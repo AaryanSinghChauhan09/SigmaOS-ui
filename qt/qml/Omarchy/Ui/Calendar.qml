@@ -129,7 +129,7 @@ FocusScope {
         id: prev
         anchors.left: parent.left
         iconText: "󰅁"
-        tooltipText: "Previous month"
+        tooltipText: Commons.I18n.t("clock.previousMonth", "Previous month")
         foreground: root.foreground
         onClicked: root.stepMonth(-1)
       }
@@ -137,7 +137,7 @@ FocusScope {
       PanelActionButton {
         anchors.right: parent.right
         iconText: "󰅂"
-        tooltipText: "Next month"
+        tooltipText: Commons.I18n.t("clock.nextMonth", "Next month")
         foreground: root.foreground
         onClicked: root.stepMonth(1)
       }
