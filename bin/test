@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Rust tests, then Qt/Rune token parity for every fixture theme at radius 0 and 8. Renders are
+# bin/review's job; this stays fast enough to run on every change.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+cargo test -q --manifest-path "$ROOT/Cargo.toml" --workspace 2>&1 | grep -E "^test result|FAILED|panicked|^error" || true
+"$ROOT/bin/build" >/dev/null
+
+fail=0
+for dir in "$ROOT"/fixtures/themes/*/; do
+  for radius in 0 8; do
+    qt="$(OMARCHY_UI_THEME_DIR=$dir OMARCHY_UI_ROUNDING=$radius "$ROOT/build/qt/omarchy-qt-gallery" --dump-tokens | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin), sort_keys=True))')"
+    rs="$(OMARCHY_UI_THEME_DIR=$dir OMARCHY_UI_ROUNDING=$radius "$ROOT/target/release/omarchy-theme" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin), sort_keys=True))')"
+    if [[ $qt != "$rs" ]]; then
+      echo "token parity: $(basename "$dir") at radius $radius differs (bin/review shows where)"
+      fail=1
+    fi
+  done
+done
+
+if (( fail )); then
+  exit 1
+fi
+echo "token parity: Qt and Rune agree on every fixture"

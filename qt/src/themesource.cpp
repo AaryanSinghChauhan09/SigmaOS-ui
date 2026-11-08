@@ -1,5 +1,6 @@
 #include "themesource.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -63,6 +64,17 @@ ThemeSource::ThemeSource(QObject *parent) : QObject(parent) {
       m_eventBuffer.remove(0, nl + 1);
     }
   });
+
+  // The instance outlives the event loop; stop reconnecting and watching when the app quits.
+  if (QCoreApplication::instance()) {
+    connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, [this] {
+      m_events.disconnect(this);
+      m_events.disconnect(&m_reconnect);
+      m_reconnect.stop();
+      m_settle.stop();
+      m_events.abort();
+    });
+  }
 
   readFiles();
   readHyprland();

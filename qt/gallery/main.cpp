@@ -4,11 +4,14 @@
 //   omarchy-qt-gallery --section buttons        one section (spec/gallery.md)
 //   omarchy-qt-gallery --snap out.png           render offscreen to a PNG and exit
 //   omarchy-qt-gallery --dump-tokens            print the canonical token JSON and exit
+//   omarchy-qt-gallery --qml view.qml --snap out.png   render any QML file with the kit (an Item or a Window)
 //   omarchy-qt-gallery --watch-tokens           print it again on every theme, font or Hyprland change
 //   OMARCHY_UI_THEME_DIR=fixtures/themes/nord omarchy-qt-gallery --snap nord.png
 
 #include <QCommandLineParser>
 #include <QFile>
+#include <QFileInfo>
+#include <QQuickItem>
 #include <QGuiApplication>
 #include <QJsonDocument>
 #include <QJsonValue>
@@ -59,6 +62,7 @@ int main(int argc, char **argv) {
   QCommandLineParser args;
   args.addHelpOption();
   args.addOption({"section", "Show only this section.", "name"});
+  args.addOption({"qml", "Load this QML file (an Item or a Window) instead of the gallery.", "file"});
   args.addOption({"snap", "Render offscreen to this PNG and exit.", "path"});
   args.addOption({"scale", "Device pixel ratio for --snap (default 2).", "n", "2"});
   args.addOption({"width", "Window width in points (default 760).", "n", "760"});
@@ -99,15 +103,47 @@ int main(int argc, char **argv) {
     return app.exec();
   }
 
-  engine.load(QUrl("qrc:/gallery/Main.qml"));
-  if (engine.rootObjects().isEmpty()) return 1;
-  auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+  QQuickWindow *window = nullptr;
+  QQuickItem *hosted = nullptr;
+  const int pad = 16;
+  if (args.isSet("qml")) {
+    // Any QML file: a Window shows as itself, an Item is hosted in a window sized to it on the
+    // theme background, so an agent can render its own view with the kit and look at it.
+    QQmlComponent component(&engine, QUrl::fromLocalFile(QFileInfo(args.value("qml")).absoluteFilePath()));
+    QObject *root = component.create();
+    if (!root) {
+      fprintf(stderr, "%s\n", qPrintable(component.errorString()));
+      return 1;
+    }
+    window = qobject_cast<QQuickWindow *>(root);
+    if (!window) {
+      auto *item = qobject_cast<QQuickItem *>(root);
+      if (!item) return 1;
+      window = new QQuickWindow();
+      QQmlComponent bg(&engine);
+      bg.setData("import QtQuick\nimport Omarchy.Theme as T\nQtObject { property color c: T.Color.background }", QUrl());
+      QObject *b = bg.create();
+      window->setColor(b ? b->property("c").value<QColor>() : Qt::black);
+      item->setParentItem(window->contentItem());
+      item->setPosition(QPointF(pad, pad));
+      hosted = item;
+      auto fit = [window, item, pad] { window->resize(int(item->width()) + pad * 2, int(item->height()) + pad * 2); };
+      QObject::connect(item, &QQuickItem::widthChanged, window, fit);
+      QObject::connect(item, &QQuickItem::heightChanged, window, fit);
+      fit();
+      window->show();
+    }
+  } else {
+    engine.load(QUrl("qrc:/gallery/Main.qml"));
+    if (engine.rootObjects().isEmpty()) return 1;
+    window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+  }
 
   if (args.isSet("snap")) {
     const QString path = args.value("snap");
     // Let layout settle and a few frames render before grabbing.
     QTimer::singleShot(400, &app, [&] {
-      window->setWidth(gallery.width);
+      if (!hosted) window->setWidth(gallery.width);
       QTimer::singleShot(200, &app, [&] {
         const QImage img = window->grabWindow();
         if (img.isNull() || !img.save(path)) {
@@ -119,7 +155,14 @@ int main(int argc, char **argv) {
       });
     });
   }
-  return app.exec();
+  const int rc = app.exec();
+  // A hosted item and its window aren't owned by the engine; tear them down while the event
+  // loop's dispatcher still exists, so their animations don't restart timers after it.
+  if (hosted) {
+    delete hosted;
+    delete window;
+  }
+  return rc;
 }
 
 #include "main.moc"

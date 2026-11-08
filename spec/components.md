@@ -1,0 +1,50 @@
+# Omarchy UI components
+
+The primitives every binding provides, under the same names, with the same states and metrics. The Qt binding is the Omarchy shell's own kit (`qt/HARVEST.md`); the others are drawn to match it, and `bin/review` shows how closely. Token names refer to `spec/tokens.md`.
+
+| Component | Qt (`import Omarchy.Ui`) | Rune (`omarchy_rune::ui`) | What it is |
+|---|---|---|---|
+| Button | `Button` | `Button` | Label, optional icon glyph. Borderless at rest unless `bordered`. `selected` fills and bolds. |
+| IconButton | `IconButton` (`PanelActionButton`) | `IconButton` | Square, odd-sized, one glyph. |
+| ButtonGroup | `ButtonGroup` | `ButtonGroup` | Bordered buttons `md` apart, one selected: a segmented choice. |
+| ToggleSwitch | `ToggleSwitch` | `ToggleSwitch` | A bare switch; cursor ring around it. |
+| Toggle | `Toggle` | `Toggle` | Labeled row (title, description) with the switch at the end; the whole row is the control. |
+| TextField | `TextField` | `TextField` | Single-line input. |
+| NumberField | `NumberField` | `NumberField` | Integer stepper with a label: [−] value [+]. |
+| Dropdown | `Dropdown` | `Dropdown` | Labeled single choice; the list opens below the trigger on the popups surface. |
+| Slider | `ValueSlider` (`PanelSlider`) | `Slider` | Thin track, foreground fill, knob ringed in the surface color, optional notches. |
+| Card | `Card` | `Card` | The raised surface panels, popups and flyouts are drawn on. |
+| SectionHeader | `SectionHeader` (`PanelSectionHeader`) | `section_header` | Caption, bold, foreground darker 1.4. |
+| Separator | `Separator` (`PanelSeparator`) | `separator` | 1px foreground at 12%. |
+| MenuRow | `MenuRow` (`PopupMenuRow`) | `MenuRow` | List/menu row: label, accent check when `checked`, hover fill when `highlighted`. |
+| Tooltip | `PanelToolTip` | `Tooltip` | Tooltip surface, `bodySmall` text. |
+| ConfirmDialog | `ConfirmDialog` | `ConfirmDialog` | Message, Cancel, destructive Confirm in urgent. |
+
+Qt also carries the rest of the shell's kit (`SearchableDropdown`, `FilterInput`, `CursorSurface`, `PanelHero`, `OpticalGlyph`, `BorderSurface`, …). Rune also has all of rune-kit (Select, Menu, Popover, Table, Tree, Markdown, Diff, …), themed through `Theme::kit()`.
+
+## Shared rules
+
+- **States** follow `[controls]`: pressed > focus > hover-cursor > selected > normal. Focus looks like hover unless the theme says otherwise. Every component takes a `cursor` / `hasCursor` flag that forces the hover-cursor look, for keyboard-driven lists and for still renders.
+- **No relayout on state change.** A component reserves the widest border any of its states paints.
+- **Corners** are `radius` (Hyprland's rounding, usually 0). Small parts use `min(4, radius)`. Switches and slider knobs are the only round things, and switches only when `radius > 0`.
+- **Color** is foreground glass: fills and borders are the foreground at the state's alpha. Accent marks only what is *chosen* (a menu's selected text, a check, the active border on cards). Urgent marks destructive actions.
+- **Type** is one family (fontconfig `monospace`) at the token sizes; selection is shown with bold, nothing else changes weight.
+- **Motion** is 120 ms for color, 160 ms for the press give (scale 0.97), zero under reduced motion.
+
+## Metrics (at scale 1)
+
+| Part | Value |
+|---|---|
+| Button padding | `controlPaddingX` 10 × `controlPaddingY` 6, icon–label gap `controlGap` 8, label `body` |
+| IconButton | `max(space(22), icon + sm × 2) | 1` square, glyph `icon` |
+| ButtonGroup gap | `md` 6 |
+| ToggleSwitch | track `max(22, round(controlHeight × 0.55))` tall, × 1.9 wide; knob `round(track × 0.72)`; cursor ring `space(6)` outside; knob off = foreground darker 1.25, on = selected text |
+| Toggle | min height 54, padding `rowPaddingX` 12, title `subtitle` bold, description `caption` foreground darker 1.5 |
+| TextField | padding `controlPaddingX` × `inputPaddingY` 7, text `body`, placeholder darker 1.6 |
+| NumberField | `numberFieldWidth` 120 × `controlHeight` 28, label `bodySmall` darker 1.4, `md` above |
+| Dropdown | `dropdownWidth` 240 × `controlHeight`, label `bodySmall` bold darker 1.4, chevron darker 1.2 |
+| Slider | track `max(4, round(controlHeight × 0.11))`, knob `max(14, round(controlHeight × 0.38))` with a `space(2)` ring in the surface color, notches `space(2)` wide |
+| Card | `panelPadding` 18, children `panelGap` 14 apart, popups border at `max(1, space(2))` |
+| MenuRow | `popupRowHeight` 28, text inset `controlPaddingX` |
+| Tooltip | padding `controlPaddingX` × `controlPaddingY`, border `max(1, normal border width)` |
+| ConfirmDialog | `space(370)` wide, `space(18)` padding, message `title`, buttons `space(88)` × `space(34)` `space(10)` apart, labels `caption` |
