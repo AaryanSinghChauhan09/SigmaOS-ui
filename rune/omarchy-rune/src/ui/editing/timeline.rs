@@ -164,19 +164,22 @@ impl Timeline {
         }));
         self
     }
-    /// A trim handle of the selected clip moved: its track, index, edge (`Left` or `Right`) and
-    /// the new time for that edge.
+    /// A trim handle of the selected clip was dragged or nudged with the arrow keys (a point a
+    /// press): its track, index, edge (`Left` or `Right`) and the new time for that edge.
     pub fn on_trim<S: 'static>(mut self, f: impl Fn(&mut S, usize, usize, Edge, f32) + 'static) -> Self {
         let f = Rc::new(f);
         self.trim = Some(Rc::new(move |h: TrimHandle, track: usize, clip: usize, edge: Edge, origin: f32, view: TimelineView| {
-            let f = f.clone();
+            let (drag, nudge) = (f.clone(), f.clone());
             h.on_drag(move |s: &mut S, d: &mut Drag| {
                 if d.phase == Phase::Down {
                     d.data = origin;
                     return;
                 }
                 let to = (d.data + d.dx / view.pixels_per_second()).clamp(0.0, view.duration);
-                f(s, track, clip, edge, to);
+                drag(s, track, clip, edge, to);
+            })
+            .on_nudge(move |s: &mut S, dx, _dy| {
+                nudge(s, track, clip, edge, (origin + dx / view.pixels_per_second()).clamp(0.0, view.duration));
             })
         }));
         self

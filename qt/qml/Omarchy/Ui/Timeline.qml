@@ -13,7 +13,7 @@ import Omarchy.Theme as Commons
 //  - Playhead: an accent line with a small head on the ruler.
 //
 // Press or drag on the ruler or an empty lane to scrub (`seek`), press a clip to select it
-// (`clipPressed`), drag a trim handle to trim (`trimmed`), and turn the wheel to zoom around the
+// (`clipPressed`), drag a trim handle or nudge it with the arrow keys to trim (`trimmed`), and turn the wheel to zoom around the
 // pointer (`viewChanged`). Left/Right move the playhead by a second (Shift: a major step),
 // Home/End jump to the ends.
 //
@@ -222,6 +222,11 @@ Item {
               onMoved: function(dx, dy) {
                 root.trimmed(lane.trackIndex, clipItem.index, modelData,
                   Math.max(0, Math.min(root.duration, origin + dx / root.pixelsPerSecond)))
+              }
+              onNudged: function(dx, dy) {
+                var at = modelData === "left" ? clipItem.modelData.start : clipItem.modelData.end
+                root.trimmed(lane.trackIndex, clipItem.index, modelData,
+                  Math.max(0, Math.min(root.duration, at + dx / root.pixelsPerSecond)))
               }
             }
           }
