@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Rust tests, then Qt/Rune token parity for every fixture theme at radius 0 and 8, and icon
-# lookup parity on the fixture icon tree. Renders are bin/review's job; this stays fast enough
-# to run on every change.
+# Rust tests, the Qt Quick tests, then Qt/Rune token parity for every fixture theme at radius 0
+# and 8, and icon lookup parity on the fixture icon tree. Renders are bin/review's job; this
+# stays fast enough to run on every change.
 
 set -euo pipefail
 
@@ -12,6 +12,11 @@ cargo test -q --manifest-path "$ROOT/Cargo.toml" --workspace 2>&1 | grep -E "^te
 "$ROOT/bin/build" >/dev/null
 
 fail=0
+
+# The Qt binding's behavior tests (qt/tests/tst_*.qml), offscreen in a fixture theme.
+qt_tests="$("$ROOT/build/qt-tests/omarchy-qt-tests" 2>&1)" || fail=1
+grep -E "^(FAIL|XPASS)!|^   Loc:|^Totals" <<<"$qt_tests" | sed 's/^Totals/qt tests: totals/'
+
 for dir in "$ROOT"/fixtures/themes/*/; do
   for radius in 0 8; do
     qt="$(OMARCHY_UI_THEME_DIR=$dir OMARCHY_UI_ROUNDING=$radius "$ROOT/build/qt/omarchy-qt-gallery" --dump-tokens | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin), sort_keys=True))')"

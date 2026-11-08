@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Build both galleries (and the token CLI) into build/.
+# Build both galleries (and the token CLI and the Qt tests) into build/.
 #
 #   bin/build          # everything
-#   bin/build qt       # just the Qt gallery
+#   bin/build qt       # just the Qt gallery and its tests
 #   bin/build rune     # just the Rune gallery and omarchy-theme
 
 set -euo pipefail
@@ -16,6 +16,10 @@ if [[ $what == "all" || $what == "qt" ]]; then
   (cd "$ROOT/build/qt" && qmake6 "$ROOT/qt/gallery/gallery.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
   [[ -x $ROOT/build/qt/omarchy-qt-gallery ]] || { echo "Qt gallery failed to build" >&2; exit 1; }
   echo "build/qt/omarchy-qt-gallery"
+  mkdir -p "$ROOT/build/qt-tests"
+  (cd "$ROOT/build/qt-tests" && qmake6 "$ROOT/qt/tests/tests.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
+  [[ -x $ROOT/build/qt-tests/omarchy-qt-tests ]] || { echo "Qt tests failed to build" >&2; exit 1; }
+  echo "build/qt-tests/omarchy-qt-tests"
 fi
 
 if [[ $what == "all" || $what == "rune" ]]; then
