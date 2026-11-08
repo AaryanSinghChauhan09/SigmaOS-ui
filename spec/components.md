@@ -34,6 +34,7 @@ Each group has its own file with every component's anatomy, API in both bindings
 | Forms | [`components/forms.md`](components/forms.md) | SettingRow, Checkbox, Radio, RadioGroup, PasswordField, TextArea, MultiSelect, ColorWell, SwatchStrip, Dialog | `forms`, `pickers` |
 | Data and layout | [`components/data.md`](components/data.md) | Table, Tree, SplitView, Sidebar, Calendar | `data`, `layout` |
 | Editing | [`components/editing.md`](components/editing.md) | Timeline, Scrubber, TrimHandle, CropFrame, DragHandle, DropIndicator, ColorPicker | `timeline`, `color` |
+| Composed | [`components/composed.md`](components/composed.md) | SearchList, and a Wi-Fi panel, search overlays and an app inspector built only from kit parts | `composed` |
 
 ## Shared rules
 

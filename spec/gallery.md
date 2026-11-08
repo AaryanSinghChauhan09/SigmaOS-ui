@@ -16,6 +16,7 @@ Every binding ships a gallery with these sections, in this order, with these spe
 | `forms`, `pickers` | See [`components/forms.md`](components/forms.md). |
 | `data`, `layout` | See [`components/data.md`](components/data.md). |
 | `timeline`, `color` | See [`components/editing.md`](components/editing.md). |
+| `composed` | See [`components/composed.md`](components/composed.md). |
 
 The order is the galleries' order: `qt/gallery/Sections.qml` and the `gallery!` list in `rune/gallery/src/main.rs`, which `tools/review.py` reads.
 

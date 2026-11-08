@@ -1,6 +1,6 @@
 # Primitives roadmap
 
-**Status (2026-11-08):** Tiers 1–3 are built in both bindings, except SearchList (Tier 1 #9, composed in the `composed` gallery section instead) and the classic bevel surfaces (a theme concern). See [`components.md`](components.md#the-rest-of-the-kit).
+**Status (2026-11-08):** Tiers 1–3 are built in both bindings, plus SearchList and a `composed` gallery section that builds real panels from kit parts only. Not built: the classic bevel surfaces (a theme concern). See [`components.md`](components.md#the-rest-of-the-kit).
 
 What the kit should grow next, ranked by how often real Omarchy UI builds it by hand. Evidence comes from two surveys (2026-11-08):
 
