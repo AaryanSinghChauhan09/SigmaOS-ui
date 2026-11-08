@@ -38,6 +38,12 @@ ListRow 1.0 ListRow.qml
 ScrollArea 1.0 ScrollArea.qml
 StatusDot 1.0 StatusDot.qml
 TileGrid 1.0 TileGrid.qml
+Banner 1.0 Banner.qml
+EmptyState 1.0 EmptyState.qml
+Meter 1.0 Meter.qml
+ProgressBar 1.0 ProgressBar.qml
+Spinner 1.0 Spinner.qml
+Toast 1.0 Toast.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml

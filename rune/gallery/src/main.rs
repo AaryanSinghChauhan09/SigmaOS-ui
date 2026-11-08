@@ -90,6 +90,8 @@ gallery! {
     surfaces: "Surfaces",
     lists: "Lists",
     tiles: "Tiles",
+    progress: "Progress",
+    messages: "Messages",
     tokens: "Tokens",
 }
 

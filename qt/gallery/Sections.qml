@@ -17,6 +17,8 @@ ColumnLayout {
     "surfaces",
     "lists",
     "tiles",
+    "progress",
+    "messages",
     "tokens",
   ]
 

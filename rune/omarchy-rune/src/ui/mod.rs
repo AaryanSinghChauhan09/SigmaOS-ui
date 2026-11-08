@@ -6,6 +6,7 @@
 //! as the shell's `hasCursor` does for keyboard-driven panels.
 
 mod button;
+pub mod feedback;
 mod field;
 mod lists;
 mod slider;
@@ -13,6 +14,7 @@ mod surface;
 mod toggle;
 
 pub use button::{Button, ButtonGroup, IconButton};
+pub use feedback::{Banner, EmptyState, Meter, ProgressBar, Spinner, Toast};
 pub use field::{Dropdown, NumberField, TextField};
 pub use lists::{
     Avatar, AvatarSize, Badge, CursorKey, CursorModel, CursorSection, Hero, KeyValue, ListRow, ScrollArea, StatusDot, Tile, TileGrid,
