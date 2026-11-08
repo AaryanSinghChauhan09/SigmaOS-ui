@@ -1,7 +1,0 @@
-<RCC>
-  <qresource prefix="/gallery">
-    <file>Main.qml</file>
-    <file>Section.qml</file>
-    <file>Sections.qml</file>
-  </qresource>
-</RCC>

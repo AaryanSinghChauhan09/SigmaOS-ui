@@ -14,11 +14,15 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SECTIONS = ["buttons", "toggles", "inputs", "slider", "surfaces", "tokens"]
 DEFAULT_THEMES = ["live", "tokyo-night", "catppuccin-latte", "gruvbox", "rose-pine", "retro-82"]
 QT = ROOT / "build/qt/omarchy-qt-gallery"
 RUNE = ROOT / "target/release/omarchy-rune-gallery"
 TOKENS = ROOT / "target/release/omarchy-theme"
+
+
+def gallery_sections():
+    """The sections, in order, as the Rune gallery lists them (the Qt gallery has the same)."""
+    return subprocess.run([str(RUNE), "--list-sections"], capture_output=True, text=True, check=True).stdout.split()
 
 
 def png_size(path):
@@ -95,7 +99,7 @@ def main():
     p.add_argument("--themes", default=",".join(DEFAULT_THEMES))
     p.add_argument("--all-themes", action="store_true")
     p.add_argument("--radii", default="0,8")
-    p.add_argument("--sections", default=",".join(SECTIONS))
+    p.add_argument("--sections", default="")
     p.add_argument("--out", default=str(ROOT / "out/review"))
     args = p.parse_args()
 
@@ -103,7 +107,7 @@ def main():
     if args.all_themes:
         themes = ["live"] + sorted(d.name for d in (ROOT / "fixtures/themes").iterdir() if d.is_dir())
     radii = [int(r) for r in args.radii.split(",")]
-    sections = args.sections.split(",")
+    sections = args.sections.split(",") if args.sections else gallery_sections()
     out = Path(args.out)
     if out.exists():
         shutil.rmtree(out)
