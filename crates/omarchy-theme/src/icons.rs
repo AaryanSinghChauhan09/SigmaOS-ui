@@ -247,6 +247,12 @@ fn nearest(found: &[(&Subdir, PathBuf)], size: u32) -> Option<PathBuf> {
 mod tests {
     use super::*;
 
+    // fixtures/icons: Fixture-Accent (Inherits Fixture-Base, which names a missing theme and
+    // hicolor) under system/, with one more icon of it under local/; loose files in pixmaps/.
+    // The icons carry real app names so the live galleries show real icons for the same
+    // specimens: utilities-terminal is PNGs at 16, 48 and 96 in Fixture-Accent (and an SVG in
+    // its parent), org.gnome.Nautilus an SVG beside a 32px PNG, firefox only in Fixture-Base,
+    // chromium only in hicolor, btop in local/ and in the parent, steam only in pixmaps.
     fn fixture() -> (PathBuf, IconLookup) {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/icons").canonicalize().unwrap();
         let roots = ["local", "system", "pixmaps"].map(|d| root.join(d)).to_vec();
@@ -263,8 +269,8 @@ mod tests {
         // Fixture-Base names a theme that isn't installed (skipped) and hicolor (not repeated).
         assert_eq!(icons.themes(), ["Fixture-Accent", "Fixture-Base", "hicolor"]);
         let (root, _) = fixture();
-        assert_eq!(rel(&root, icons.find("fixture-inherited", 48)).as_deref(), Some("system/Fixture-Base/scalable/apps/fixture-inherited.svg"));
-        assert_eq!(rel(&root, icons.find("fixture-hicolor", 48)).as_deref(), Some("system/hicolor/scalable/apps/fixture-hicolor.svg"));
+        assert_eq!(rel(&root, icons.find("firefox", 48)).as_deref(), Some("system/Fixture-Base/scalable/apps/firefox.svg"));
+        assert_eq!(rel(&root, icons.find("chromium", 48)).as_deref(), Some("system/hicolor/scalable/apps/chromium.svg"));
     }
 
     #[test]
@@ -272,26 +278,26 @@ mod tests {
         let (root, _) = fixture();
         let icons = IconLookup::new("Not-Installed", ["system", "pixmaps"].map(|d| root.join(d)).to_vec());
         assert_eq!(icons.themes(), ["hicolor"]);
-        assert_eq!(rel(&root, icons.find("fixture-hicolor", 16)).as_deref(), Some("system/hicolor/scalable/apps/fixture-hicolor.svg"));
+        assert_eq!(rel(&root, icons.find("chromium", 16)).as_deref(), Some("system/hicolor/scalable/apps/chromium.svg"));
     }
 
     #[test]
     fn prefers_scalable_svg() {
         let (root, icons) = fixture();
         // A 32px PNG sits beside it, nearer the request.
-        assert_eq!(rel(&root, icons.find("fixture-vector", 32)).as_deref(), Some("system/Fixture-Accent/scalable/apps/fixture-vector.svg"));
+        assert_eq!(rel(&root, icons.find("org.gnome.Nautilus", 32)).as_deref(), Some("system/Fixture-Accent/scalable/apps/org.gnome.Nautilus.svg"));
     }
 
     #[test]
     fn picks_the_nearest_size_at_or_above() {
         let (root, icons) = fixture();
-        let at = |size| rel(&root, icons.find("fixture-app", size));
-        assert_eq!(at(8).as_deref(), Some("system/Fixture-Accent/16x16/apps/fixture-app.png"));
-        assert_eq!(at(16).as_deref(), Some("system/Fixture-Accent/16x16/apps/fixture-app.png"));
-        assert_eq!(at(17).as_deref(), Some("system/Fixture-Accent/48x48/apps/fixture-app.png"));
-        assert_eq!(at(56).as_deref(), Some("system/Fixture-Accent/96x96/apps/fixture-app.png"));
+        let at = |size| rel(&root, icons.find("utilities-terminal", size));
+        assert_eq!(at(8).as_deref(), Some("system/Fixture-Accent/16x16/apps/utilities-terminal.png"));
+        assert_eq!(at(16).as_deref(), Some("system/Fixture-Accent/16x16/apps/utilities-terminal.png"));
+        assert_eq!(at(17).as_deref(), Some("system/Fixture-Accent/48x48/apps/utilities-terminal.png"));
+        assert_eq!(at(56).as_deref(), Some("system/Fixture-Accent/96x96/apps/utilities-terminal.png"));
         // Nothing big enough: the largest. The parent's SVG never wins over the theme's own PNGs.
-        assert_eq!(at(200).as_deref(), Some("system/Fixture-Accent/96x96/apps/fixture-app.png"));
+        assert_eq!(at(200).as_deref(), Some("system/Fixture-Accent/96x96/apps/utilities-terminal.png"));
     }
 
     #[test]
@@ -299,24 +305,24 @@ mod tests {
         let (root, icons) = fixture();
         // Fixture-Accent's index.theme is under system/, but local/ adds an icon to it, which
         // wins over the parent theme's copy.
-        assert_eq!(rel(&root, icons.find("fixture-local", 48)).as_deref(), Some("local/Fixture-Accent/48x48/apps/fixture-local.png"));
+        assert_eq!(rel(&root, icons.find("btop", 48)).as_deref(), Some("local/Fixture-Accent/48x48/apps/btop.png"));
     }
 
     #[test]
     fn falls_back_to_pixmaps() {
         let (root, icons) = fixture();
-        assert_eq!(rel(&root, icons.find("fixture-pixmap", 48)).as_deref(), Some("pixmaps/fixture-pixmap.png"));
+        assert_eq!(rel(&root, icons.find("steam", 48)).as_deref(), Some("pixmaps/steam.png"));
     }
 
     #[test]
     fn missing_icons_are_none() {
         let (root, icons) = fixture();
-        assert_eq!(icons.find("fixture-missing", 48), None);
+        assert_eq!(icons.find("no-such-app", 48), None);
         assert_eq!(icons.find("", 48), None);
-        assert_eq!(icons.find("../pixmaps/fixture-pixmap", 48), None);
+        assert_eq!(icons.find("../pixmaps/steam", 48), None);
         // Asked again: answered from the cache, the same.
-        assert_eq!(icons.find("fixture-missing", 48), None);
-        let abs = root.join("pixmaps/fixture-pixmap.png");
+        assert_eq!(icons.find("no-such-app", 48), None);
+        let abs = root.join("pixmaps/steam.png");
         assert_eq!(icons.find(abs.to_str().unwrap(), 48), Some(abs));
     }
 
