@@ -22,6 +22,19 @@ The primitives every binding provides, under the same names, with the same state
 
 Qt also carries the rest of the shell's kit (`SearchableDropdown`, `FilterInput`, `CursorSurface`, `PanelHero`, `OpticalGlyph`, `BorderSurface`, …). Rune also has all of rune-kit (Select, Menu, Popover, Table, Tree, Markdown, Diff, …), themed through `Theme::kit()`.
 
+## The rest of the kit
+
+Each group has its own file with every component's anatomy, API in both bindings, states, metrics and gallery specimens. The names are the same in Qt (`import Omarchy.Ui`) and Rune (`omarchy_rune::ui`).
+
+| Group | Spec | Components | Gallery sections |
+|---|---|---|---|
+| Lists | [`components/lists.md`](components/lists.md) | ListRow, CursorModel, ScrollArea, KeyValue, Hero, Badge, StatusDot, Avatar, TileGrid | `lists`, `tiles` |
+| Feedback | [`components/feedback.md`](components/feedback.md) | Meter, ProgressBar, Spinner, EmptyState, Banner, Toast | `progress`, `messages` |
+| Navigation | [`components/navigation.md`](components/navigation.md) | Menu, ContextMenu, Keycap, KeyCombo, ShortcutSheet, Tooltip (with shortcut), Toolbar, Tabs, IconRail | `menus`, `navigation` |
+| Forms | [`components/forms.md`](components/forms.md) | SettingRow, Checkbox, Radio, RadioGroup, PasswordField, TextArea, MultiSelect, ColorWell, SwatchStrip, Dialog | `forms`, `pickers` |
+| Data and layout | [`components/data.md`](components/data.md) | Table, Tree, SplitView, Sidebar, Calendar | `data`, `layout` |
+| Editing | [`components/editing.md`](components/editing.md) | Timeline, Scrubber, TrimHandle, CropFrame, DragHandle, DropIndicator, ColorPicker | `timeline`, `color` |
+
 ## Shared rules
 
 - **States** follow `[controls]`: pressed > focus > hover-cursor > selected > normal. Focus looks like hover unless the theme says otherwise. Every component takes a `cursor` / `hasCursor` flag that forces the hover-cursor look, for keyboard-driven lists and for still renders.

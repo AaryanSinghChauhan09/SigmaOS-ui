@@ -120,7 +120,7 @@ FocusScope {
         horizontalAlignment: Text.AlignHCenter
         textFormat: Text.PlainText
         text: (root.monthNames[root.month - 1] + " " + root.year).toUpperCase()
-        color: Qt.darker(root.foreground, 1.4)
+        color: Commons.Color.textDim
         font.family: Style.font.family
         font.pixelSize: Style.font.body
       }
@@ -202,7 +202,7 @@ FocusScope {
                   ? Commons.Color.textFaint
                   : (cell.isSelected
                     ? Style.selectedStateColor(root.foreground, root.accent)
-                    : (cell.info.weekend ? Qt.darker(root.foreground, 1.45) : root.foreground))
+                    : (cell.info.weekend ? Commons.Color.textDim : root.foreground))
                 font.family: Style.font.family
                 font.pixelSize: Style.font.body
                 font.bold: cell.isSelected || cell.isToday

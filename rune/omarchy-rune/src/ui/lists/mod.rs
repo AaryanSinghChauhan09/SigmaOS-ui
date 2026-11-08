@@ -251,7 +251,7 @@ impl ListRow {
                     gradient: None,
                 });
             }
-            let ink = if self.action_urgent { tk.palette.urgent } else { tk.palette.foreground.darker(1.4) };
+            let ink = if self.action_urgent { tk.palette.urgent } else { tk.roles.text_dim };
             // Under the pointer the row's hover group reveals it too.
             let rest = if shown { 1.0 } else { 0.0 };
             let mark = glyph(t, &self.action, f.subtitle, color(ink));
@@ -514,7 +514,7 @@ impl Hero {
             text(self.title).font(t.text_style_bold(f.title)).color(t.fg()).single_line().truncate(),
         );
         if !self.status.is_empty() {
-            let ink = if self.error { t.urgent() } else { t.fg_darker(1.4) };
+            let ink = if self.error { t.urgent() } else { t.dim() };
             let mut style = t.text_style_bold(f.caption);
             style.tracking = 1.2;
             labels = labels.child(text(self.status.to_uppercase()).font(style).color(ink).single_line().truncate());

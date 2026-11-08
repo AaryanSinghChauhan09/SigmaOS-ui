@@ -26,8 +26,11 @@ QtObject {
   // The kit's own additions (spec/tokens.md "Palette" and "Roles"); not in the shell.
   property color success: "#7f9f6f"
   property color warning: "#c0a060"
-  readonly property color textDim: Qt.darker(foreground, 1.5)
-  readonly property color textFaint: Qt.darker(foreground, 2.0)
+  // Secondary and faint text fade toward the background: in a dark theme that is the shell's
+  // Qt.darker(foreground, 1.5 / 2.0); in a light theme darker would mean stronger, so they mix
+  // a third / a half of the way to the background instead.
+  readonly property color textDim: dark ? Qt.darker(foreground, 1.5) : mixColor(foreground, background, 1 / 3)
+  readonly property color textFaint: dark ? Qt.darker(foreground, 2.0) : mixColor(foreground, background, 1 / 2)
   readonly property color track: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.12)
   readonly property color scrim: menu.scrim
 
@@ -143,6 +146,12 @@ QtObject {
     property color text: root.flatColor(root.pick("image-picker.text", ""), root.foreground)
     property color selectedBorder: root.composed("image-picker.selected-border", "image-picker.selected-border-alpha", root.accent, 1.0)
     property color unselectedBorder: root.composed("image-picker.unselected-border", "image-picker.unselected-border-alpha", root.foreground, 0.28)
+  }
+
+  // sRGB mix by `t` (0 is a, 1 is b), rounded per 8-bit channel as the Rust resolver does.
+  function mixColor(a, b, t) {
+    function m(x, y) { return Math.round(Math.round(x * 255) + (Math.round(y * 255) - Math.round(x * 255)) * t) / 255 }
+    return Qt.rgba(m(a.r, b.r), m(a.g, b.g), m(a.b, b.b), m(a.a, b.a))
   }
 
   function loadColors(raw) {

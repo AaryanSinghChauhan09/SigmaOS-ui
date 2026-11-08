@@ -67,7 +67,7 @@ Item {
       visible: root.status !== ""
       width: parent.width
       text: root.status.toUpperCase()
-      color: root.error ? Commons.Color.urgent : Qt.darker(root.foreground, 1.4)
+      color: root.error ? Commons.Color.urgent : Commons.Color.textDim
       font.family: Style.font.family
       font.pixelSize: Style.font.caption
       font.bold: true

@@ -45,8 +45,10 @@ Colors derived from the palette, so components share them instead of each re-der
 
 | Role | Value | For |
 |---|---|---|
-| `textDim` | foreground darker 1.5 | Secondary text: subtitles, values, hints, status lines |
-| `textFaint` | foreground darker 2.0 | Disabled and placeholder text |
+| `textDim` | dark themes: foreground darker 1.5; light themes: foreground mixed ⅓ toward background | Secondary text: subtitles, values, hints, status lines |
+| `textFaint` | dark themes: foreground darker 2.0; light themes: foreground mixed ½ toward background | Disabled and placeholder text |
+
+Both fade toward the background. In a dark theme that is exactly the shell's `Qt.darker`; in a light theme `darker` would make secondary text stronger than the foreground, so they mix instead (sRGB, per 8-bit channel, rounded).
 | `track` | foreground at 0.12 | The unfilled part of meters, progress bars and scrollbars; also the separator color |
 | `scrim` | `surfaces.menu.scrim` | Behind modal dialogs |
 

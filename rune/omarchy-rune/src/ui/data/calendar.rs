@@ -160,7 +160,7 @@ impl Calendar {
                 row()
                     .pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
                     .items_center()
-                    .child(text(title).font(t.text_style(tk.font.body)).color(t.fg_darker(1.4)).align(Align::Center).w_full().single_line()),
+                    .child(text(title).font(t.text_style(tk.font.body)).color(t.dim()).align(Align::Center).w_full().single_line()),
             )
             .child(
                 row()
@@ -195,7 +195,7 @@ impl Calendar {
                 } else if is_selected {
                     color(c.selected.text)
                 } else if i >= 5 {
-                    t.fg_darker(1.45)
+                    t.dim()
                 } else {
                     color(fg)
                 };

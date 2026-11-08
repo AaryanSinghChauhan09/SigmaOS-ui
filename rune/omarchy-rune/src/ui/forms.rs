@@ -520,7 +520,7 @@ impl TextArea {
             .key("input")
             .w_full()
             .color(t.fg())
-            .placeholder(self.placeholder, t.fg_darker(1.6))
+            .placeholder(self.placeholder, t.faint())
             .caret(t.fg(), color(c.selection.fill));
         if let Some(access) = self.access {
             field = access(field);

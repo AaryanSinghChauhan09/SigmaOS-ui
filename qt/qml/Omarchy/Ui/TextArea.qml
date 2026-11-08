@@ -68,7 +68,7 @@ Item {
       color: root.foreground
       selectionColor: Style.selectionFillFor(root.foreground, root.accent)
       selectedTextColor: root.foreground
-      placeholderTextColor: Qt.darker(root.foreground, 1.6)
+      placeholderTextColor: Commons.Color.textFaint
       leftPadding: root.horizontalPadding + Border.left(root._borderSpec)
       rightPadding: root.horizontalPadding + Border.right(root._borderSpec)
       topPadding: root.verticalPadding + Border.top(root._borderSpec)
