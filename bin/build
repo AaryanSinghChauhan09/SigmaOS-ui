@@ -3,7 +3,7 @@
 # Build both galleries (and the token CLI and the Qt tests) into build/.
 #
 #   bin/build          # everything
-#   bin/build qt       # just the Qt gallery and its tests
+#   bin/build qt       # just the Qt gallery, its tests and the installable QML module
 #   bin/build rune     # just the Rune gallery and omarchy-theme
 
 set -euo pipefail
@@ -20,6 +20,11 @@ if [[ $what == "all" || $what == "qt" ]]; then
   (cd "$ROOT/build/qt-tests" && qmake6 "$ROOT/qt/tests/tests.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
   [[ -x $ROOT/build/qt-tests/omarchy-qt-tests ]] || { echo "Qt tests failed to build" >&2; exit 1; }
   echo "build/qt-tests/omarchy-qt-tests"
+  # The installed-module route (qt/module): `make -C build/qt-module install INSTALL_ROOT=...`.
+  mkdir -p "$ROOT/build/qt-module"
+  (cd "$ROOT/build/qt-module" && qmake6 "$ROOT/qt/module/module.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
+  [[ -f $ROOT/build/qt-module/libomarchyuiplugin.so ]] || { echo "Qt module failed to build" >&2; exit 1; }
+  echo "build/qt-module/libomarchyuiplugin.so"
 fi
 
 if [[ $what == "all" || $what == "rune" ]]; then

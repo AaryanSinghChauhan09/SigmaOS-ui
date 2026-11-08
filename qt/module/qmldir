@@ -1,0 +1,3 @@
+module Omarchy.Theme.Native
+plugin omarchyuiplugin
+classname OmarchyUiPlugin
