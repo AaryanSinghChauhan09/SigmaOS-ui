@@ -20,4 +20,9 @@ omarchy_ui_qml.files = \
   $$files($$PWD/qml/Omarchy/Ui/*.qml) $$PWD/qml/Omarchy/Ui/qmldir
 omarchy_ui_qml.prefix = /qt/qml
 omarchy_ui_qml.base = $$PWD/qml
-RESOURCES += omarchy_ui_qml
+# Omarchy.Theme.Native's qmldir without the plugin line: registerTypes() provides the types, and
+# an installed copy of the kit (qt/module) is never loaded behind this one.
+omarchy_ui_native.files = $$PWD/src/Native/qmldir
+omarchy_ui_native.prefix = /qt/qml/Omarchy/Theme
+omarchy_ui_native.base = $$PWD/src
+RESOURCES += omarchy_ui_qml omarchy_ui_native

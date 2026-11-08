@@ -1,0 +1,5 @@
+# Omarchy.Theme.Native for an app that vendors the kit (omarchy-ui.pri embeds this at
+# qrc:/qt/qml/Omarchy/Theme/Native). No plugin: the app's own OmarchyUi::registerTypes() call
+# registers the types. Being here, ahead of the installed modules on the import path, it keeps
+# the engine from also loading an installed libomarchyuiplugin.so.
+module Omarchy.Theme.Native
