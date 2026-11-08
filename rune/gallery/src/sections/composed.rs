@@ -3,10 +3,10 @@
 
 use omarchy_rune::Theme;
 use omarchy_rune::ui::{
-    Button, Card, ColorWell, CursorModel, Dropdown, Hero, IconButton, KeyValue, ListRow, NumberField, PasswordField, ScrollArea,
-    SearchItem, SearchList, SettingRow, Slider, Tabs, Toolbar, ToggleSwitch, Tone, section_header, separator,
+    Button, Card, ColorWell, CursorModel, Dropdown, Hero, IconButton, KeyValue, ListRow, NumberField, Pane, PasswordField, ScrollArea,
+    SearchItem, SearchList, SettingRow, Slider, Tabs, ToggleSwitch, Tone, section_header, separator,
 };
-use rune::{El, TextEdit, col, row};
+use rune::{El, Side, TextEdit, col, row};
 
 use crate::State;
 
@@ -110,17 +110,8 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .child(KeyValue::new().pair("IP", "192.168.1.24").pair("Gateway", "192.168.1.1").pair("DNS", "1.1.1.1").build(t))
         .build(t);
 
-    // An app inspector, as omareel's side panel.
-    let head = col()
-        .w_full()
-        .child(
-            Toolbar::new()
-                .divided(false)
-                .leading([IconButton::new("\u{F0E2}").build(t), IconButton::new("\u{F01E}").build(t)])
-                .trailing([Button::new("Export").bordered(true).build(t)])
-                .build(t),
-        )
-        .child(Tabs::new(["Shape", "Cursor", "Zoom"], c.tab).on_choose(|s: &mut State, i| s.composed.tab = i).build(t));
+    // An app inspector, as omareel's side panel: a pane on the window, ruled off from the canvas.
+    let tabs = Tabs::new(["Shape", "Cursor", "Zoom"], c.tab).on_choose(|s: &mut State, i| s.composed.tab = i).build(t);
     let frame = col()
         .w_full()
         .child(SettingRow::new("Radius").control(Slider::new(c.radius).width(110.0).on_change(|s: &mut State, v| s.composed.radius = v).build(t)).build(t))
@@ -153,9 +144,17 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
                 .control(NumberField::new("", c.padding).range(0, 96).on_change(|s: &mut State, v| s.composed.padding = v).build(t))
                 .build(t),
         );
-    let inspector = Card::new()
+    let inspector = Pane::new()
         .width(300.0)
-        .child(head)
+        .title("Recording 1")
+        .subtitle("1920 × 1080 · 0:42")
+        .divider(Side::Left)
+        .actions([
+            IconButton::new("\u{F0E2}").build(t),
+            IconButton::new("\u{F01E}").build(t),
+            Button::new("Export").bordered(true).build(t),
+        ])
+        .child(tabs)
         .child(section_header(t, "Frame"))
         .child(frame)
         .child(section_header(t, "Background"))

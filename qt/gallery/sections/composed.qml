@@ -77,28 +77,23 @@ Section {
       }
     }
 
-    // An app inspector, as omareel's side panel.
-    Card {
+    // An app inspector, as omareel's side panel: a pane on the window, ruled off from the canvas.
+    Pane {
       Layout.preferredWidth: 300
       Layout.alignment: Qt.AlignTop
+      title: "Recording 1"
+      subtitle: "1920 × 1080 · 0:42"
+      divider: "left"
+      actions: [
+        IconButton { iconText: section.g(0xF0E2) },
+        IconButton { iconText: section.g(0xF01E) },
+        Button { text: "Export"; bordered: true }
+      ]
 
-      ColumnLayout {
+      Tabs {
         Layout.fillWidth: true
-        spacing: 0
-
-        Toolbar {
-          Layout.fillWidth: true
-          divided: false
-          IconButton { iconText: section.g(0xF0E2) }
-          IconButton { iconText: section.g(0xF01E) }
-          trailing: [ Button { text: "Export"; bordered: true } ]
-        }
-
-        Tabs {
-          Layout.fillWidth: true
-          model: ["Shape", "Cursor", "Zoom"]
-          currentIndex: 0
-        }
+        model: ["Shape", "Cursor", "Zoom"]
+        currentIndex: 0
       }
 
       SectionHeader { text: "Frame"; Layout.fillWidth: true }
