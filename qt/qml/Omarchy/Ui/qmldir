@@ -30,6 +30,15 @@ ToggleSwitch 1.0 ToggleSwitch.qml
 
 # The kit's own components (not in the shell).
 Card 1.0 Card.qml
+Checkbox 1.0 Checkbox.qml
+ColorWell 1.0 ColorWell.qml
+Dialog 1.0 Dialog.qml
+PasswordField 1.0 PasswordField.qml
+Radio 1.0 Radio.qml
+RadioGroup 1.0 RadioGroup.qml
+SettingRow 1.0 SettingRow.qml
+SwatchStrip 1.0 SwatchStrip.qml
+TextArea 1.0 TextArea.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml
