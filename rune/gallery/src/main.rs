@@ -491,6 +491,48 @@ mod tests {
         assert!(!rt.state.pickers.notify.iter().any(|v| v == "Mail"));
     }
 
+    /// The MultiSelect's keys, as `qt/tests/tst_forms.qml`'s test_multiselect_keys drives Qt's:
+    /// j opens it from the trigger, typing filters and Return toggles the first match, Down goes
+    /// into the list, Space toggles, j walks, Return toggles, k off the first row goes back to the
+    /// search, Escape closes.
+    #[test]
+    fn multiselect_keys_as_in_qt() {
+        use rune::{Key, KeyEvent};
+        let mut at = 1.0 / 60.0;
+        let mut walk = |rt: &mut Runtime<State>, keys: &[Key]| {
+            for k in keys {
+                rt.key(KeyEvent { key: k.clone(), mods: Default::default() });
+                for _ in 0..2 {
+                    at += 1.0 / 60.0;
+                    rt.frame(at);
+                }
+            }
+        };
+        let text = |t: &str| Key::Text(t.into());
+        // The gallery holds it open; a press on the trigger closes it and leaves the trigger focused.
+        let mut rt = pressed("pickers", "ms-notify");
+        assert!(!rt.state.pickers.notify_open);
+        walk(&mut rt, &[text("j")]);
+        assert!(rt.state.pickers.notify_open, "j opens it from the trigger");
+        walk(&mut rt, &[text("m"), text("e"), text("s")]);
+        assert_eq!(rt.state.pickers.search.text, "mes");
+        walk(&mut rt, &[Key::Enter]);
+        assert_eq!(rt.state.pickers.notify, ["Mail", "Updates", "Messages"], "Return toggles the first match");
+        walk(&mut rt, &[Key::Backspace, Key::Backspace, Key::Backspace, Key::Down, text(" ")]);
+        assert_eq!(rt.state.pickers.notify, ["Mail", "Updates", "Messages", "Calendar"], "Down into the list, Space toggles");
+        walk(&mut rt, &[text("j"), Key::Enter]);
+        assert_eq!(rt.state.pickers.notify, ["Updates", "Messages", "Calendar"], "j walks, Return toggles");
+        walk(&mut rt, &[Key::End, text("j"), text("j"), text("j"), text("j")]);
+        assert_eq!(rt.state.pickers.notify_row, Some(4), "stops at the last row");
+        walk(&mut rt, &[text("k"), text("k"), text("k"), text("k"), Key::Up]);
+        assert_eq!(rt.state.pickers.notify_row, None, "Up off the first row goes back to the search");
+        walk(&mut rt, &[Key::Escape]);
+        assert!(!rt.state.pickers.notify_open, "Escape closes it");
+        walk(&mut rt, &[Key::Down]);
+        assert!(rt.state.pickers.notify_open, "Down opens it too");
+        assert_eq!(rt.state.pickers.search.text, "", "with the search cleared");
+    }
+
     /// Pressing a table row selects it, a tree chevron folds its branch, a tree row selects it.
     #[test]
     fn data_selects_and_folds() {

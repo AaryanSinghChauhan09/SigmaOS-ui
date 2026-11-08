@@ -15,6 +15,8 @@ pub struct Pickers {
     pub notify: Vec<String>,
     pub notify_open: bool,
     pub search: TextEdit,
+    /// The notify popup's keyboard row (`None`: the keys are in the search).
+    pub notify_row: Option<usize>,
     pub swatch: usize,
 }
 
@@ -25,6 +27,7 @@ pub fn init() -> Pickers {
         notify: vec!["Mail".into(), "Updates".into()],
         notify_open: true,
         search: TextEdit::new(""),
+        notify_row: None,
         swatch: 2,
     }
 }
@@ -52,8 +55,8 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .label("Notify for")
         .open(p.notify_open)
         .search(&p.search)
-        .on_search(|s: &mut State| &mut s.pickers.search)
-        .on_toggle(|s: &mut State| s.pickers.notify_open ^= true)
+        .highlighted(p.notify_row)
+        .on_state(|s: &mut State| (&mut s.pickers.notify_open, &mut s.pickers.search, &mut s.pickers.notify_row))
         .on_choose(|s: &mut State, v: &str| flip(&mut s.pickers.notify, v))
         .build(t, layer);
     let selects = row().items_start().gap(sp.xxl as f32).child(closed).child(col().h(280.0).child(open));

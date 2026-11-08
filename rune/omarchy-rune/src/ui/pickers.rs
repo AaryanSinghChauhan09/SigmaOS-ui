@@ -1,8 +1,11 @@
 //! Pickers: MultiSelect (the shell's `MultiSelect.qml`), ColorWell and SwatchStrip, drawn as
 //! the Qt binding draws them.
 
+use std::any::Any;
+use std::rc::Rc;
+
 use omarchy_theme::Rgba;
-use rune::{Align, Color, El, Side, TextEdit, col, el, row, text};
+use rune::{Align, Color, El, Key, KeyEvent, Side, TextEdit, Tx, col, el, row, text};
 
 use super::forms::{bold_mark, input_looks, layer, bare_input, state_layers};
 use super::{Attach, Look, glyph};
@@ -13,6 +16,13 @@ use crate::{Theme, border, color};
 /// A searchable choice of any number of options: the Dropdown trigger (reading the chosen
 /// labels, or "N selected" past three), and while `open` a popup below it with a search field
 /// and a checkbox row per option. The popup goes in the overlay `layer`, as Dropdown's list does.
+///
+/// The app owns `open`, the search text and the highlighted row, as Qt's MultiSelect keeps them.
+/// With [`MultiSelect::on_state`] the keys work as Qt's do: on the trigger, j, Down, Return or
+/// Space opens it; in the search (`highlighted` is `None`) typing filters, Return toggles the
+/// first match and Down goes into the list; in the list j/k and Down/Up walk (Up off the first
+/// row goes back to the search) and Return or Space toggles; Escape closes. The trigger keeps
+/// keyboard focus, so typing there lands in the search.
 pub struct MultiSelect {
     key: String,
     label: String,
@@ -29,6 +39,129 @@ pub struct MultiSelect {
     empty_text: String,
     toggle: Option<Attach>,
     choose: Option<Box<dyn Fn(El, String) -> El>>,
+    chooser: Option<Chooser>,
+    wire: Option<Box<dyn Wire>>,
+}
+
+/// `on_choose`'s handler, callable from a key handler typed for the same state.
+type Chooser = Rc<dyn Fn(&mut dyn Any, &str)>;
+
+/// Wires the trigger and the search field to the app's open flag, search and highlighted row,
+/// typed when `on_state` was called.
+trait Wire {
+    fn trigger(&self, e: El, shown: Rc<Vec<String>>, choose: Option<Chooser>) -> El;
+    fn input(&self, e: El, shown: Rc<Vec<String>>, choose: Option<Chooser>) -> El;
+}
+
+type Access<S> = Rc<dyn for<'a> Fn(&'a mut S) -> (&'a mut bool, &'a mut TextEdit, &'a mut Option<usize>)>;
+
+struct Wiring<S> {
+    access: Access<S>,
+}
+
+/// Closed, with the search cleared and nothing highlighted, as Qt's popup closes.
+fn close(open: &mut bool, search: &mut TextEdit, highlighted: &mut Option<usize>) {
+    *open = false;
+    search.clear();
+    *highlighted = None;
+}
+
+/// One key on the trigger (`in_field` false) or the search field: whether it was taken, and the
+/// value to toggle.
+fn multiselect_key(
+    (open, search, highlighted): (&mut bool, &mut TextEdit, &mut Option<usize>),
+    k: &KeyEvent,
+    shown: &[String],
+    in_field: bool,
+) -> (bool, Option<String>) {
+    let typed = match &k.key {
+        Key::Text(t) if !k.mods.ctrl && !k.mods.alt && !k.mods.logo && !k.mods.cmd => Some(t.as_str()),
+        _ => None,
+    };
+    if !*open {
+        if matches!(k.key, Key::Down | Key::Enter) || matches!(typed, Some("j" | " ")) {
+            *open = true;
+            search.clear();
+            *highlighted = None;
+            return (true, None);
+        }
+        return (false, None);
+    }
+    if k.key == Key::Escape {
+        close(open, search, highlighted);
+        return (true, None);
+    }
+    let last = shown.len().checked_sub(1);
+    match *highlighted {
+        // In the search.
+        None => match (&k.key, typed) {
+            (Key::Down, _) => {
+                *highlighted = last.map(|_| 0);
+                (true, None)
+            }
+            (Key::Enter, _) => (true, shown.first().cloned()),
+            (Key::Backspace, _) if !in_field => {
+                let mut t = search.text.clone();
+                t.pop();
+                search.replace_text(t);
+                (true, None)
+            }
+            (_, Some(t)) if !in_field => {
+                search.set_caret(search.text.len());
+                search.insert(t);
+                (true, None)
+            }
+            _ => (false, None),
+        },
+        // In the list.
+        Some(i) => match (&k.key, typed) {
+            (Key::Down, _) | (_, Some("j")) => {
+                *highlighted = Some(last.map_or(0, |l| (i + 1).min(l)));
+                (true, None)
+            }
+            (Key::Up, _) | (_, Some("k")) => {
+                *highlighted = i.checked_sub(1);
+                (true, None)
+            }
+            (Key::Enter, _) | (_, Some(" ")) => (true, shown.get(i).cloned()),
+            _ => (false, None),
+        },
+    }
+}
+
+impl<S: 'static> Wire for Wiring<S> {
+    fn trigger(&self, e: El, shown: Rc<Vec<String>>, choose: Option<Chooser>) -> El {
+        let (press, keys) = (self.access.clone(), self.access.clone());
+        e.on_press(move |s: &mut S| {
+            let (open, search, highlighted) = press(s);
+            if *open {
+                close(open, search, highlighted);
+            } else {
+                *open = true;
+                *highlighted = None;
+            }
+        })
+        .on_key(move |s: &mut S, k: &KeyEvent, _: &mut Tx| {
+            let (taken, pick) = multiselect_key(keys(s), k, &shown, false);
+            if let (Some(v), Some(f)) = (pick, &choose) {
+                f(s, &v);
+            }
+            taken
+        })
+    }
+
+    fn input(&self, e: El, shown: Rc<Vec<String>>, choose: Option<Chooser>) -> El {
+        let (edit, change, keys) = (self.access.clone(), self.access.clone(), self.access.clone());
+        e.on_edit(move |s: &mut S| edit(s).1)
+            .on_input_change(move |s: &mut S, _| *change(s).2 = None)
+            .on_input_key(move |s: &mut S, k: &KeyEvent, _: &mut Tx| {
+                let (taken, pick) = multiselect_key(keys(s), k, &shown, true);
+                if let (Some(v), Some(f)) = (pick, &choose) {
+                    f(s, &v);
+                }
+                taken
+            })
+    }
 }
 
 impl MultiSelect {
@@ -55,6 +188,8 @@ impl MultiSelect {
             empty_text: "No options".into(),
             toggle: None,
             choose: None,
+            chooser: None,
+            wire: None,
         }
     }
     pub fn label(mut self, label: impl Into<String>) -> Self {
@@ -69,7 +204,8 @@ impl MultiSelect {
         self.cursor = on;
         self
     }
-    /// The popup row under the keyboard cursor.
+    /// The popup row under the keyboard cursor, counted among the rows the search shows; `None`
+    /// while the keys are in the search.
     pub fn highlighted(mut self, index: Option<usize>) -> Self {
         self.highlighted = index;
         self
@@ -100,13 +236,40 @@ impl MultiSelect {
         self.toggle = Some(Box::new(move |e: El| e.on_press(f)));
         self
     }
-    /// A row pressed: `f` gets its value, to add or remove from the chosen ones.
+    /// A row pressed (or toggled from the keys): `f` gets its value, to add or remove from the
+    /// chosen ones.
     pub fn on_choose<S: 'static>(mut self, f: impl Fn(&mut S, &str) + Clone + 'static) -> Self {
+        let g = f.clone();
+        self.chooser = Some(Rc::new(move |s: &mut dyn Any, v: &str| {
+            if let Some(s) = s.downcast_mut::<S>() {
+                g(s, v);
+            }
+        }));
         self.choose = Some(Box::new(move |e: El, v: String| {
             let f = f.clone();
             e.on_press(move |s: &mut S| f(s, &v))
         }));
         self
+    }
+    /// Where the app keeps `open`, the search and the highlighted row, so the trigger and the
+    /// keys open, filter, walk and close it (in place of `on_toggle` and `on_search`). Pass the
+    /// same values to `open`, `search` and `highlighted`.
+    pub fn on_state<S: 'static>(
+        mut self,
+        f: impl for<'a> Fn(&'a mut S) -> (&'a mut bool, &'a mut TextEdit, &'a mut Option<usize>) + 'static,
+    ) -> Self {
+        self.wire = Some(Box::new(Wiring::<S> { access: Rc::new(f) }));
+        self
+    }
+
+    /// The values of the options the search shows, in order.
+    fn shown_values(&self) -> Vec<String> {
+        let query = self.search.as_ref().map(|e| e.text.to_lowercase()).unwrap_or_default();
+        self.options
+            .iter()
+            .filter(|(v, l)| query.is_empty() || l.to_lowercase().contains(&query) || v.to_lowercase().contains(&query))
+            .map(|(v, _)| v.clone())
+            .collect()
     }
 
     fn selection_label(&self) -> String {
@@ -148,7 +311,10 @@ impl MultiSelect {
             .expanded(self.open)
             .focusable(true);
         let mut trigger = super::chrome(t, base, vec![words, chevron], &rest, &hot, self.cursor, t.radius());
-        if let Some(attach) = self.toggle.take() {
+        let shown = Rc::new(self.shown_values());
+        if let Some(wire) = &self.wire {
+            trigger = wire.trigger(trigger, shown.clone(), self.chooser.clone());
+        } else if let Some(attach) = self.toggle.take() {
             trigger = attach(trigger);
         }
 
@@ -194,7 +360,9 @@ impl MultiSelect {
         let fbw = c.normal.border.max_width().max(c.hover.border.max_width()) as f32;
         let edit = self.search.clone().unwrap_or_else(|| TextEdit::new(""));
         let mut input = bare_input(t, &edit, self.placeholder.clone());
-        if let Some(access) = access {
+        if let Some(wire) = &self.wire {
+            input = wire.input(input, Rc::new(self.shown_values()), self.chooser.clone());
+        } else if let Some(access) = access {
             input = access(input);
         }
         let field_base = row()
@@ -217,7 +385,7 @@ impl MultiSelect {
         }
         let box_size = t.space(16.0);
         let box_radius = (t.radius() / 2.0).max(2.0);
-        for (i, (value, label)) in shown {
+        for (row_index, (_, (value, label))) in shown.into_iter().enumerate() {
             let selected = self.values.iter().any(|v| v == value);
             let look = if selected {
                 Look::new(c.selected.fill, c.selected.border.clone())
@@ -228,7 +396,7 @@ impl MultiSelect {
             if selected {
                 check = check.child(bold_mark(t, "\u{2713}", (box_size * 0.85).round() as i64, color(c.selected.text)));
             }
-            let lit = self.highlighted == Some(i);
+            let lit = self.highlighted == Some(row_index);
             let r = row()
                 .w_full()
                 .h(row_h)
