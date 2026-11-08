@@ -21,6 +21,8 @@ ColumnLayout {
     "messages",
     "menus",
     "navigation",
+    "forms",
+    "pickers",
     "tokens",
   ]
 

@@ -1,7 +1,7 @@
 //! Surfaces: Card (the shell's panels and popups), section headers, separators, menu rows,
 //! tooltips and the confirm dialog.
 
-use omarchy_theme::{BorderSpec, Rgba};
+use omarchy_theme::Rgba;
 use rune::{El, col, el, row, text};
 
 use super::Attach;
@@ -169,7 +169,8 @@ impl Tooltip {
 }
 
 /// A yes/no prompt card: message, then Cancel and a destructive Confirm, one of them selected
-/// (arrow keys move it in the shell; here the app owns `selected`).
+/// (arrow keys move it in the shell; here the app owns `selected`). A [`super::Dialog`] preset:
+/// no title, the message in `title` size.
 pub struct ConfirmDialog {
     message: String,
     cancel: String,
@@ -217,59 +218,15 @@ impl ConfirmDialog {
 
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
-        let p = &tk.palette;
-        let line = tk.controls.normal.border.max_width().max(1.0);
-        let accent = tk.surfaces.menu.selected_text;
-        let choice = |label: String, index: usize, attach: Option<Attach>| {
-            let selected = self.selected == index;
-            let destructive = index == 1;
-            let (fill, edge, ink) = if destructive {
-                (
-                    if selected { p.urgent.with_alpha(0.22) } else { Rgba::TRANSPARENT },
-                    if selected { p.urgent } else { p.urgent.with_alpha(0.56) },
-                    if selected { p.urgent } else { p.foreground },
-                )
-            } else {
-                (
-                    if selected { tk.surfaces.menu.selected_background } else { Rgba::TRANSPARENT },
-                    if selected { accent } else { p.foreground.with_alpha(0.38) },
-                    if selected { accent } else { p.foreground },
-                )
-            };
-            let b = row()
-                .size(t.space(88.0), t.space(34.0))
-                .center()
-                .fill(color(fill))
-                .border(line as f32, color(edge))
-                .role("button")
-                .label(label.clone())
-                .child(text(label).font(t.text_style(tk.font.caption)).color(color(ink)));
-            match attach {
-                Some(a) => a(b),
-                None => b,
-            }
-        };
-        let pad = t.space(18.0);
-        let card_border = BorderSpec { color: accent, widths: [line; 4], gradient: None };
-        let mut card = col()
-            .gap(t.space(20.0))
-            .padding(pad + line as f32)
-            .fill(color(p.background))
-            .radius(t.radius())
-            .role("alertdialog");
-        card = border(card, &card_border);
-        card = match self.width {
-            Some(w) => card.w(w),
-            None => card.w(t.space(370.0)),
-        };
-        card.child(text(self.message).font(t.text_style(tk.font.title)).color(t.fg()).wrap())
-            .child(
-                row()
-                    .w_full()
-                    .justify_end()
-                    .gap(t.space(10.0))
-                    .child(choice(self.cancel, 0, self.on_cancel))
-                    .child(choice(self.confirm, 1, self.on_confirm)),
-            )
+        let message = text(self.message).font(t.text_style(tk.font.title)).color(t.fg()).wrap();
+        let mut d = super::Dialog::new("")
+            .body(message)
+            .labels(self.cancel, self.confirm)
+            .destructive(true)
+            .selected(self.selected);
+        if let Some(w) = self.width {
+            d = d.width(w);
+        }
+        d.attach(self.on_cancel, self.on_confirm).build(t)
     }
 }

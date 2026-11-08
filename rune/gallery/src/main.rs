@@ -40,6 +40,8 @@ pub(crate) struct State {
     pub tiles: sections::tiles::Tiles,
     pub menus: sections::menus::Menus,
     pub navigation: sections::navigation::Navigation,
+    pub forms: sections::forms::Forms,
+    pub pickers: sections::pickers::Pickers,
 }
 
 pub(crate) fn init() -> State {
@@ -63,6 +65,8 @@ pub(crate) fn init() -> State {
         tiles: sections::tiles::Tiles::init(),
         menus: sections::menus::Menus::init(),
         navigation: sections::navigation::Navigation::init(),
+        forms: sections::forms::init(),
+        pickers: sections::pickers::init(),
     }
 }
 
@@ -98,6 +102,8 @@ gallery! {
     messages: "Messages",
     menus: "Menus",
     navigation: "Navigation",
+    forms: "Forms",
+    pickers: "Pickers",
     tokens: "Tokens",
 }
 
@@ -209,6 +215,14 @@ mod tests {
         rt.frame(5.0 / 60.0);
         assert!(rt.state.lists.cursor.is_at("rows", 6), "the still pointer doesn't pull the cursor back");
     fn press(section: &'static str, key: &str) -> Runtime<State> {
+    fn press(rt: &mut Runtime<State>, key: &str) {
+        let (x, y) = rt.find(key).unwrap_or_else(|| panic!("no element keyed {key}"));
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(1.0 / 60.0);
+    }
+
+    fn runtime(section: &'static str) -> Runtime<State> {
         let mut s = init();
         s.theme = fixture("tokyo-night");
         s.section = Some(section);
@@ -233,5 +247,28 @@ mod tests {
     fn tabs_and_rail_choose() {
         assert_eq!(press("navigation", "tab-3").state.navigation.tab, 3);
         assert_eq!(press("navigation", "rail-4").state.navigation.panel, 4);
+        rt
+    }
+
+    /// A checkbox flips, a disabled one doesn't, and a radio takes the group's value.
+    #[test]
+    fn forms_check_and_choose() {
+        let mut rt = runtime("forms");
+        press(&mut rt, "check-0");
+        assert!(rt.state.forms.checks[0]);
+        press(&mut rt, "check-3");
+        assert!(!rt.state.forms.checks[3]);
+        press(&mut rt, "radio-hidden");
+        assert_eq!(rt.state.forms.position, "hidden");
+    }
+
+    /// A MultiSelect row adds or removes its value.
+    #[test]
+    fn multiselect_toggles_values() {
+        let mut rt = runtime("pickers");
+        press(&mut rt, "ms-notify-Calendar");
+        assert!(rt.state.pickers.notify.iter().any(|v| v == "Calendar"));
+        press(&mut rt, "ms-notify-Mail");
+        assert!(!rt.state.pickers.notify.iter().any(|v| v == "Mail"));
     }
 }

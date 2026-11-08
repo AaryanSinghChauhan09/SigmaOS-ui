@@ -10,6 +10,7 @@ CursorSurface 1.0 CursorSurface.qml
 Dropdown 1.0 Dropdown.qml
 FilterInput 1.0 FilterInput.qml
 IconContentBounds 1.0 IconContentBounds.qml
+MultiSelect 1.0 MultiSelect.qml
 NumberField 1.0 NumberField.qml
 OpticalGlyph 1.0 OpticalGlyph.qml
 PanelActionButton 1.0 PanelActionButton.qml
@@ -57,6 +58,15 @@ Tabs 1.0 Tabs.qml
 Toolbar 1.0 Toolbar.qml
 ToolbarSeparator 1.0 ToolbarSeparator.qml
 Tooltip 1.0 Tooltip.qml
+Checkbox 1.0 Checkbox.qml
+ColorWell 1.0 ColorWell.qml
+Dialog 1.0 Dialog.qml
+PasswordField 1.0 PasswordField.qml
+Radio 1.0 Radio.qml
+RadioGroup 1.0 RadioGroup.qml
+SettingRow 1.0 SettingRow.qml
+SwatchStrip 1.0 SwatchStrip.qml
+TextArea 1.0 TextArea.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml

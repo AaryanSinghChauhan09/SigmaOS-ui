@@ -1,0 +1,189 @@
+--- a/qt/qml/Omarchy/Ui/MultiSelect.qml
++++ b/qt/qml/Omarchy/Ui/MultiSelect.qml
+@@ -1,7 +1,6 @@
+ import QtQuick
+ import QtQuick.Controls as QQC
+ import QtQuick.Window
+-import Quickshell.Io
+ import Omarchy.Theme
+ import Omarchy.Theme as Commons
+ 
+@@ -11,12 +10,12 @@
+ // need to pick zero or more items from a (possibly long, possibly
+ // dynamic) list.
+ //
+-// Options are either:
+-//   - static `options`: string[] or [{ value, label, description? }]
+-//   - dynamic `optionsCommand`: argv array. The command's stdout is
+-//     parsed as JSON when it trims to start with `[`, otherwise as
+-//     one option per non-empty newline. Re-runs whenever the popup opens
+-//     and via the refresh button.
++// Options are a plain model: `options`, string[] or
++// [{ value, label, description? }]. The shell's command-backed loading
++// (`optionsCommand`, a Quickshell Process) is dropped here: an app that
++// loads options itself sets `loadingOptions` / `optionsError` while it
++// does, and sets `refreshable` to show the refresh button, which emits
++// `refreshRequested()`.
+ //
+ // `values` is the persisted selection — always an array of strings.
+ // Emits `changed(values)` whenever the selection mutates.
+@@ -26,8 +25,7 @@
+   property string label: ""
+   property var values: []
+   property var options: []
+-  property var optionsCommand: []
+-  property string optionsCommandCwd: ""
++  property bool refreshable: false
+   property string placeholderText: Commons.I18n.t("common.search")
+   property string emptyText: Commons.I18n.t("common.noOptions")
+   property string noSelectionText: Commons.I18n.t("common.noneSelected")
+@@ -53,9 +51,10 @@
+ 
+   signal changed(var values)
+   signal hovered(bool isHovered)
++  signal refreshRequested()
+ 
+-  // Loaded options after merging static + dynamic. Always normalized
+-  // into the [{ value, label, description }] shape for delegate use.
++  // `options`, normalized into the [{ value, label, description }] shape
++  // for delegate use.
+   property var resolvedOptions: []
+   property bool loadingOptions: false
+   property string optionsError: ""
+@@ -151,107 +150,13 @@
+     recomputeFiltered()
+   }
+ 
+-  // Parse stdout from a dynamic optionsCommand into `{ options, error }`.
+-  // Output starting with `[` is parsed strictly as JSON — a malformed array
+-  // surfaces as an error rather than silently falling back to newline
+-  // parsing, which would render the broken text as a literal option label.
+-  // Output not starting with `[` is treated as one value per non-empty line.
+-  function parseCommandOutput(text) {
+-    var raw = String(text || "").trim()
+-    if (raw === "") return { options: [], error: "" }
+-    if (raw.charAt(0) === "[") {
+-      try {
+-        var parsed = JSON.parse(raw)
+-        return { options: parsed, error: "" }
+-      } catch (e) {
+-        return { options: [], error: Commons.I18n.t("multiSelect.invalidJson") }
+-      }
+-    }
+-    var out = []
+-    var lines = raw.split(/\r?\n/)
+-    for (var i = 0; i < lines.length; i++) {
+-      var line = lines[i].trim()
+-      if (line !== "") out.push(line)
+-    }
+-    return { options: out, error: "" }
+-  }
+-
+-  // Monotonic request id so stale stdout/exit signals from a previous
+-  // refresh can't clobber the resolvedOptions of a newer refresh, and
+-  // a runaway command can be detected after a timeout.
+-  property int refreshSeq: 0
+-  readonly property int refreshTimeoutMs: 6000
+-
+   function refresh() {
+-    var cmd = arrayFrom(optionsCommand)
+-    if (cmd.length === 0) {
+-      rebuildFromStatic()
+-      return
+-    }
+-    refreshSeq++
+-    loadingOptions = true
+-    optionsError = ""
+-    optionsProcess.command = cmd
+-    optionsProcess.workingDirectory = optionsCommandCwd
+-    optionsProcess.running = false
+-    optionsProcess.running = true
+-    refreshTimeoutTimer.restart()
+-  }
+-
+-  Timer {
+-    id: refreshTimeoutTimer
+-    interval: root.refreshTimeoutMs
+-    repeat: false
+-    onTriggered: {
+-      if (!root.loadingOptions) return
+-      optionsProcess.running = false
+-      root.loadingOptions = false
+-      root.optionsError = Commons.I18n.t("multiSelect.timedOut")
+-    }
++    rebuildFromStatic()
+   }
+ 
+-  onOptionsChanged: if (arrayFrom(optionsCommand).length === 0) rebuildFromStatic()
+-  onOptionsCommandChanged: refresh()
++  onOptionsChanged: rebuildFromStatic()
+   Component.onCompleted: refresh()
+ 
+-  Process {
+-    id: optionsProcess
+-    running: false
+-    command: []
+-
+-    property int seq: 0
+-
+-    stdout: StdioCollector {
+-      waitForEnd: true
+-      onStreamFinished: {
+-        if (optionsProcess.seq !== root.refreshSeq) return
+-        var result = root.parseCommandOutput(text)
+-        if (result.error) {
+-          root.optionsError = result.error
+-          root.resolvedOptions = root.normalizeAll(root.options)
+-        } else {
+-          var combined = root.arrayFrom(root.options)
+-          for (var j = 0; j < result.options.length; j++) combined.push(result.options[j])
+-          root.resolvedOptions = root.normalizeAll(combined)
+-        }
+-        root.recomputeFiltered()
+-        root.loadingOptions = false
+-        refreshTimeoutTimer.stop()
+-      }
+-    }
+-
+-    onRunningChanged: if (running) seq = root.refreshSeq
+-
+-    onExited: function(exitCode, exitStatus) {
+-      if (seq !== root.refreshSeq) return
+-      refreshTimeoutTimer.stop()
+-      if (exitCode !== 0) {
+-        root.loadingOptions = false
+-        root.optionsError = Commons.I18n.t("multiSelect.exited").arg(Commons.I18n.formatNumber(exitCode))
+-      }
+-    }
+-  }
+-
+   implicitWidth: Style.spacing.searchableDropdownWidth
+   implicitHeight: showLabel && label !== "" ? rowHeight + Style.spacing.huge : rowHeight
+ 
+@@ -417,7 +322,7 @@
+ 
+               TextField {
+                 id: searchField
+-                width: parent.width - refreshButton.width - parent.spacing
++                width: parent.width - (refreshButton.visible ? refreshButton.width + parent.spacing : 0)
+                 height: parent.height
+                 placeholderText: root.placeholderText
+                 foreground: root.foreground
+@@ -451,7 +356,7 @@
+ 
+               BorderSurface {
+                 id: refreshButton
+-                visible: root.arrayFrom(root.optionsCommand).length > 0
++                visible: root.refreshable
+                 enabled: !root.loadingOptions
+                 width: parent.height
+                 height: parent.height
+@@ -483,7 +388,7 @@
+                 MouseArea {
+                   anchors.fill: parent
+                   cursorShape: Qt.PointingHandCursor
+-                  onClicked: root.refresh()
++                  onClicked: root.refreshRequested()
+                 }
+               }
+             }
