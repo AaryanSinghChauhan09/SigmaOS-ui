@@ -42,7 +42,7 @@ A TextField for secrets.
 - **Qt**: `text`, `placeholderText`, `revealable`, `revealed`, `error` (non-empty = error state), `hasCursor`, `field` (the TextField); signal `accepted()`; `shake()` replays the error animation. Setting `error` runs it.
 - **Rune**: `PasswordField::new(&edit).placeholder(p).width(w).cursor(b).revealed(b).on_reveal(f).revealable(b).error(msg).shaker(&live).on_edit(f).build(&t)`; `PasswordField::shake(&live, &t)` pulses a bound `Live<[f32; 2]>`.
 - **States**: TextField's (normal border at rest; hover/focus/cursor = hover look). Error: border `surfaces.polkit.borderError` at `max(1, normal width)`, lock and message in `polkit.textError`. Motion: polkit's shake (−8, +8, 0 over 35/50/55 ms, `space(8)`) and an urgent flash (`selected` fill alpha fading over 400 ms) in Qt, a spring pulse in Rune; both land at once under `reduceMotion`, so a still shows only the colors.
-- **Metrics**: TextField's padding (`controlPaddingX` × `inputPaddingY`) and height; glyphs `body` in `textDim`; glyph to text `controlGap`; message `caption`, `labelGap` below.
+- **Metrics**: TextField's padding (`controlPaddingX` × `inputPaddingY`) and height; placeholder `textFaint` (TextField's darker 1.6 would outweigh the text in a light theme); glyphs `body` in `textDim`; glyph to text `controlGap`; message `caption`, `labelGap` below.
 
 ## TextArea
 
