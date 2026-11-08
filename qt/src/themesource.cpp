@@ -149,6 +149,10 @@ void ThemeSource::armWatcher() {
     m_watcher.removePath(m_themeDir);
     if (QFileInfo::exists(m_themeDir)) m_watcher.addPath(m_themeDir);
   }
+  // A directory watch misses a file rewritten in place, so icons.theme is watched as a file too.
+  const QString icons = m_themeDir + QStringLiteral("/icons.theme");
+  m_watcher.removePath(icons);
+  if (QFileInfo::exists(icons)) m_watcher.addPath(icons);
 }
 
 QString ThemeSource::hyprDir() const {
