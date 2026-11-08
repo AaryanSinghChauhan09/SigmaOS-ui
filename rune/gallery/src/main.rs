@@ -333,7 +333,8 @@ mod tests {
     }
 
     /// A menu with no `on_close` still walks with j and k as with Down and Up (Qt's Menu takes
-    /// both), skipping its disabled row, and Enter runs the row the walk lands on.
+    /// both), skipping its disabled row and wrapping at the ends, and Enter runs the row the walk
+    /// lands on (`qt/tests/tst_navigation.qml` drives Qt's the same way).
     #[test]
     fn menu_walks_with_vim_keys_and_arrows() {
         use rune::{Key, KeyEvent};
@@ -345,6 +346,8 @@ mod tests {
                 "Down" => Key::Down,
                 "Up" => Key::Up,
                 "Enter" => Key::Enter,
+                "Home" => Key::Home,
+                "End" => Key::End,
                 c => Key::Text(c.into()),
             };
             rt.key(KeyEvent { key, mods: Default::default() });
@@ -359,12 +362,16 @@ mod tests {
             (&["Down", "Enter"], "Save"),
             (&["k", "Enter"], "Open…"),
             (&["j", "j", "Enter"], "Sidebar"),
+            (&["End", "Down", "Enter"], "New"),
+            (&["Home", "Up", "Up", "Enter"], "Word wrap"),
         ] {
             for k in keys {
                 key(&mut rt, k);
             }
             if ran == "Sidebar" {
                 assert!(!rt.state.menus.sidebar, "j skips the disabled row to Sidebar and Enter flips it");
+            } else if ran == "Word wrap" {
+                assert!(rt.state.menus.wrap, "Up from the first row wraps to the last");
             } else {
                 assert_eq!(rt.state.menus.ran, Some(ran), "after {keys:?}");
             }
