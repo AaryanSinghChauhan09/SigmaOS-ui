@@ -6,12 +6,14 @@
 //! as the shell's `hasCursor` does for keyboard-driven panels.
 
 mod button;
+mod editing;
 mod field;
 mod slider;
 mod surface;
 mod toggle;
 
 pub use button::{Button, ButtonGroup, IconButton};
+pub use editing::{Clip, ColorPicker, CropFrame, DragHandle, DropIndicator, Edge, Hsva, Scrubber, Timeline, TimelineView, TrimHandle};
 pub use field::{Dropdown, NumberField, TextField};
 pub use slider::Slider;
 pub use surface::{Card, ConfirmDialog, MenuRow, Tooltip, section_header, separator};
