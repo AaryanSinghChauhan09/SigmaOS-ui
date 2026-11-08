@@ -10,6 +10,7 @@
 //! (Rune, GPUI, iced, egui) can build its theme from [`Tokens`].
 
 pub mod color;
+pub mod fontmetrics;
 pub mod parse;
 pub mod resolve;
 pub mod source;

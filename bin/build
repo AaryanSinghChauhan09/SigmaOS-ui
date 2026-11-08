@@ -19,7 +19,7 @@ if [[ $what == "all" || $what == "qt" ]]; then
 fi
 
 if [[ $what == "all" || $what == "rune" ]]; then
-  cargo build --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-rune-gallery -p omarchy-theme
+  cargo build -q --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-rune-gallery -p omarchy-theme
   echo "target/release/omarchy-rune-gallery"
   echo "target/release/omarchy-theme"
 fi

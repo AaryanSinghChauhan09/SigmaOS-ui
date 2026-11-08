@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Compare the frameworks: build both galleries, check that Qt and Rune resolve identical tokens
+# for every fixture theme, render every gallery section in both for a set of themes and
+# roundings, and write out/review/index.html (side by side, overlay, swipe and pixel diff).
+#
+#   bin/review                         default themes (live + five fixtures), radius 0 and 8
+#   bin/review --all-themes            every fixture
+#   bin/review --themes nord,white --radii 0 --sections buttons,inputs
+#   bin/review --open                  ...and open the page
+#   bin/review --live                  skip the report; open both galleries as windows instead
+#
+# Keys on the page: t theme, r radius, s section, v view (shift goes back).
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+if [[ ${1:-} == "--help" || ${1:-} == "-h" ]]; then
+  sed -n '3,14p' "$0" | sed 's/^# \{0,1\}//'
+  exit 0
+fi
+
+if [[ ${1:-} == "--live" ]]; then
+  "$ROOT/bin/build" >/dev/null
+  # Both follow the desktop theme: switch themes (or rounding) and watch them change together.
+  "$ROOT/build/qt/omarchy-qt-gallery" &
+  "$ROOT/target/release/omarchy-rune-gallery" &
+  wait
+  exit 0
+fi
+
+open=0
+args=()
+for arg in "$@"; do
+  if [[ $arg == "--open" ]]; then
+    open=1
+  else
+    args+=("$arg")
+  fi
+done
+
+"$ROOT/bin/build" >/dev/null
+python3 "$ROOT/tools/review.py" "${args[@]}"
+
+if (( open )); then
+  xdg-open "$ROOT/out/review/index.html" >/dev/null 2>&1 &
+fi

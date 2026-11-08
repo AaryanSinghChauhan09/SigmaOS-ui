@@ -52,6 +52,17 @@ impl Rgba {
         0.2126 * lin(self.r) + 0.7152 * lin(self.g) + 0.0722 * lin(self.b)
     }
 
+    /// Qt's `QColor::darker(factor × 100)`, which the shell uses for secondary text (labels at
+    /// 1.4, descriptions at 1.5, placeholders at 1.6): HSV value divided by `factor`, hue and
+    /// saturation kept, so every channel scales by `1 / factor`.
+    pub fn darker(self, factor: f64) -> Rgba {
+        if factor <= 0.0 {
+            return self;
+        }
+        let d = |c: u8| ((c as f64) / factor).round().clamp(0.0, 255.0) as u8;
+        Rgba { r: d(self.r), g: d(self.g), b: d(self.b), a: self.a }
+    }
+
     /// Mix toward `other` by `t` (0 keeps self, 1 is other), in sRGB like the theme templates' `mix`.
     pub fn mix(self, other: Rgba, t: f64) -> Rgba {
         let t = t.clamp(0.0, 1.0);

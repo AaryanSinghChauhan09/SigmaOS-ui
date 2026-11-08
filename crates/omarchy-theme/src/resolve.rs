@@ -380,6 +380,7 @@ pub fn resolve(src: &Sources) -> Tokens {
         family: src.font_family.clone(),
         resolved_family: src.resolved_font_family.clone(),
         file: src.font_file.clone(),
+        line_height: src.font_file.as_deref().and_then(crate::fontmetrics::line_height_ratio).unwrap_or(1.3),
         base_size: base,
         caption: ft("caption", font_px(0.833)),
         body_small,
@@ -417,6 +418,10 @@ pub fn resolve(src: &Sources) -> Tokens {
         panel_gap: sp("panel-gap", 14.0),
         panel_padding: sp("panel-padding", 18.0),
         popup_padding: sp("popup-padding", 14.0),
+        dropdown_width: sp("dropdown-width", 240.0),
+        searchable_dropdown_width: sp("searchable-dropdown-width", 260.0),
+        number_field_width: sp("number-field-width", 120.0),
+        searchable_popup_min_height: sp("searchable-popup-min-height", 220.0),
     };
 
     // ---- surfaces

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Omarchy UI Review</title>
+<style>
+  :root {
+    --bg: #101315; --panel: #171b1e; --fg: #cacccc; --dim: #7d8488; --line: #2a3034;
+    --accent: #7aa2f7; --bad: #f7768e; --ok: #9ece6a; --warn: #e0af68;
+    --mono: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { --bg: #f4f4f2; --panel: #ffffff; --fg: #222426; --dim: #6b7074; --line: #d9dbdc; --accent: #2f5fd0; --bad: #c4314b; --ok: #3d7a1c; --warn: #a06800; }
+  }
+  :root[data-theme="light"] { --bg: #f4f4f2; --panel: #ffffff; --fg: #222426; --dim: #6b7074; --line: #d9dbdc; --accent: #2f5fd0; --bad: #c4314b; --ok: #3d7a1c; --warn: #a06800; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 16px; }
+  h1 { font-size: 14px; margin: 0 0 8px; font-weight: 700; }
+  h1 span { color: var(--dim); font-weight: 400; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .group { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  .group b { color: var(--dim); font-weight: 400; margin-right: 4px; }
+  button.chip { font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--line); padding: 3px 10px; cursor: pointer; }
+  button.chip:hover { border-color: var(--dim); }
+  button.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  main { padding: 16px; display: grid; gap: 16px; }
+  .parity { border: 1px solid var(--line); background: var(--panel); padding: 10px 14px; }
+  .parity.ok { border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); }
+  .parity.bad { border-color: var(--bad); }
+  .parity summary { cursor: pointer; }
+  .parity pre { white-space: pre-wrap; color: var(--dim); margin: 8px 0 0; max-height: 240px; overflow: auto; }
+  .card { border: 1px solid var(--line); background: var(--panel); }
+  .card h2 { display: flex; gap: 12px; align-items: baseline; font-size: 13px; margin: 0; padding: 8px 12px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .card h2 .meta { color: var(--dim); font-weight: 400; }
+  .card h2 .score { margin-left: auto; font-weight: 400; }
+  .score.good { color: var(--ok); } .score.mid { color: var(--warn); } .score.high { color: var(--bad); }
+  .body { padding: 12px; overflow-x: auto; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .pair figure { margin: 0; min-width: 0; }
+  figcaption { color: var(--dim); margin-bottom: 4px; }
+  img { display: block; max-width: 100%; height: auto; image-rendering: auto; }
+  .stage { position: relative; display: inline-block; max-width: 100%; }
+  .stage img.top { position: absolute; inset: 0; }
+  .stage .clip { position: absolute; inset: 0; overflow: hidden; }
+  .stage .clip img { max-width: none; }
+  .stage .rule { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--accent); pointer-events: none; }
+  input[type=range] { width: 260px; accent-color: var(--accent); }
+  .slider { display: flex; gap: 8px; align-items: center; color: var(--dim); margin-bottom: 8px; }
+  .diffbg { background: repeating-conic-gradient(#0000 0 25%, #8881 0 50%) 0 / 16px 16px; }
+  .err { color: var(--bad); white-space: pre-wrap; }
+  .empty { color: var(--dim); padding: 24px; text-align: center; }
+  @media (max-width: 720px) { .pair { grid-template-columns: 1fr; } input[type=range] { width: 160px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Omarchy UI review <span id="sub"></span></h1>
+  <div class="controls">
+    <div class="group" id="f-theme"><b>theme</b></div>
+    <div class="group" id="f-radius"><b>radius</b></div>
+    <div class="group" id="f-section"><b>section</b></div>
+    <div class="group" id="f-mode"><b>view</b></div>
+  </div>
+</header>
+<main id="main"></main>
+<script>
+const DATA = /*DATA*/null;
+const MODES = [["side", "side by side"], ["overlay", "overlay"], ["swipe", "swipe"], ["diff", "diff"]];
+const state = { theme: DATA.themes[0], radius: String(DATA.radii[0]), section: "all", mode: "side" };
+try { Object.assign(state, JSON.parse(localStorage.getItem("omarchy-ui-review") || "{}")); } catch (e) {}
+if (!DATA.themes.includes(state.theme)) state.theme = DATA.themes[0];
+
+function save() { try { localStorage.setItem("omarchy-ui-review", JSON.stringify(state)); } catch (e) {} }
+
+function chips(id, key, options) {
+  const g = document.getElementById(id);
+  g.querySelectorAll("button").forEach(b => b.remove());
+  for (const [value, label] of options) {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = label;
+    b.setAttribute("aria-pressed", String(state[key] === value));
+    b.onclick = () => { state[key] = value; save(); render(); };
+    g.appendChild(b);
+  }
+}
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k.startsWith("on")) e[k] = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) e.append(k);
+  return e;
+}
+
+function img(src, w, cls = "") { return el("img", { src, width: w, alt: "", class: cls, loading: "lazy" }); }
+
+function view(row) {
+  const qt = row.path + "/qt.png", rune = row.path + "/rune.png", diff = row.path + "/diff.png";
+  if (state.mode === "side") {
+    return el("div", { class: "pair" },
+      el("figure", {}, el("figcaption", {}, "Qt"), img(qt, row.w)),
+      el("figure", {}, el("figcaption", {}, "Rune"), img(rune, row.w)));
+  }
+  if (state.mode === "diff") {
+    return el("figure", {}, el("figcaption", {}, "pixels that differ by more than 3%, over Qt"),
+      el("div", { class: "stage" }, img(qt, row.w), img(diff, row.w, "top")));
+  }
+  const stage = el("div", { class: "stage" }, img(qt, row.w));
+  const range = el("input", { type: "range", min: "0", max: "100", value: "50" });
+  if (state.mode === "overlay") {
+    const top = img(rune, row.w, "top");
+    top.style.opacity = 0.5;
+    stage.append(top);
+    range.oninput = () => { top.style.opacity = range.value / 100; };
+    return el("div", {}, el("label", { class: "slider" }, "Qt", range, "Rune"), stage);
+  }
+  const clip = el("div", { class: "clip" }, img(rune, row.w));
+  const rule = el("div", { class: "rule" });
+  const set = () => { clip.style.clipPath = `inset(0 0 0 ${range.value}%)`; rule.style.left = range.value + "%"; };
+  range.oninput = set;
+  set();
+  stage.append(clip, rule);
+  return el("div", {}, el("label", { class: "slider" }, "Qt ◀", range, "▶ Rune"), stage);
+}
+
+function render() {
+  const live = DATA.live ? `live (${DATA.live})` : "live";
+  chips("f-theme", "theme", DATA.themes.map(t => [t, t === "live" ? live : t]));
+  chips("f-radius", "radius", DATA.radii.map(r => [String(r), r === 0 ? "0 (sharp)" : String(r)]));
+  chips("f-section", "section", [["all", "all"], ...DATA.sections.map(s => [s, s])]);
+  chips("f-mode", "mode", MODES);
+  document.getElementById("sub").textContent = `· ${DATA.rev} · Qt vs Rune`;
+
+  const main = document.getElementById("main");
+  main.replaceChildren();
+
+  const key = `${state.theme}@${state.radius}`;
+  const diffs = DATA.parity[key] || [];
+  const allBad = Object.entries(DATA.parity).filter(([, v]) => v.length);
+  const p = el("details", { class: "parity " + (allBad.length ? "bad" : "ok") },
+    el("summary", {}, allBad.length
+      ? `Token parity: ${allBad.length} of ${Object.keys(DATA.parity).length} theme × radius dumps differ (this one: ${diffs.length})`
+      : `Token parity: Qt and Rune resolve identical tokens for all ${Object.keys(DATA.parity).length} theme × radius combinations`),
+    el("pre", {}, allBad.length ? allBad.map(([k, v]) => k + "\n  " + v.join("\n  ")).join("\n") : "Every fixture theme, at every radius, dumps byte-identical canonical JSON from both bindings."));
+  main.append(p);
+
+  const rows = DATA.rows.filter(r => r.theme === state.theme && String(r.radius) === state.radius && (state.section === "all" || r.section === state.section));
+  if (!rows.length) { main.append(el("div", { class: "empty" }, "Nothing rendered for this combination.")); return; }
+  for (const row of rows) {
+    const s = row.diff;
+    const cls = s == null ? "" : s < 2 ? "good" : s < 6 ? "mid" : "high";
+    const head = el("h2", {}, row.section, el("span", { class: "meta" }, `${row.theme} · radius ${row.radius}`),
+      el("span", { class: "score " + cls }, row.error ? "failed" : s == null ? "" : `${s}% of pixels differ`));
+    const body = el("div", { class: "body" }, row.error ? el("div", { class: "err" }, row.error) : view(row));
+    main.append(el("section", { class: "card" }, head, body));
+  }
+}
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  const cycle = (key, list) => { const i = list.indexOf(state[key]); state[key] = list[(i + (e.shiftKey ? list.length - 1 : 1)) % list.length]; save(); render(); };
+  if (e.key === "t") cycle("theme", DATA.themes);
+  if (e.key === "r") cycle("radius", DATA.radii.map(String));
+  if (e.key === "s") cycle("section", ["all", ...DATA.sections]);
+  if (e.key === "v") cycle("mode", MODES.map(m => m[0]));
+});
+
+render();
+</script>
+</body>
+</html>

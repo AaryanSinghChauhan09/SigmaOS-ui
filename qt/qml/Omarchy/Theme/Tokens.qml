@@ -73,6 +73,8 @@ QtObject {
         inputPaddingY: sp.inputPaddingY, controlHeight: sp.controlHeight, popupRowHeight: sp.popupRowHeight,
         rowGap: sp.rowGap, rowPaddingX: sp.rowPaddingX, labelGap: sp.labelGap, panelGap: sp.panelGap,
         panelPadding: sp.panelPadding, popupPadding: sp.popupPadding,
+        dropdownWidth: sp.dropdownWidth, searchableDropdownWidth: sp.searchableDropdownWidth,
+        numberFieldWidth: sp.numberFieldWidth, searchablePopupMinHeight: sp.searchablePopupMinHeight,
       },
       controls: {
         normal: state("normal", S.normalFillFor(fg, ac), fg),

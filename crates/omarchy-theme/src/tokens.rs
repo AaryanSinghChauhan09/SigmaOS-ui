@@ -79,6 +79,10 @@ pub struct Font {
     /// The resolved family's regular face, for frameworks that load font files themselves.
     #[serde(skip)]
     pub file: Option<PathBuf>,
+    /// Line height as a multiple of size, from the font file (Qt's `Text` height); 1.3 when
+    /// the file can't be read.
+    #[serde(skip)]
+    pub line_height: f64,
     pub base_size: i64,
     pub caption: i64,
     pub body_small: i64,
@@ -119,6 +123,17 @@ pub struct Spacing {
     pub panel_gap: i64,
     pub panel_padding: i64,
     pub popup_padding: i64,
+    pub dropdown_width: i64,
+    pub searchable_dropdown_width: i64,
+    pub number_field_width: i64,
+    pub searchable_popup_min_height: i64,
+}
+
+impl Font {
+    /// The line box for text at `size` px, as Qt lays it out.
+    pub fn line_px(&self, size: i64) -> f64 {
+        (size as f64 * self.line_height).ceil()
+    }
 }
 
 impl Spacing {

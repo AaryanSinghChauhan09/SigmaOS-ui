@@ -4,6 +4,7 @@
 //   omarchy-qt-gallery --section buttons        one section (spec/gallery.md)
 //   omarchy-qt-gallery --snap out.png           render offscreen to a PNG and exit
 //   omarchy-qt-gallery --dump-tokens            print the canonical token JSON and exit
+//   omarchy-qt-gallery --watch-tokens           print it again on every theme, font or Hyprland change
 //   OMARCHY_UI_THEME_DIR=fixtures/themes/nord omarchy-qt-gallery --snap nord.png
 
 #include <QCommandLineParser>
@@ -20,6 +21,7 @@
 #include <cstdio>
 
 #include "omarchyui.h"
+#include "themesource.h"
 
 class Gallery : public QObject {
   Q_OBJECT
@@ -44,7 +46,7 @@ static const char *argValue(int argc, char **argv, const char *flag, const char 
 }
 
 int main(int argc, char **argv) {
-  const bool headless = hasArg(argc, argv, "--snap") || hasArg(argc, argv, "--dump-tokens");
+  const bool headless = hasArg(argc, argv, "--snap") || hasArg(argc, argv, "--dump-tokens") || hasArg(argc, argv, "--watch-tokens");
   if (headless) qputenv("QT_QPA_PLATFORM", "offscreen");
   // The device pixel ratio has to be set before the application exists.
   if (hasArg(argc, argv, "--snap")) qputenv("QT_SCALE_FACTOR", argValue(argc, argv, "--scale", "2"));
@@ -61,6 +63,7 @@ int main(int argc, char **argv) {
   args.addOption({"scale", "Device pixel ratio for --snap (default 2).", "n", "2"});
   args.addOption({"width", "Window width in points (default 760).", "n", "760"});
   args.addOption({"dump-tokens", "Print the resolved tokens as canonical JSON and exit."});
+  args.addOption({"watch-tokens", "Print the resolved tokens, then again whenever they change."});
   args.process(app);
 
   Gallery gallery;
@@ -71,7 +74,7 @@ int main(int argc, char **argv) {
   QQmlApplicationEngine engine;
   engine.rootContext()->setContextProperty("gallery", &gallery);
 
-  if (args.isSet("dump-tokens")) {
+  if (args.isSet("dump-tokens") || args.isSet("watch-tokens")) {
     QQmlComponent dumper(&engine);
     dumper.setData("import QtQuick\nimport Omarchy.Theme\nQtObject { function dump() { return JSON.stringify(Tokens.canonical()) } }", QUrl());
     QObject *obj = dumper.create();
@@ -79,11 +82,21 @@ int main(int argc, char **argv) {
       fprintf(stderr, "%s\n", qPrintable(dumper.errorString()));
       return 1;
     }
-    QVariant out;
-    QMetaObject::invokeMethod(obj, "dump", Q_RETURN_ARG(QVariant, out));
-    const QJsonDocument doc = QJsonDocument::fromJson(out.toString().toUtf8());
-    printf("%s", doc.toJson(QJsonDocument::Indented).constData());
-    return 0;
+    auto print = [obj] {
+      QVariant out;
+      QMetaObject::invokeMethod(obj, "dump", Q_RETURN_ARG(QVariant, out));
+      const QJsonDocument doc = QJsonDocument::fromJson(out.toString().toUtf8());
+      printf("%s", doc.toJson(QJsonDocument::Indented).constData());
+      fflush(stdout);
+    };
+    print();
+    if (!args.isSet("watch-tokens")) return 0;
+    // The singletons connected to ThemeSource when the first dump created them, so by the time
+    // these run they have already reloaded.
+    ThemeSource *source = ThemeSource::instance();
+    for (auto signal : {&ThemeSource::themeChanged, &ThemeSource::hyprlandChanged, &ThemeSource::fontChanged})
+      QObject::connect(source, signal, &app, print);
+    return app.exec();
   }
 
   engine.load(QUrl("qrc:/gallery/Main.qml"));

@@ -97,6 +97,10 @@ Each surface has `background`, `text`, `border` (spec), and some extras. Default
 | `huge` | 18 | `panelGap` | 14 |
 | | | `panelPadding` | 18 |
 | | | `popupPadding` | 14 |
+| | | `dropdownWidth` | 240 |
+| | | `searchableDropdownWidth` | 260 |
+| | | `numberFieldWidth` | 120 |
+| | | `searchablePopupMinHeight` | 220 |
 
 ## Typography
 
