@@ -47,6 +47,18 @@ Section {
     Avatar { name: "Missing"; source: "qrc:/gallery/assets/missing.png" }
   }
 
+  // By icon name, from the icon theme (the fixture icon theme under bin/review).
+  RowLayout {
+    spacing: Style.spacing.xxl
+    Avatar { name: "Files"; iconName: "org.gnome.Nautilus" }
+    Avatar { name: "Terminal"; iconName: "utilities-terminal" }
+    Avatar { name: "Firefox"; iconName: "firefox" }
+    Avatar { name: "Chromium"; iconName: "chromium"; size: "small" }
+    Avatar { name: "Steam"; iconName: "steam"; size: "large" }
+    Avatar { name: "Btop"; iconName: "btop"; size: "small" }
+    Avatar { name: "Nothing"; iconName: "no-such-app"; glyph: section.g(0xF120) }
+  }
+
   TileGrid {
     columns: 4
     cursorIndex: 2

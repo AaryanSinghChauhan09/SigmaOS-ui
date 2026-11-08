@@ -31,6 +31,27 @@ impl Tiles {
     }
 }
 
+/// The icon-name specimens: name, label, size, and the glyph for a name nothing has.
+const ICONS: [(&str, &str, AvatarSize, &str); 7] = [
+    ("org.gnome.Nautilus", "Files", AvatarSize::Medium, ""),
+    ("utilities-terminal", "Terminal", AvatarSize::Medium, ""),
+    ("firefox", "Firefox", AvatarSize::Medium, ""),
+    ("chromium", "Chromium", AvatarSize::Small, ""),
+    ("steam", "Steam", AvatarSize::Large, ""),
+    ("btop", "Btop", AvatarSize::Small, ""),
+    ("no-such-app", "Nothing", AvatarSize::Medium, "\u{F120}"),
+];
+
+/// Decode the icon specimens before the first frame, at the 2× stills render at (a still is a
+/// single frame, so an icon still decoding would be missing from it).
+pub fn preload(t: &Theme) {
+    for (name, _, size, _) in ICONS {
+        if let Some(icon) = t.icon(name, size.px(t)) {
+            let _ = icon.wait();
+        }
+    }
+}
+
 pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     let sp = &t.tokens().spacing;
     let bg = t.tokens().palette.background;
@@ -66,6 +87,12 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
         .child(Avatar::new("Photo").image(photo).size(AvatarSize::Large).build(t))
         .child(Avatar::new("Missing").image(Some(&s.tiles.missing)).build(t));
 
+    // By icon name, from the icon theme (the fixture icon theme under bin/review).
+    let icons = row()
+        .items_center()
+        .gap(sp.xxl as f32)
+        .children(ICONS.map(|(name, label, size, glyph)| Avatar::new(label).icon(name).size(size).glyph(glyph).build(t)));
+
     let grid = TileGrid::new([
         Tile::new("Terminal").glyph("\u{F120}"),
         Tile::new("Files").glyph("\u{F07B}"),
@@ -84,5 +111,5 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     })
     .build(t);
 
-    vec![badges, dots, avatars, grid]
+    vec![badges, dots, avatars, icons, grid]
 }

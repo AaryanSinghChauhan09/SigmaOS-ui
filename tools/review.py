@@ -33,7 +33,7 @@ def png_size(path):
 
 def env_for(theme, radius):
     env = dict(os.environ)
-    for k in ("OMARCHY_UI_THEME_DIR", "OMARCHY_UI_ROUNDING", "OMARCHY_UI_REDUCE_MOTION"):
+    for k in ("OMARCHY_UI_THEME_DIR", "OMARCHY_UI_ROUNDING", "OMARCHY_UI_REDUCE_MOTION", "OMARCHY_UI_ICON_DIRS", "OMARCHY_UI_ICON_THEME"):
         env.pop(k, None)
     if theme != "live":
         env["OMARCHY_UI_THEME_DIR"] = str(ROOT / "fixtures/themes" / theme)
@@ -41,6 +41,10 @@ def env_for(theme, radius):
         env["OMARCHY_UI_ROUNDING"] = str(radius)
     # Stills, not mid-animation frames.
     env["OMARCHY_UI_REDUCE_MOTION"] = "1"
+    # Icons by name from the fixture icon tree, whatever is installed (live theme included).
+    icons = ROOT / "fixtures/icons"
+    env["OMARCHY_UI_ICON_DIRS"] = ":".join(str(icons / d) for d in ("local", "system", "pixmaps"))
+    env["OMARCHY_UI_ICON_THEME"] = "Fixture-Accent"
     return env
 
 

@@ -52,7 +52,7 @@ pub(crate) struct State {
 }
 
 pub(crate) fn init() -> State {
-    State {
+    let s = State {
         theme: Theme::load(),
         section: None,
         switches: [false, true, false, true],
@@ -81,7 +81,9 @@ pub(crate) fn init() -> State {
         timeline: sections::timeline::init(),
         color: sections::color::init(),
         composed: sections::composed::init(),
-    }
+    };
+    sections::tiles::preload(&s.theme);
+    s
 }
 
 /// The sections, in spec/gallery.md order: `name: "Title"`, one per line.
