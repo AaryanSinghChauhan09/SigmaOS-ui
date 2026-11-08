@@ -9,7 +9,8 @@ import Omarchy.Theme as Commons
 //     glyph: "󰖩"; title: "Basecamp"; status: "Connected"; statusTone: "success"
 //     current: true                                 // the connected one
 //     hasCursor: cursor.isAt("wifi", index)         // a CursorModel drives the cursor
-//     actionGlyph: "󰅙"; actionUrgent: true          // forget, revealed under the cursor
+//     trailingGlyph: "󰌾"                            // the lock, at rest
+//     actionGlyph: "󰅙"; actionUrgent: true          // forget, in its place under the cursor
 //     onClicked: connect()
 //     onActionClicked: forget()
 //     onPointerMoved: function(mouse) { cursor.pointerMoved(this, mouse, "wifi", index) }
@@ -17,7 +18,9 @@ import Omarchy.Theme as Commons
 //
 // Leading: a glyph, or any item through `leading` (an Avatar). Then a bold title, a dim subtitle
 // and a status line tinted by `statusTone`. Trailing: `value` text, or any item through
-// `trailing` (a Badge, a non-interactive ToggleSwitch), then the action slot.
+// `trailing` (a Badge, a non-interactive ToggleSwitch), then the slot at the end, which holds
+// `trailingGlyph` (a lock, signal bars, a drill-in chevron, a check) at rest and the action in
+// its place while the action shows, as the network panel's lock turns into forget.
 //
 // Like CursorSurface, the row never reads hover for its look: the cursor (`hasCursor`) is the one
 // highlight, and pointer movement reaches the app through `pointerMoved` so it can move the
@@ -42,6 +45,10 @@ CursorSurface {
 
   property string value: ""
   property Component trailing: null
+
+  // A glyph that stays in the end slot, dim unless `trailingTone` tints it ("accent" for a check).
+  property string trailingGlyph: ""
+  property string trailingTone: ""
 
   property string actionGlyph: ""
   property bool actionUrgent: false
@@ -70,6 +77,7 @@ CursorSurface {
     case "success": return Commons.Color.success
     case "warning": return Commons.Color.warning
     case "urgent": return Commons.Color.urgent
+    case "muted": return Commons.Color.muted
     }
     return Commons.Color.textDim
   }
@@ -172,12 +180,13 @@ CursorSurface {
       }
     }
 
-    // Value or trailing item, then the action slot. The slot keeps its width while the action is
-    // hidden, so revealing it never reflows the row.
+    // Value or trailing item, then the end slot: the trailing glyph at rest, the action in its
+    // place while it shows. The slot keeps its width while empty, so revealing the action never
+    // reflows the row.
     Row {
       id: trailBox
       readonly property bool hasValue: root.value !== "" && root.trailing === null
-      readonly property bool hasAny: hasValue || root.trailing !== null || root.actionGlyph !== ""
+      readonly property bool hasAny: hasValue || root.trailing !== null || actionSlot.visible
       anchors.right: parent.right
       anchors.verticalCenter: parent.verticalCenter
       width: hasAny ? implicitWidth + Style.space(8) : 0
@@ -186,7 +195,7 @@ CursorSurface {
 
       Item {
         id: actionSlot
-        visible: root.actionGlyph !== ""
+        visible: root.actionGlyph !== "" || root.trailingGlyph !== ""
         width: Style.space(22)
         height: width
         anchors.verticalCenter: parent.verticalCenter
@@ -211,11 +220,21 @@ CursorSurface {
           font.pixelSize: Style.font.subtitle
         }
 
+        Text {
+          visible: root.trailingGlyph !== "" && !root.actionShown
+          anchors.centerIn: parent
+          textFormat: Text.PlainText
+          text: root.trailingGlyph
+          color: root.toneColor(root.trailingTone)
+          font.family: Style.font.family
+          font.pixelSize: Style.font.subtitle
+        }
+
         MouseArea {
           id: actionMouse
           anchors.fill: parent
           hoverEnabled: true
-          enabled: !root.disabled
+          enabled: !root.disabled && root.actionGlyph !== ""
           cursorShape: Qt.PointingHandCursor
           onPositionChanged: function(mouse) { root.pointerMoved(mouse) }
           onClicked: root.actionClicked()

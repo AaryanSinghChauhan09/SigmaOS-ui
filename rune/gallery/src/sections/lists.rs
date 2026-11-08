@@ -2,7 +2,7 @@
 
 use omarchy_rune::Theme;
 use omarchy_rune::ui::{Avatar, AvatarSize, Badge, CursorKey, CursorModel, Hero, KeyValue, ListRow, ScrollArea, ToggleSwitch, Tone};
-use rune::El;
+use rune::{El, col};
 
 use crate::State;
 
@@ -33,7 +33,12 @@ fn row(s: &State, i: usize, title: &str) -> ListRow {
 pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     let sp = &t.tokens().spacing;
     let rows = vec![
-        row(s, 0, "Coffee Shop").glyph("\u{F0928}").subtitle("WPA2").value("5 GHz").build(t),
+        row(s, 0, "Coffee Shop")
+            .glyph("\u{F0928}")
+            .subtitle("WPA2")
+            .value("5 GHz")
+            .trailing_glyph("\u{F033E}", Tone::Neutral)
+            .build(t),
         row(s, 1, "Basecamp Guest").glyph("\u{F0925}").subtitle("Open").build(t),
         row(s, 2, "Basecamp").glyph("\u{F0928}").status("Connected", Tone::Success).current(true).build(t),
         row(s, 3, "Neighbor 5G").glyph("\u{F091F}").subtitle("Out of range").disabled(true).build(t),
@@ -47,9 +52,20 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
             .subtitle("Battery 80%")
             .trailing(ToggleSwitch::new(true).interactive(false).build(t))
             .build(t),
-        row(s, 6, "Office").glyph("\u{F0922}").subtitle("Saved").action("\u{F0159}", true).action_cursor(true).build(t),
+        row(s, 6, "Office")
+            .glyph("\u{F0922}")
+            .subtitle("Saved")
+            .trailing_glyph("\u{F033E}", Tone::Neutral)
+            .action("\u{F0159}", true)
+            .action_cursor(true)
+            .build(t),
         // Past the cap, so the bar shows.
-        row(s, 7, "Library").glyph("\u{F0922}").subtitle("WPA2").build(t),
+        row(s, 7, "Library")
+            .glyph("\u{F0922}")
+            .subtitle("WPA2")
+            .trailing_glyph("\u{F033E}", Tone::Neutral)
+            .action("\u{F0159}", true)
+            .build(t),
         row(s, 8, "Airport Free WiFi").glyph("\u{F091F}").subtitle("Open").build(t),
     ];
     let scroll = ScrollArea::new("lists-scroll")
@@ -67,8 +83,20 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
             CursorKey::Ignored => false,
             _ => true,
         });
+    // Trailing glyphs that stay: drill-in chevrons and a check.
+    let glyphs = col().w(WIDTH).gap(sp.xxs as f32).children([
+        ListRow::new("Appearance").glyph("\u{F03D8}").subtitle("Theme, font, rounding").trailing_glyph("\u{F0142}", Tone::Neutral).build(t),
+        ListRow::new("Display").glyph("\u{F0379}").subtitle("2560 × 1440").trailing_glyph("\u{F0142}", Tone::Neutral).build(t),
+        ListRow::new("Headphones")
+            .glyph("\u{F02CB}")
+            .subtitle("Output")
+            .current(true)
+            .trailing_glyph("\u{F012C}", Tone::Accent)
+            .build(t),
+    ]);
     vec![
         scroll,
+        glyphs,
         Hero::new("\u{F0928}", "Wi-Fi").status("Connected to Basecamp").trailing(ToggleSwitch::new(true).build(t)).build(t).w(WIDTH),
         Hero::new("\u{F00B2}", "Bluetooth").status("No adapter found").error(true).glyph_opacity(0.5).build(t).w(WIDTH),
         KeyValue::new()

@@ -53,7 +53,8 @@ pub(crate) fn lead_width(t: &Theme) -> f32 {
 
 /// One row of a keyboard-and-mouse list (the shell's NetworkRow, DeviceRow, ...): a leading glyph
 /// or element, a bold title over a dim subtitle and a tinted status line, a trailing value or
-/// element, and an action revealed under the cursor. Like the shell's CursorSurface, the look
+/// element, and an end slot holding a trailing glyph at rest and an action in its place under the
+/// cursor (the network panel's lock that turns into forget). Like the shell's CursorSurface, the look
 /// follows `cursor` and `current` only; the pointer moves the cursor through
 /// [`ListRow::on_pointer_move`] and a [`CursorModel`].
 pub struct ListRow {
@@ -67,6 +68,8 @@ pub struct ListRow {
     tone: Tone,
     value: String,
     trailing: Option<El>,
+    trailing_glyph: String,
+    trailing_tone: Tone,
     expansion: Option<El>,
     action: String,
     action_urgent: bool,
@@ -93,6 +96,8 @@ impl ListRow {
             tone: Tone::Neutral,
             value: String::new(),
             trailing: None,
+            trailing_glyph: String::new(),
+            trailing_tone: Tone::Neutral,
             expansion: None,
             action: String::new(),
             action_urgent: false,
@@ -144,14 +149,22 @@ impl ListRow {
         self.trailing = Some(e);
         self
     }
+    /// A glyph that stays in the end slot (a lock, signal bars, a drill-in chevron, a check), dim
+    /// unless `tone` tints it. An [`action`](Self::action) takes its place while it shows.
+    pub fn trailing_glyph(mut self, g: impl Into<String>, tone: Tone) -> Self {
+        self.trailing_glyph = g.into();
+        self.trailing_tone = tone;
+        self
+    }
     /// Opens the row: any element across it under the main line, inside the row's fill (the
     /// network panel's password field and Connect button), `space(4)` below.
     pub fn expansion(mut self, e: El) -> Self {
         self.expansion = Some(e);
         self
     }
-    /// An action glyph on the trailing edge, shown while the row has the cursor (or the action
-    /// has it). `urgent` for a destructive one, like forget.
+    /// An action glyph in the end slot, shown while the row has the cursor or the pointer (or the
+    /// action has the cursor), in place of any trailing glyph. `urgent` for a destructive one,
+    /// like forget.
     pub fn action(mut self, g: impl Into<String>, urgent: bool) -> Self {
         self.action = g.into();
         self.action_urgent = urgent;
@@ -245,13 +258,16 @@ impl ListRow {
         } else if !self.value.is_empty() {
             trail.push(text(self.value).font(t.text_style(f.body_small)).color(color(dim)).single_line());
         }
-        if !self.action.is_empty() {
+        // The end slot: the trailing glyph at rest, the action in its place while it shows (under
+        // the cursor, or the pointer through the row's hover group).
+        let has_action = !self.action.is_empty();
+        if has_action || !self.trailing_glyph.is_empty() {
             let side = t.space(22.0);
-            let tone = if self.action_urgent { tk.palette.urgent } else { tk.palette.foreground };
-            let shown = !self.disabled && (self.cursor || self.action_cursor);
-            let mut slot = row().size(side, side).center().radius(t.radius()).role("button");
-            if self.action_cursor && !self.disabled {
+            let shown = has_action && !self.disabled && (self.cursor || self.action_cursor);
+            let mut slot = row().size(side, side).center().radius(t.radius());
+            if has_action && self.action_cursor && !self.disabled {
                 // The cursor look in the action's own ink, whatever color the theme gives the cursor.
+                let tone = if self.action_urgent { tk.palette.urgent } else { tk.palette.foreground };
                 let w = c.hover.border.max_width();
                 slot = border(slot.fill(color(tone.with_alpha(c.hover.fill.alpha_f() as f64))), &BorderSpec {
                     color: tone.with_alpha(c.hover.border.color.alpha_f() as f64),
@@ -259,13 +275,22 @@ impl ListRow {
                     gradient: None,
                 });
             }
-            let ink = if self.action_urgent { tk.palette.urgent } else { tk.roles.text_dim };
-            // Under the pointer the row's hover group reveals it too.
-            let rest = if shown { 1.0 } else { 0.0 };
-            let mark = glyph(t, &self.action, f.subtitle, color(ink));
-            slot = slot.child(if self.disabled { mark.opacity(0.0) } else { mark.group_opacity(rest, 1.0) });
-            if let Some(attach) = self.action_press {
-                slot = attach(slot);
+            if !self.trailing_glyph.is_empty() {
+                let tint = if self.disabled { faint } else { self.trailing_tone.rgba(t, tk.roles.text_dim) };
+                let mark = glyph(t, &self.trailing_glyph, f.subtitle, color(tint));
+                let rest = if shown { 0.0 } else { 1.0 };
+                let hovered = if has_action && !self.disabled { 0.0 } else { rest };
+                // Stacked under the action, centered in the slot.
+                slot = slot.child(row().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).center().child(mark).group_opacity(rest, hovered));
+            }
+            if has_action {
+                let ink = if self.action_urgent { tk.palette.urgent } else { tk.roles.text_dim };
+                let rest = if shown { 1.0 } else { 0.0 };
+                let mark = glyph(t, &self.action, f.subtitle, color(ink));
+                slot = slot.role("button").child(if self.disabled { mark.opacity(0.0) } else { mark.group_opacity(rest, 1.0) });
+                if let Some(attach) = self.action_press {
+                    slot = attach(slot);
+                }
             }
             trail.push(slot);
         }

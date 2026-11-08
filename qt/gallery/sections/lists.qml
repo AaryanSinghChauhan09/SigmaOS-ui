@@ -31,6 +31,7 @@ Section {
 
     ListRow {
       glyph: section.g(0xF0928); title: "Coffee Shop"; subtitle: "WPA2"; value: "5 GHz"
+      trailingGlyph: section.g(0xF033E)
       hasCursor: cursor.isAt("rows", 0)
       onPointerMoved: function(mouse) { cursor.pointerMoved(this, mouse, "rows", 0) }
     }
@@ -65,6 +66,7 @@ Section {
     }
     ListRow {
       glyph: section.g(0xF0922); title: "Office"; subtitle: "Saved"
+      trailingGlyph: section.g(0xF033E)
       actionGlyph: section.g(0xF0159); actionUrgent: true; actionCursor: true
       hasCursor: cursor.isAt("rows", 6)
       onPointerMoved: function(mouse) { cursor.pointerMoved(this, mouse, "rows", 6) }
@@ -72,6 +74,8 @@ Section {
     // Past the cap, so the bar shows.
     ListRow {
       glyph: section.g(0xF0922); title: "Library"; subtitle: "WPA2"
+      trailingGlyph: section.g(0xF033E)
+      actionGlyph: section.g(0xF0159); actionUrgent: true
       hasCursor: cursor.isAt("rows", 7)
       onPointerMoved: function(mouse) { cursor.pointerMoved(this, mouse, "rows", 7) }
     }
@@ -79,6 +83,30 @@ Section {
       glyph: section.g(0xF091F); title: "Airport Free WiFi"; subtitle: "Open"
       hasCursor: cursor.isAt("rows", 8)
       onPointerMoved: function(mouse) { cursor.pointerMoved(this, mouse, "rows", 8) }
+    }
+  }
+
+  // Trailing glyphs that stay: drill-in chevrons and a check.
+  ColumnLayout {
+    Layout.preferredWidth: 420
+    Layout.fillWidth: false
+    spacing: Style.spacing.xxs
+
+    ListRow {
+      Layout.fillWidth: true
+      glyph: section.g(0xF03D8); title: "Appearance"; subtitle: "Theme, font, rounding"
+      trailingGlyph: section.g(0xF0142)
+    }
+    ListRow {
+      Layout.fillWidth: true
+      glyph: section.g(0xF0379); title: "Display"; subtitle: "2560 × 1440"
+      trailingGlyph: section.g(0xF0142)
+    }
+    ListRow {
+      Layout.fillWidth: true
+      glyph: section.g(0xF02CB); title: "Headphones"; subtitle: "Output"
+      current: true
+      trailingGlyph: section.g(0xF012C); trailingTone: "accent"
     }
   }
 

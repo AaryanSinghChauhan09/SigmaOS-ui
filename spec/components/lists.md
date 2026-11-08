@@ -10,7 +10,7 @@ Qt `ListRow` (on `CursorSurface`) · Rune `ListRow`
 
 One row of a keyboard-and-mouse list: what the network, bluetooth, tailscale and audio panels each build (NetworkRow, DeviceRow, ...).
 
-**Anatomy.** Leading slot (a glyph, or any item such as a small Avatar) · info column (bold title; dim subtitle; status line) · trailing (value text, or any item such as a Badge or a non-interactive ToggleSwitch) · action slot (a glyph revealed under the cursor or the pointer).
+**Anatomy.** Leading slot (a glyph, or any item such as a small Avatar) · info column (bold title; dim subtitle; status line) · trailing (value text, or any item such as a Badge or a non-interactive ToggleSwitch) · end slot (a trailing glyph that stays, such as a lock, signal bars, a drill-in chevron or a check; and the action, revealed in its place under the cursor or the pointer).
 
 **API.**
 
@@ -22,7 +22,8 @@ One row of a keyboard-and-mouse list: what the network, bluetooth, tailscale and
 | `status`, `statusTone` | `.status(s, tone)` | Status line, dim unless toned |
 | `value` | `.value(v)` | Dim trailing text |
 | `trailing: Component` | `.trailing(El)` | Any trailing item instead |
-| `actionGlyph`, `actionUrgent`, `actionTip` | `.action(g, urgent)` | The revealed action (forget) |
+| `trailingGlyph`, `trailingTone` | `.trailing_glyph(g, tone)` | A glyph that stays in the end slot (the lock), `textDim` unless toned |
+| `actionGlyph`, `actionUrgent`, `actionTip` | `.action(g, urgent)` | The revealed action (forget), in the end slot |
 | `expansion: Component` | `.expansion(El)` | Opens the row: any item across it under the main line (a password field and Connect) |
 | `actionCursor` | `.action_cursor(bool)` | The cursor is on the action, not the row |
 | `hasCursor`, `current`, `disabled` | `.cursor(b)`, `.current(b)`, `.disabled(b)` | |
@@ -39,9 +40,11 @@ One row of a keyboard-and-mouse list: what the network, bluetooth, tailscale and
 | current | `controls.selected.fill` | `controls.selected.border` | as normal |
 | disabled | none | none | everything `textFaint`; no clicks, no pointer, no action |
 
-The action glyph shows while the row has the cursor or the pointer, or when `actionCursor` is set; then its slot takes the cursor look in its own ink (urgent when `actionUrgent`): the ink at the hover fill alpha, a border at the hover border alpha and width.
+The action glyph shows while the row has the cursor or the pointer, or when `actionCursor` is set; with `actionCursor` its slot takes the cursor look in its own ink (urgent when `actionUrgent`): the ink at the hover fill alpha, a border at the hover border alpha and width.
 
-**Metrics.** Radius `radius`. Padding `controlPaddingX` across, `rowPaddingX / 2` down (height = content + `rowPaddingX`). Leading slot `font.iconLarge` wide, glyph centered in it by its box, then `space(10)`. Title `body` bold; subtitle and status `caption`; lines `space(1)` apart; all elide. Trailing items `space(8)` from the info and from each other; value `bodySmall`. Action slot `space(22)` square, glyph `subtitle`, foreground darker 1.4 (or `urgent`); the slot is reserved while hidden, so revealing it never reflows the row. An expansion sits `space(4)` under the main line, inset `controlPaddingX` each side, inside the row's fill; the main line then sits at the top padding instead of centering.
+The trailing glyph and the action share the end slot, as the network panel's lock and forget do: the trailing glyph shows at rest, and the action replaces it (never beside it) whenever the action shows. A row with a trailing glyph and no action shows the glyph always; a disabled row shows it in `textFaint` and never shows the action. Clicks on a bare trailing glyph are the row's.
+
+**Metrics.** Radius `radius`. Padding `controlPaddingX` across, `rowPaddingX / 2` down (height = content + `rowPaddingX`). Leading slot `font.iconLarge` wide, glyph centered in it by its box, then `space(10)`. Title `body` bold; subtitle and status `caption`; lines `space(1)` apart; all elide. Trailing items `space(8)` from the info and from each other; value `bodySmall`. End slot `space(22)` square, last on the line, `space(8)` after any value or trailing item, present when the row has a trailing glyph or an action; the trailing glyph and the action glyph are both `subtitle`, centered in it by their box; the trailing glyph `textDim` (or its tone), the action `textDim` (or `urgent`). The slot is reserved while empty, so revealing the action never reflows the row. An expansion sits `space(4)` under the main line, inset `controlPaddingX` each side, inside the row's fill; the main line then sits at the top padding instead of centering.
 
 ## CursorModel
 
@@ -150,18 +153,19 @@ A grid of tiles, each a glyph or an Avatar above a label of up to two lines: the
 ### `lists`
 
 1. A ScrollArea 420 wide, capped at 340, rows `xxs` apart, its rows driven by a CursorModel (one section `rows` of 9, cursor on row 1; the keys and the pointer move it in the live galleries):
-   1. Coffee Shop: glyph U+F0928, subtitle "WPA2", value "5 GHz".
+   1. Coffee Shop: glyph U+F0928, subtitle "WPA2", value "5 GHz", trailing glyph the lock U+F033E.
    2. Basecamp Guest: glyph U+F0925, subtitle "Open", under the cursor.
    3. Basecamp: glyph U+F0928, status "Connected" in success, current.
    4. Neighbor 5G: glyph U+F091F, subtitle "Out of range", disabled.
    5. Messages: a small Avatar "Messages" leading, subtitle "From Basecamp", trailing Badge "3" accent filled.
    6. Headphones: glyph U+F00AF, subtitle "Battery 80%", trailing ToggleSwitch on (not interactive).
-   7. Office: glyph U+F0922, subtitle "Saved", forget action U+F0159 urgent with the action cursor.
-   8. Library: glyph U+F0922, subtitle "WPA2" (past the cap).
+   7. Office: glyph U+F0922, subtitle "Saved", trailing glyph the lock U+F033E, forget action U+F0159 urgent with the action cursor (so forget shows in the lock's place).
+   8. Library: glyph U+F0922, subtitle "WPA2", the lock, forget action U+F0159 urgent (past the cap).
    9. Airport Free WiFi: glyph U+F091F, subtitle "Open" (past the cap).
-2. Hero 420 wide: glyph U+F0928, "Wi-Fi", status "Connected to Basecamp", trailing ToggleSwitch on.
-3. Hero 420 wide: glyph U+F00B2 at half opacity, "Bluetooth", status "No adapter found" as an error.
-4. KeyValue, two pairs to a line: Ping 18 ms · Packet loss 4% (urgent) · Receiving 1.2 MB/s · Sending 240 KB/s · IP address 192.168.1.24 · Gateway 192.168.1.1.
+2. Rows with trailing glyphs that stay, a column 420 wide, `xxs` apart: Appearance (glyph U+F03D8, subtitle "Theme, font, rounding", trailing chevron U+F0142); Display (glyph U+F0379, subtitle "2560 × 1440", chevron U+F0142); Headphones (glyph U+F02CB, subtitle "Output", current, trailing check U+F012C in accent).
+3. Hero 420 wide: glyph U+F0928, "Wi-Fi", status "Connected to Basecamp", trailing ToggleSwitch on.
+4. Hero 420 wide: glyph U+F00B2 at half opacity, "Bluetooth", status "No adapter found" as an error.
+5. KeyValue, two pairs to a line: Ping 18 ms · Packet loss 4% (urgent) · Receiving 1.2 MB/s · Sending 240 KB/s · IP address 192.168.1.24 · Gateway 192.168.1.1.
 
 ### `tiles`
 
