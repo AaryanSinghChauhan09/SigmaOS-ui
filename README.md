@@ -26,10 +26,13 @@ Any of these can render a fixture theme instead of the desktop's: `OMARCHY_UI_TH
 
 ## Use it
 
-Qt (qmake):
+It's a library: apps depend on it rather than copying it. [`docs/`](docs/README.md) covers each route, with a minimal app, the live theme, previews in other themes, snapshots, pinning and troubleshooting:
+
+- **Qt Quick** ([`docs/using-qt.md`](docs/using-qt.md)): install the QML modules (the Arch package in [`packaging/arch/omarchy-ui`](packaging/arch/omarchy-ui), or `make install` from [`qt/module`](qt/module)), and `import Omarchy.Ui as O` works in any QML app: the `qml` tool, C++, PySide6, Quickshell. Or vendor it with `include(omarchy-ui/qt/omarchy-ui.pri)` and one `OmarchyUi::registerTypes()` call.
+- **Rune** ([`docs/using-rust.md`](docs/using-rust.md)): one path or git dependency on `omarchy-rune`, which re-exports the `rune` it's built on.
+- **Any other Rust UI** ([`docs/using-rust.md`](docs/using-rust.md#any-other-rust-framework-omarchy-theme)): `omarchy-theme` gives tokens, a live watch, icons and strings.
 
 ```qml
-// app.pro: include(../omarchy-ui/qt/omarchy-ui.pri)   main.cpp: OmarchyUi::registerTypes();
 import Omarchy.Theme as Theme
 import Omarchy.Ui as O
 
@@ -40,20 +43,6 @@ O.Card {
 }
 ```
 
-Rune:
-
-```rust
-use omarchy_rune::{Theme, ui::*};
-
-fn view(s: &App, cx: &mut Cx<App>) -> El {
-    let t = &s.theme;
-    t.apply(cx);
-    Card::new().title("Network")
-        .child(Toggle::new("Wi-Fi").description("Basecamp").checked(s.wifi).on_toggle(|s: &mut App| s.wifi ^= true).build(t))
-        .child(Button::new("Forget").bordered(true).build(t))
-        .build(t)
-}
-// AppSpec { setup: Some(|s, wake| s.theme.follow(wake)), poll: Some(|s, _, _| s.theme.poll()), .. }
-```
+[`examples/`](examples) has a working app for each route, built and rendered by `bin/test`.
 
 [`spec/roadmap.md`](spec/roadmap.md) ranks the primitives still to build. [`AGENTS.md`](AGENTS.md) has the rules that make an app read as Omarchy, and how to work on the kit.

@@ -6,13 +6,13 @@ A cross-framework kit for apps that look and feel like Omarchy. One token contra
 
 Use the kit's components and tokens. Never hard-code a color, radius, font, size or duration that a token covers.
 
-- **Qt Quick**: `include(path/to/omarchy-ui/qt/omarchy-ui.pri)` in the `.pro`, call `OmarchyUi::registerTypes()` before loading QML, then `import Omarchy.Theme as Theme` and `import Omarchy.Ui as O`. Colors are `Theme.Color.*` (`foreground`, `background`, `accent`, `urgent`, `muted`, and surfaces like `Theme.Color.popups.background`), structure is `Theme.Style.*` (`cornerRadius`, `spacing.*`, `font.*`, `duration(ms)`, state fills like `hoverFill`), borders are `Theme.Border.*` specs drawn with `O.BorderSurface`. Qualify the imports: the kit has `Button`, `TextField` and `Color` like Qt Quick does. Run with `QT_QUICK_CONTROLS_STYLE=Basic` (the gallery sets it) so nothing falls back to a platform style.
-- **Rune**: depend on `omarchy-rune` (and `rune`, `rune-kit` at the rev pinned in `Cargo.toml`). Keep an `omarchy_rune::Theme` in the app state, `Theme::load()` in `init`, `setup: Some(|s, wake| s.theme.follow(wake))` and `poll: Some(|s, _, _| s.theme.poll())` in the `AppSpec`, `families: Theme::load().families()`, and call `theme.apply(cx)` at the top of the view. Build with `omarchy_rune::ui::*`; reach for rune-kit components through `theme.kit()` only when the kit has no Omarchy primitive for the job.
+- **Qt Quick** ([`docs/using-qt.md`](docs/using-qt.md)): with the modules installed (`packaging/arch/omarchy-ui`, or `qt/module`), any QML file can `import Omarchy.Theme as Theme` and `import Omarchy.Ui as O`. A vendoring app instead does `include(path/to/omarchy-ui/qt/omarchy-ui.pri)` and calls `OmarchyUi::registerTypes()` before loading QML. Colors are `Theme.Color.*`, structure is `Theme.Style.*`, borders are `Theme.Border.*` specs drawn with `O.BorderSurface`. Qualify the imports (`O.Button`): the kit has `Button`, `TextField` and `Color` like Qt Quick does. Run with `QT_QUICK_CONTROLS_STYLE=Basic`.
+- **Rune** ([`docs/using-rust.md`](docs/using-rust.md)): depend on `omarchy-rune` only and use its `omarchy_rune::rune` / `rune_kit` re-exports. Keep an `omarchy_rune::Theme` in the app state (`Theme::load()`), wire `families: Theme::load().families()`, `setup: Some(|s: &mut App, wake| s.theme.follow(wake))` and `poll: Some(|s: &mut App, _, _| s.theme.poll())` in the `AppSpec`, call `theme.apply(cx)` at the top of the view, and build with `omarchy_rune::ui::*`. Use rune-kit through `theme.kit()` only when the kit has no Omarchy primitive for the job.
 - **Any other Rust framework (GPUI, iced, egui)**: depend on `omarchy-theme`, map `Tokens` onto the framework's theme, and follow `omarchy_theme::watch`. Then add a binding here (below).
 
 Look at what you built before calling it done, in more than one theme and rounding:
 
-- Qt: `build/qt/omarchy-qt-gallery --qml view.qml --snap out.png` renders any QML file (an Item or a Window) with the kit, offscreen.
+- Qt: `build/qt/omarchy-qt-gallery --qml view.qml --snap out.png` renders any QML file (an Item or a Window) with the kit, offscreen. Against the installed modules, `QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 qml6 examples/qt-installed/snap.qml -- /abs/view.qml /abs/out.png` does the same for a Window.
 - Rune: every app gets `--snap out.png [--scene name] [--size WxH]` from Rune's own tooling.
 - Either: prefix with `OMARCHY_UI_THEME_DIR=fixtures/themes/catppuccin-latte OMARCHY_UI_ROUNDING=8` to see a light theme with rounded corners, or any fixture under `fixtures/themes/`.
 
@@ -29,7 +29,8 @@ What makes it read as Omarchy, in order of how often agents get it wrong:
 
 ```sh
 bin/build                  # both galleries + the token CLI
-bin/test                   # Rust tests, Qt Quick tests (qt/tests), Qt/Rune token and icon parity
+bin/test                   # Rust tests, Qt Quick tests (qt/tests), Qt/Rune token and icon parity, examples/
+bin/test-examples          # build each example app (examples/) and render it to build/examples/
 bin/review --open          # render every section in both, compare in the browser
 bin/review --live          # both galleries as windows, following the desktop
 bin/harvest-qt --check     # what changed in the shell since the last harvest
@@ -42,4 +43,5 @@ The Omarchy checkout is `~/omarchy` on `quattro` (`$OMARCHY_SRC` to override). P
 - **Qt components** are harvested from the shell (`qt/HARVEST.md`). Don't edit harvested files: fix them in the shell, or add a patch under `qt/patches/` when the fix only matters outside the shell.
 - **A new component** goes in `spec/components.md` with its metrics, then in every binding under the same name, then into every gallery as `spec/gallery.md` lists it. Check it with `bin/review`. Behavior gets a test in both: a `qt/tests/tst_*.qml` case and a Rune gallery test (`rune/gallery/src/main.rs`) driving the same keys and clicks.
 - **A new framework** gets `<framework>/` with a binding that resolves tokens (reuse `omarchy-theme` from Rust), a gallery with the `spec/gallery.md` sections, `--dump-tokens`, a still-render mode at 2×, and the `OMARCHY_UI_*` overrides; then a column in `tools/review.py`.
+- **How apps consume the kit** (installed QML modules from `qt/module`, the vendored `qt/omarchy-ui.pri`, Cargo path/git dependencies) is documented in `docs/` and proven by `examples/`. Keep both building: `qt/src/native.pri` is the C++ both Qt routes compile, and `OmarchyUi::registerTypes()` is the one place native types are registered.
 - **Commits**: short, imperative, one change each.
