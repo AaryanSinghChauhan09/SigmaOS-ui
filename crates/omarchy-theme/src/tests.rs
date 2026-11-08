@@ -13,6 +13,7 @@ fn fixture(name: &str) -> Tokens {
         font_file: None,
         theme_name: name.into(),
         icon_theme: "Yaru-blue".into(),
+        language: "en".into(),
     })
 }
 

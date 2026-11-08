@@ -6,7 +6,7 @@ The Qt binding is the Omarchy shell's own QML kit, lifted out of Quickshell. `bi
 |---|---|---|
 | Harvested | `Ui/*.qml` listed in `bin/harvest-qt`, `Theme/Border.qml`, `Theme/BorderGeometry.js`, `Theme/Numbers.js` | Copied verbatim; only imports change (`qs.Commons` → `Omarchy.Theme`) |
 | Patched | `qt/patches/*.patch` | Applied on top of the harvest. Each fixes something the shell doesn't hit because it runs under the desktop's platform style or inside Quickshell. Candidates to send upstream. |
-| Generated | `Theme/Strings.js` | The strings the components show, extracted from `default/i18n` for every language |
+| Generated | `Theme/Strings.js` | The strings the components show, extracted from `default/i18n` for every language (every key an `I18n.t` call in `Ui/` names). The Rune binding reads the same file through `omarchy_theme::strings`. |
 | Hand-ported | `Theme/Color.qml`, `Theme/Style.qml`, `Theme/Util.qml`, `Theme/I18n.qml` | The shell's logic with its I/O swapped for `src/themesource.cpp` (see below). Never overwritten by a harvest. |
 | Own | `Ui/Card.qml`, `Theme/Tokens.qml`, `src/*` | Written here |
 

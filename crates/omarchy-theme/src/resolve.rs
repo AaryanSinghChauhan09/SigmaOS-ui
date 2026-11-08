@@ -39,6 +39,8 @@ pub struct Sources {
     pub theme_name: String,
     /// The icon theme the theme names (`icons.theme`), see [`crate::icons::theme_name`].
     pub icon_theme: String,
+    /// The display language code, see [`crate::strings::language`] (empty is English).
+    pub language: String,
 }
 
 struct Ctx<'a> {
@@ -483,6 +485,7 @@ pub fn resolve(src: &Sources) -> Tokens {
         schema: 1,
         theme: src.theme_name.clone(),
         icon_theme: src.icon_theme.clone(),
+        language: crate::strings::language_code(&src.language),
         mode: if c.dark { Mode::Dark } else { Mode::Light },
         palette: Palette {
             foreground: c.foreground,

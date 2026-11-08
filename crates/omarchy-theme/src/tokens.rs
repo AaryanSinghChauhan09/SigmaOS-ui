@@ -267,6 +267,10 @@ pub struct Tokens {
     /// canonical JSON, but a change to it is a change to the tokens, so `watch` delivers it.
     #[serde(skip)]
     pub icon_theme: String,
+    /// The display language (`de`, `pt-BR`; `en` when unset), for the kit's strings
+    /// ([`crate::strings`]). Not part of the canonical JSON; `watch` delivers a change to it.
+    #[serde(skip)]
+    pub language: String,
     pub mode: Mode,
     pub palette: Palette,
     pub roles: Roles,
@@ -286,6 +290,11 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    /// The kit's string `key` in the display language, or `fallback` ([`crate::strings::t`]).
+    pub fn string(&self, key: &str, fallback: &str) -> String {
+        crate::strings::t(&self.language, key, fallback)
+    }
+
     pub fn is_dark(&self) -> bool {
         self.mode == Mode::Dark
     }

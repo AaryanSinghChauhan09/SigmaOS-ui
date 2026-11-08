@@ -15,6 +15,7 @@ pub mod icons;
 pub mod parse;
 pub mod resolve;
 pub mod source;
+pub mod strings;
 pub mod tokens;
 pub mod watch;
 

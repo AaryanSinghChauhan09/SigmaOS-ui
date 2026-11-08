@@ -79,6 +79,9 @@ fi
 
 # The few strings the components show (Cancel, Search...), in every Omarchy language, plus each
 # language's direction and number format, so the kit follows `omarchy language` like the shell.
+# The keys are every I18n.t call in Ui/, harvested and kit-owned alike (SearchList's
+# common.noMatchesFor comes from there). The Rune binding reads the same file
+# (crates/omarchy-theme/src/strings.rs parses the `var catalog = ` line), so keep it one line.
 keys="$(grep -rhoE 'I18n\.tn?\("[^"]+"' "$UI_OUT" | sed -E 's/.*\("//; s/"$//' | sort -u)"
 python3 - "$OMARCHY_SRC/default/i18n" "$THEME_OUT/Strings.js" "${EXTRA_KEY_PREFIXES[*]}" $keys <<'PY'
 import json, os, sys

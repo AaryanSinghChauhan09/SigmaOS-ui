@@ -37,6 +37,11 @@ pub fn user_shell_path() -> PathBuf {
     home().join(".config/omarchy/shell.toml")
 }
 
+/// `~/.config/omarchy/language`, the display language `omarchy language` sets.
+pub fn language_path() -> PathBuf {
+    home().join(".config/omarchy/language")
+}
+
 fn read(path: &Path) -> String {
     std::fs::read_to_string(path).unwrap_or_default()
 }
@@ -162,5 +167,6 @@ pub fn load_sources() -> Sources {
         font_file: file,
         theme_name,
         icon_theme: crate::icons::theme_name(),
+        language: crate::strings::language(),
     }
 }
