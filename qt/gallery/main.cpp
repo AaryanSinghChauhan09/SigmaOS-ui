@@ -54,6 +54,8 @@ int main(int argc, char **argv) {
   // The device pixel ratio has to be set before the application exists.
   if (hasArg(argc, argv, "--snap")) qputenv("QT_SCALE_FACTOR", argValue(argc, argv, "--scale", "2"));
   qputenv("QT_QUICK_CONTROLS_STYLE", "Basic");
+  // Under a systemd session Qt logs to the journal; console.log from a --qml file belongs on stderr.
+  if (!qEnvironmentVariableIsSet("QT_FORCE_STDERR_LOGGING")) qputenv("QT_FORCE_STDERR_LOGGING", "1");
 
   QGuiApplication app(argc, argv);
   app.setApplicationName("omarchy-qt-gallery");
