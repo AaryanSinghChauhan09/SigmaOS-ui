@@ -76,7 +76,7 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
             ListRow::new("Coffee Shop")
                 .glyph("\u{F0922}")
                 .subtitle("WPA2")
-                .value("\u{F033E}")
+                .trailing_glyph("\u{F033E}", Tone::Neutral)
                 .expansion(
                     row()
                         .w_full()
@@ -94,7 +94,14 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
                 )
                 .build(t),
         )
-        .child(ListRow::new("Library").glyph("\u{F091F}").subtitle("Saved").build(t))
+        .child(
+            ListRow::new("Library")
+                .glyph("\u{F091F}")
+                .subtitle("Saved")
+                .trailing_glyph("\u{F033E}", Tone::Neutral)
+                .action("\u{F0159}", true)
+                .build(t),
+        )
         .build(t);
     let wifi = Card::new()
         .width(360.0)

@@ -64,8 +64,8 @@ Built only from kit components and tokens; the gallery adds nothing but layout (
    - A ScrollArea (max 280) of ListRows `xxs` apart:
      1. Basecamp: glyph U+F0928, status "Connected" in success, current.
      2. Basecamp Guest: glyph U+F0925, subtitle "Open", under the cursor, its forget action U+F0159 (urgent) revealed.
-     3. Coffee Shop: glyph U+F0922, subtitle "WPA2", value the lock U+F033E, expanded: a PasswordField (placeholder "Password") filling the row and a bordered Button "Connect", `md` apart.
-     4. Library: glyph U+F091F, subtitle "Saved".
+     3. Coffee Shop: glyph U+F0922, subtitle "WPA2", trailing glyph the lock U+F033E, expanded: a PasswordField (placeholder "Password") filling the row and a bordered Button "Connect", `md` apart.
+     4. Library: glyph U+F091F, subtitle "Saved", the lock U+F033E with the forget action U+F0159 (urgent) in its place under the cursor.
    - A Separator.
    - KeyValue, one pair to a line: IP 192.168.1.24 · Gateway 192.168.1.1 · DNS 1.1.1.1.
 

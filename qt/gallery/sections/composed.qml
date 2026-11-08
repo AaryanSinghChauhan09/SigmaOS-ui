@@ -52,7 +52,8 @@ Section {
           hasCursor: true
         }
         ListRow {
-          glyph: section.g(0xF0922); title: "Coffee Shop"; subtitle: "WPA2"; value: section.g(0xF033E)
+          glyph: section.g(0xF0922); title: "Coffee Shop"; subtitle: "WPA2"
+          trailingGlyph: section.g(0xF033E)
           expansion: Component {
             RowLayout {
               spacing: Style.spacing.md
@@ -63,6 +64,8 @@ Section {
         }
         ListRow {
           glyph: section.g(0xF091F); title: "Library"; subtitle: "Saved"
+          trailingGlyph: section.g(0xF033E)
+          actionGlyph: section.g(0xF0159); actionUrgent: true
         }
       }
 
