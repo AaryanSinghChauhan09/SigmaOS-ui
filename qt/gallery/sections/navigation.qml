@@ -21,15 +21,7 @@ Section {
     ToolbarSeparator {}
     IconButton { iconText: "" }
     IconButton { iconText: "" }
-    center: [
-      Text {
-        textFormat: Text.PlainText
-        text: "notes.md"
-        color: Commons.Color.textDim
-        font.family: Style.font.family
-        font.pixelSize: Style.font.body
-      }
-    ]
+    center: [ Heading { text: "notes.md"; centered: true } ]
     trailing: [ Button { text: "Share"; bordered: true } ]
     overflow: true
   }

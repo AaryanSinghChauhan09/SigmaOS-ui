@@ -1,7 +1,7 @@
 //! The `navigation` section (spec/gallery.md).
 
 use omarchy_rune::Theme;
-use omarchy_rune::ui::{Button, IconButton, IconRail, Tabs, Toolbar, toolbar_separator};
+use omarchy_rune::ui::{Button, Heading, IconButton, IconRail, Tabs, Toolbar, toolbar_separator};
 use rune::{El, el, row, text};
 
 use crate::State;
@@ -39,7 +39,7 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
             icon("\u{f03e}"),
             icon("\u{f0c1}"),
         ])
-        .center([text("notes.md").font(t.text_style(tk.font.body)).color(t.dim()).single_line()])
+        .center([Heading::new("notes.md").centered(true).build(t)])
         .trailing([Button::new("Share").bordered(true).build(t)])
         .overflow(true)
         .build(t);
