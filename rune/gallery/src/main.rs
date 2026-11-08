@@ -36,6 +36,8 @@ pub(crate) struct State {
     pub stepped: f32,
     pub align: String,
     pub network: String,
+    pub timeline: sections::timeline::Editing,
+    pub color: sections::color::Picker,
 }
 
 pub(crate) fn init() -> State {
@@ -55,6 +57,8 @@ pub(crate) fn init() -> State {
         stepped: 0.75,
         align: "center".into(),
         network: "basecamp".into(),
+        timeline: sections::timeline::init(),
+        color: sections::color::init(),
     }
 }
 
@@ -84,6 +88,8 @@ gallery! {
     inputs: "Inputs",
     slider: "Slider",
     surfaces: "Surfaces",
+    timeline: "Timeline",
+    color: "Color",
     tokens: "Tokens",
 }
 
@@ -168,5 +174,32 @@ mod tests {
         rt.pointer_up(x, y);
         rt.frame(1.0 / 60.0);
         assert_ne!(before, rt.state.switches[0]);
+    }
+
+    /// Pressing a clip selects it; pressing a swatch picks its color.
+    #[test]
+    fn editing_selects_and_picks() {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some("timeline");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        let (x, y) = rt.find("clip-1-0").expect("the voiceover clip");
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(1.0 / 60.0);
+        assert_eq!(rt.state.timeline.selected, Some((1, 0)));
+
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some("color");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        let (x, y) = rt.find("swatch-red").expect("the red swatch");
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(1.0 / 60.0);
+        assert_eq!(rt.state.color.value.hex(), "#f7768e");
+        assert_eq!(rt.state.color.hex.text, "#f7768e");
     }
 }

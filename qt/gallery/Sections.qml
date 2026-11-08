@@ -15,6 +15,8 @@ ColumnLayout {
     "inputs",
     "slider",
     "surfaces",
+    "timeline",
+    "color",
     "tokens",
   ]
 
