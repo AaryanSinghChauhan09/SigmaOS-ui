@@ -258,6 +258,48 @@ mod tests {
         assert!(rt.find("composed-search-row-3").is_some(), "an empty query lists everything");
     }
 
+    /// The rest of SearchList's keys, as `qt/tests/tst_searchlist.qml` drives Qt's: j, k, x and
+    /// Space are text; the paging keys move the cursor and stop at the ends; Delete asks to
+    /// delete the cursor row; Escape clears, then asks to close; Return with no rows does nothing.
+    #[test]
+    fn search_list_keys_match_qt() {
+        use rune::{Key, KeyEvent};
+        let mut at = 1.0 / 60.0;
+        let mut key = |rt: &mut Runtime<State>, k: Key| {
+            at += 1.0 / 60.0;
+            rt.key(KeyEvent { key: k, mods: Default::default() });
+            rt.frame(at);
+        };
+        let text = |t: &str| Key::Text(t.into());
+        let mut rt = runtime("composed");
+        press(&mut rt, "composed-search-filter");
+        let c = |rt: &Runtime<State>| rt.state.composed.cursor.index();
+
+        for (k, want) in [(Key::Down, 2), (Key::Down, 3), (Key::Down, 3), (Key::Up, 2), (Key::Home, 0), (Key::End, 3), (Key::PageUp, 0), (Key::PageDown, 3)] {
+            let name = format!("{k:?}");
+            key(&mut rt, k);
+            assert_eq!(c(&rt), want, "after {name}");
+        }
+        key(&mut rt, Key::Up);
+        key(&mut rt, Key::Delete);
+        assert_eq!(rt.state.composed.deleted.as_deref(), Some("Terminal theme"));
+
+        for t in ["j", "k", " ", "x"] {
+            key(&mut rt, text(t));
+        }
+        assert_eq!(rt.state.composed.query.text, "termjk x", "j, k, Space and x are text");
+        assert_eq!(rt.state.composed.deleted.as_deref(), Some("Terminal theme"), "x didn't delete");
+        assert!(rt.find("composed-search-row-0").is_none());
+        key(&mut rt, Key::Enter);
+        assert_eq!(rt.state.composed.picked, None, "Return with no rows does nothing");
+
+        key(&mut rt, Key::Escape);
+        assert_eq!(rt.state.composed.query.text, "");
+        assert_eq!(rt.state.composed.closes, 0);
+        key(&mut rt, Key::Escape);
+        assert_eq!(rt.state.composed.closes, 1, "Escape on an empty query asks to close");
+    }
+
     /// A gallery section, laid out once, in tokyo-night.
     fn runtime(section: &'static str) -> Runtime<State> {
         let mut s = init();

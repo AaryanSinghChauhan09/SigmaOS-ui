@@ -25,6 +25,10 @@ pub struct Composed {
     pub empty_cursor: CursorModel,
     /// The last result activated, by title.
     pub picked: Option<String>,
+    /// The last result asked to be deleted, by title.
+    pub deleted: Option<String>,
+    /// Times the overlay asked to close.
+    pub closes: usize,
 }
 
 pub fn init() -> Composed {
@@ -45,6 +49,8 @@ pub fn init() -> Composed {
         empty_query: TextEdit::new("zzz"),
         empty_cursor: SearchList::cursor(),
         picked: None,
+        deleted: None,
+        closes: 0,
     }
 }
 
@@ -176,6 +182,8 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .size(360.0, 300.0)
         .on_state(|s: &mut State| (&mut s.composed.query, &mut s.composed.cursor))
         .on_activate(|s: &mut State, i| s.composed.picked = filtered(&s.composed.query.text).get(i).map(|i| i.title.clone()))
+        .on_delete(|s: &mut State, i| s.composed.deleted = filtered(&s.composed.query.text).get(i).map(|i| i.title.clone()))
+        .on_close(|s: &mut State| s.composed.closes += 1)
         .build(t);
     let empty = SearchList::new("composed-empty", &c.empty_query, &c.empty_cursor)
         .items(filtered(&c.empty_query.text))
