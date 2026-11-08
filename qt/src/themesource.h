@@ -20,15 +20,20 @@ class QJSEngine;
 //   asked over the instance socket and re-asked on `configreloaded` from socket2.
 // - The family fontconfig's `monospace` alias resolves to (`omarchy font set`).
 // - ~/.config/omarchy/language, the display language (`omarchy language`).
+// - icons.theme from the current theme, the icon theme it names (IconLookup searches it). The
+//   theme directory itself is watched too, re-armed after every change, so an edit inside it
+//   is seen as well as a switch.
 //
-// OMARCHY_UI_THEME_DIR, OMARCHY_UI_ROUNDING, OMARCHY_UI_GAPS_OUT, OMARCHY_UI_REDUCE_MOTION and
-// OMARCHY_UI_FONT_FAMILY pin any of these for reviews and tests (spec/tokens.md).
+// OMARCHY_UI_THEME_DIR, OMARCHY_UI_ROUNDING, OMARCHY_UI_GAPS_OUT, OMARCHY_UI_REDUCE_MOTION,
+// OMARCHY_UI_FONT_FAMILY and OMARCHY_UI_ICON_THEME pin any of these for reviews and tests
+// (spec/tokens.md).
 class ThemeSource : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString colorsText READ colorsText NOTIFY themeChanged)
   Q_PROPERTY(QString shellText READ shellText NOTIFY themeChanged)
   Q_PROPERTY(QString userShellText READ userShellText NOTIFY themeChanged)
   Q_PROPERTY(QString themeName READ themeName NOTIFY themeChanged)
+  Q_PROPERTY(QString iconTheme READ iconTheme NOTIFY themeChanged)
   Q_PROPERTY(QString languageText READ languageText NOTIFY languageChanged)
   Q_PROPERTY(QString themeDir READ themeDir CONSTANT)
   Q_PROPERTY(bool pinned READ pinned CONSTANT)
@@ -49,6 +54,7 @@ public:
   QString shellText() const { return m_shell; }
   QString userShellText() const { return m_userShell; }
   QString themeName() const { return m_themeName; }
+  QString iconTheme() const { return m_iconTheme; }
   QString languageText() const { return m_language; }
   QString themeDir() const { return m_themeDir; }
   bool pinned() const { return m_pinned; }
@@ -77,7 +83,7 @@ private:
   QString hyprDir() const;
   QByteArray hyprRequest(const QString &request) const;
 
-  QString m_colors, m_shell, m_userShell, m_themeName, m_themeDir, m_language;
+  QString m_colors, m_shell, m_userShell, m_themeName, m_themeDir, m_language, m_iconTheme;
   bool m_pinned = false;
   int m_rounding = 0;
   double m_gapsOut = 10;

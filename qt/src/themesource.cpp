@@ -92,9 +92,10 @@ ThemeSource *ThemeSource::instance() {
 ThemeSource *ThemeSource::create(QQmlEngine *, QJSEngine *) { return instance(); }
 
 void ThemeSource::reload() {
-  const QString colors = m_colors, shell = m_shell, user = m_userShell, name = m_themeName;
+  const QString colors = m_colors, shell = m_shell, user = m_userShell, name = m_themeName, icons = m_iconTheme;
   readFiles();
-  if (colors != m_colors || shell != m_shell || user != m_userShell || name != m_themeName) emit themeChanged();
+  if (colors != m_colors || shell != m_shell || user != m_userShell || name != m_themeName || icons != m_iconTheme)
+    emit themeChanged();
 
   const int rounding = m_rounding, border = m_borderSize;
   const double gaps = m_gapsOut;
@@ -121,6 +122,15 @@ void ThemeSource::readFiles() {
   m_userShell = m_pinned ? QString() : readText(userShellPath());
   m_themeName = m_pinned ? QFileInfo(m_themeDir).fileName()
                          : readText(currentDir() + QStringLiteral("/theme.name")).trimmed();
+
+  // The icon theme, as omarchy-theme-set-gnome applies it: icons.theme's line, else Yaru-blue.
+  m_iconTheme = qEnvironmentVariable("OMARCHY_UI_ICON_THEME").trimmed();
+  if (m_iconTheme.isEmpty()) {
+    const QStringList lines = readText(m_themeDir + QStringLiteral("/icons.theme")).split(QLatin1Char('\n'));
+    for (const QString &line : lines)
+      if (!line.trimmed().isEmpty()) { m_iconTheme = line.trimmed(); break; }
+  }
+  if (m_iconTheme.isEmpty()) m_iconTheme = QStringLiteral("Yaru-blue");
 }
 
 void ThemeSource::armWatcher() {
@@ -134,6 +144,11 @@ void ThemeSource::armWatcher() {
   }
   for (const QString &p : want)
     if (QFileInfo::exists(p) && !m_watcher.directories().contains(p)) m_watcher.addPath(p);
+  // A switch renames a new directory into current/theme, which leaves the watch on the old one.
+  if (!m_pinned) {
+    m_watcher.removePath(m_themeDir);
+    if (QFileInfo::exists(m_themeDir)) m_watcher.addPath(m_themeDir);
+  }
 }
 
 QString ThemeSource::hyprDir() const {

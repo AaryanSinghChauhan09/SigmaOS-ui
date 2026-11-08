@@ -16,6 +16,8 @@ CONFIG += c++17
 INCLUDEPATH += $$PWD/src
 HEADERS += $$PWD/src/themesource.h $$PWD/src/omarchyui.h
 SOURCES += $$PWD/src/themesource.cpp $$PWD/src/omarchyui.cpp
+HEADERS += $$PWD/src/iconlookup.h
+SOURCES += $$PWD/src/iconlookup.cpp
 
 omarchy_ui_qml.files = \
   $$files($$PWD/qml/Omarchy/Theme/*.qml) $$files($$PWD/qml/Omarchy/Theme/*.js) $$PWD/qml/Omarchy/Theme/qmldir \
