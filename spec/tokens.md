@@ -45,12 +45,12 @@ Colors derived from the palette, so components share them instead of each re-der
 
 | Role | Value | For |
 |---|---|---|
-| `textDim` | dark themes: foreground darker 1.5; light themes: foreground mixed ⅓ toward background | Secondary text: subtitles, values, hints, status lines |
-| `textFaint` | dark themes: foreground darker 2.0; light themes: foreground mixed ½ toward background | Disabled and placeholder text |
-
-Both fade toward the background. In a dark theme that is exactly the shell's `Qt.darker`; in a light theme `darker` would make secondary text stronger than the foreground, so they mix instead (sRGB, per 8-bit channel, rounded).
+| `textDim` | `dark_foreground` (legacy `dark_fg`; Base24 base04). Without one: foreground darker 1.5 in a dark theme, mixed ⅓ toward the background in a light one | Secondary text: subtitles, values, hints, status lines |
+| `textFaint` | `muted`, else `color8` (Base24 base03). Without either: foreground darker 2.0 in a dark theme, mixed ½ toward the background in a light one | Disabled and placeholder text |
 | `track` | foreground at 0.12 | The unfilled part of meters, progress bars and scrollbars; also the separator color |
 | `scrim` | `surfaces.menu.scrim` | Behind modal dialogs |
+
+`textDim` and `textFaint` follow the theme's own neutral ramp (`docs/theming.md` in Omarchy: `muted` is for "comments, placeholders, dividers"), so they read the same as the theme's terminal and editor. The fallback, for themes predating those keys, fades toward the background: in a dark theme exactly the shell's `Qt.darker`; in a light theme `darker` would make secondary text stronger than the foreground, so it mixes instead (sRGB, per 8-bit channel, rounded).
 
 `darker(f)` is Qt's `QColor::darker(round(f × 100))`, exactly: HSV value divided in 16-bit channels with float math, so halves round as Qt rounds them.
 
@@ -153,7 +153,7 @@ Short and quiet. `fast` 120 ms for color and state changes, `press` 160 ms for t
   "schema": 1,
   "mode": "dark",
   "palette": { "foreground": "#a9b1d6ff", "background": "#1a1b26ff", "accent": "#7aa2f7ff", "urgent": "#f7768eff", "muted": "#414868ff", "success": "#9ece6aff", "warning": "#e0af68ff" },
-  "roles": { "textDim": "#71768fff", "textFaint": "#54596bff", "track": "#a9b1d61f", "scrim": "#1a1b2680" },
+  "roles": { "textDim": "#565f89ff", "textFaint": "#414868ff", "track": "#a9b1d61f", "scrim": "#1a1b2680" },
   "radius": 0,
   "gapsOut": 5,
   "reduceMotion": false,

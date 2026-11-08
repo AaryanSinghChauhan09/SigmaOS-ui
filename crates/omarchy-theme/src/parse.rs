@@ -16,6 +16,10 @@ pub struct ColorsFile {
     pub muted: Rgba,
     pub success: Rgba,
     pub warning: Rgba,
+    /// `dark_foreground` (or legacy `dark_fg`): the theme's own secondary-text stop.
+    pub dark_foreground: Option<Rgba>,
+    /// `muted` or `color8` when the theme names one (`muted` above falls back to the foreground).
+    pub muted_named: Option<Rgba>,
     pub dark: bool,
     /// Every `key = "#rrggbb"` in the file, by key.
     pub named: BTreeMap<String, Rgba>,
@@ -31,6 +35,8 @@ impl Default for ColorsFile {
             muted: Rgba::rgb(0x70, 0x78, 0x80),
             success: Rgba::rgb(0x7f, 0x9f, 0x6f),
             warning: Rgba::rgb(0xc0, 0xa0, 0x60),
+            dark_foreground: None,
+            muted_named: None,
             dark: true,
             named: BTreeMap::new(),
         }
@@ -79,7 +85,10 @@ pub fn parse_colors(raw: &str) -> ColorsFile {
     out.background = bg.or(n("color0")).unwrap_or(out.background);
     out.foreground = fg.or(n("color7")).unwrap_or(out.foreground);
     out.accent = accent.or(n("color4")).unwrap_or(out.accent);
-    out.muted = muted.or(n("color8")).unwrap_or(out.foreground);
+    out.muted_named = muted.or(n("color8"));
+    out.muted = out.muted_named.unwrap_or(out.foreground);
+    // Canonical names win over the legacy short ones, wherever they sit in the file.
+    out.dark_foreground = n("dark_foreground").or(n("dark_fg"));
     out.urgent = urgent.unwrap_or(out.urgent);
     out.success = success.unwrap_or(out.success);
     out.warning = warning.unwrap_or(out.warning);

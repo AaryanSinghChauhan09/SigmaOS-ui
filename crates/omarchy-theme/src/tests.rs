@@ -91,3 +91,28 @@ fn width_specs() {
     assert_eq!(parse_widths(Some("1 2 3 4"), 0.0), [1.0, 2.0, 3.0, 4.0]);
     assert_eq!(parse_widths(None, 3.0), [3.0; 4]);
 }
+
+#[test]
+fn dim_and_faint_text_are_the_themes_base24_stops() {
+    // tokyo-night: dark_foreground and muted.
+    let t = fixture("tokyo-night");
+    assert_eq!(t.roles.text_dim.hex(), "#565f89ff");
+    assert_eq!(t.roles.text_faint.hex(), "#414868ff");
+    // catppuccin-latte is light: its own stops, not anything darker than the text.
+    let t = fixture("catppuccin-latte");
+    assert_eq!(t.roles.text_dim.hex(), "#9ca0b0ff");
+    assert_eq!(t.roles.text_faint.hex(), "#acb0beff");
+}
+
+#[test]
+fn dim_and_faint_text_fall_back_to_the_foreground() {
+    // Legacy short names count; canonical ones win wherever they sit.
+    let c = parse_colors("dark_fg = \"#111111\"\ndark_foreground = \"#222222\"\n");
+    assert_eq!(c.dark_foreground.unwrap().hex(), "#222222ff");
+    assert_eq!(parse_colors("dark_fg = \"#111111\"\n").dark_foreground.unwrap().hex(), "#111111ff");
+    // color8 stands in for muted.
+    assert_eq!(parse_colors("color8 = \"#333333\"\n").muted_named.unwrap().hex(), "#333333ff");
+    // Neither: derived from the foreground, as before.
+    let c = parse_colors("foreground = \"#a9b1d6\"\nbackground = \"#1a1b26\"\n");
+    assert_eq!((c.dark_foreground, c.muted_named), (None, None));
+}

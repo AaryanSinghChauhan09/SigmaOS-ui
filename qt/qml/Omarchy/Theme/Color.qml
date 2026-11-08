@@ -26,11 +26,16 @@ QtObject {
   // The kit's own additions (spec/tokens.md "Palette" and "Roles"); not in the shell.
   property color success: "#7f9f6f"
   property color warning: "#c0a060"
-  // Secondary and faint text fade toward the background: in a dark theme that is the shell's
-  // Qt.darker(foreground, 1.5 / 2.0); in a light theme darker would mean stronger, so they mix
-  // a third / a half of the way to the background instead.
-  readonly property color textDim: dark ? Qt.darker(foreground, 1.5) : mixColor(foreground, background, 1 / 3)
-  readonly property color textFaint: dark ? Qt.darker(foreground, 2.0) : mixColor(foreground, background, 1 / 2)
+  // Secondary and faint text are the theme's own Base24 stops: `dark_foreground` (base04) and
+  // `muted` (base03, or color8). A theme without them fades the foreground toward the
+  // background: the shell's Qt.darker(foreground, 1.5 / 2.0) in a dark theme; in a light theme
+  // darker would mean stronger, so a mix a third / a half of the way to the background instead.
+  property string darkForeground: ""
+  property bool mutedNamed: false
+  readonly property color textDim: darkForeground !== "" ? darkForeground
+    : dark ? Qt.darker(foreground, 1.5) : mixColor(foreground, background, 1 / 3)
+  readonly property color textFaint: mutedNamed ? muted
+    : dark ? Qt.darker(foreground, 2.0) : mixColor(foreground, background, 1 / 2)
   readonly property color track: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.12)
   readonly property color scrim: menu.scrim
 
@@ -167,6 +172,8 @@ QtObject {
     var nextDark = true
     var nextSuccess = "#7f9f6f"
     var nextWarning = "#c0a060"
+    var darkFg = ""
+    var darkFgLegacy = ""
     for (var i = 0; i < lines.length; i++) {
       var modeMatch = lines[i].match(/^\s*mode\s*=\s*["']?([A-Za-z]+)/)
       if (modeMatch) nextDark = modeMatch[1].toLowerCase() !== "light"
@@ -186,11 +193,16 @@ QtObject {
       else if (match[1] === "red" || match[1] === "color1") urgent = match[2]
       else if (match[1] === "green" || match[1] === "color2") nextSuccess = match[2]
       else if (match[1] === "yellow" || match[1] === "color3") nextWarning = match[2]
+      else if (match[1] === "dark_foreground") darkFg = match[2]
+      else if (match[1] === "dark_fg") darkFgLegacy = match[2]
     }
     if (!loadedBackground && color0Value.length > 0) background = color0Value
     if (!loadedForeground && color7Value.length > 0) foreground = color7Value
     if (!foundAccent && color4Value.length > 0) accent = color4Value
     if (!foundMuted) muted = color8Value.length > 0 ? color8Value : foreground
+    mutedNamed = foundMuted || color8Value.length > 0
+    // Canonical names win over the legacy short ones, wherever they sit in the file.
+    darkForeground = darkFg !== "" ? darkFg : darkFgLegacy
     dark = nextDark
     success = nextSuccess
     warning = nextWarning

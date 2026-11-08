@@ -492,10 +492,15 @@ pub fn resolve(src: &Sources) -> Tokens {
             named,
         },
         roles: Roles {
-            // Toward the background: Qt's darker in a dark theme (the shell's own values), a mix
-            // in a light one, where darker would mean stronger.
-            text_dim: if c.dark { c.foreground.darker(1.5) } else { c.foreground.mix(c.background, 1.0 / 3.0) },
-            text_faint: if c.dark { c.foreground.darker(2.0) } else { c.foreground.mix(c.background, 0.5) },
+            // The theme's own Base24 stops when it has them (dark_foreground is base04, muted
+            // base03). Otherwise derived toward the background: Qt's darker in a dark theme (the
+            // shell's own factors), a mix in a light one, where darker would mean stronger.
+            text_dim: c.dark_foreground.unwrap_or_else(|| {
+                if c.dark { c.foreground.darker(1.5) } else { c.foreground.mix(c.background, 1.0 / 3.0) }
+            }),
+            text_faint: c.muted_named.unwrap_or_else(|| {
+                if c.dark { c.foreground.darker(2.0) } else { c.foreground.mix(c.background, 0.5) }
+            }),
             track: c.foreground.with_alpha(0.12),
             scrim: surfaces.menu.scrim,
         },

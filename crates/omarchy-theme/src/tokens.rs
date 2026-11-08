@@ -243,11 +243,12 @@ impl Default for Motion {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Roles {
-    /// Secondary text: subtitles, values, hints. Foreground darker 1.5 (dark themes) or a third
-    /// of the way to the background (light themes).
+    /// Secondary text: subtitles, values, hints. The theme's `dark_foreground` (Base24 base04);
+    /// without one, foreground darker 1.5 (dark themes) or a third of the way to the background
+    /// (light themes).
     pub text_dim: Rgba,
-    /// Disabled and placeholder text. Foreground darker 2.0 (dark themes) or halfway to the
-    /// background (light themes).
+    /// Disabled and placeholder text. The theme's `muted` (or `color8`; Base24 base03); without
+    /// one, foreground darker 2.0 (dark themes) or halfway to the background (light themes).
     pub text_faint: Rgba,
     /// The unfilled part of meters, progress bars, sliders and scrollbars. Foreground at 0.12.
     pub track: Rgba,
