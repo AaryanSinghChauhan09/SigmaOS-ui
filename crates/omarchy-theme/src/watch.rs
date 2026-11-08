@@ -2,6 +2,8 @@
 //!
 //! - A theme switch swaps `~/.local/state/omarchy/current/theme` as a whole directory and then
 //!   rewrites `current/theme.name`, so the watch is on `current/`, not on files inside the theme.
+//!   The theme directory itself is watched too, re-armed after every change (a swap leaves the
+//!   watch on the old directory), so an edit inside it, such as a new `icons.theme`, is seen.
 //! - `~/.config/omarchy/shell.toml` (`omarchy display text size`) and fontconfig's `fonts.conf`
 //!   (`omarchy font set`) are watched through their parent directories, since editors and the
 //!   CLIs replace them by rename.
@@ -14,7 +16,7 @@
 use std::io::{BufRead, BufReader};
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
-use std::sync::mpsc;
+use std::sync::{Arc, Mutex, mpsc};
 use std::time::Duration;
 
 use notify::{RecursiveMode, Watcher as _};
@@ -24,7 +26,7 @@ use crate::source;
 
 /// Keeps the watch running; dropping it stops delivering changes.
 pub struct Watch {
-    _watcher: Option<notify::RecommendedWatcher>,
+    _watcher: Arc<Mutex<Option<notify::RecommendedWatcher>>>,
 }
 
 /// Call `on_change` on a background thread with fresh tokens whenever the theme, the user's
@@ -59,8 +61,13 @@ pub fn watch(initial: Tokens, mut on_change: impl FnMut(Tokens) + Send + 'static
         for d in &dirs {
             let _ = w.watch(d, RecursiveMode::NonRecursive);
         }
+        if !source::is_pinned() {
+            let _ = w.watch(&source::theme_dir(), RecursiveMode::NonRecursive);
+        }
         w
     });
+    let watcher = Arc::new(Mutex::new(watcher));
+    let rearm = watcher.clone();
 
     if !source::is_pinned() {
         let hypr_tx = tx.clone();
@@ -77,6 +84,13 @@ pub fn watch(initial: Tokens, mut on_change: impl FnMut(Tokens) + Send + 'static
             while rx.recv().is_ok() {
                 // Coalesce the burst a theme switch makes (dir swap, theme.name, Hyprland reload).
                 while rx.recv_timeout(Duration::from_millis(150)).is_ok() {}
+                if !source::is_pinned()
+                    && let Some(w) = rearm.lock().unwrap().as_mut()
+                {
+                    let theme = source::theme_dir();
+                    let _ = w.unwatch(&theme);
+                    let _ = w.watch(&theme, RecursiveMode::NonRecursive);
+                }
                 let next = crate::load();
                 if next != last {
                     last = next.clone();

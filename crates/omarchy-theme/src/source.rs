@@ -161,5 +161,6 @@ pub fn load_sources() -> Sources {
         resolved_font_family: resolved,
         font_file: file,
         theme_name,
+        icon_theme: crate::icons::theme_name(),
     }
 }

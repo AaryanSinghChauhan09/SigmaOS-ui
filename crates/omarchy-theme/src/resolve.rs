@@ -37,6 +37,8 @@ pub struct Sources {
     pub resolved_font_family: String,
     pub font_file: Option<std::path::PathBuf>,
     pub theme_name: String,
+    /// The icon theme the theme names (`icons.theme`), see [`crate::icons::theme_name`].
+    pub icon_theme: String,
 }
 
 struct Ctx<'a> {
@@ -480,6 +482,7 @@ pub fn resolve(src: &Sources) -> Tokens {
     Tokens {
         schema: 1,
         theme: src.theme_name.clone(),
+        icon_theme: src.icon_theme.clone(),
         mode: if c.dark { Mode::Dark } else { Mode::Light },
         palette: Palette {
             foreground: c.foreground,

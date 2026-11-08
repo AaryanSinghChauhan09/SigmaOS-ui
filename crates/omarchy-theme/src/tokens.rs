@@ -262,6 +262,11 @@ pub struct Tokens {
     pub schema: u32,
     #[serde(skip)]
     pub theme: String,
+    /// The freedesktop icon theme the Omarchy theme names in `icons.theme` (`Yaru-blue` when it
+    /// names none); look icons up in it with [`crate::icons::IconLookup`]. Not part of the
+    /// canonical JSON, but a change to it is a change to the tokens, so `watch` delivers it.
+    #[serde(skip)]
+    pub icon_theme: String,
     pub mode: Mode,
     pub palette: Palette,
     pub roles: Roles,
