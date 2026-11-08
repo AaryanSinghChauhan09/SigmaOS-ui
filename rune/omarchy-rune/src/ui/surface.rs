@@ -133,14 +133,21 @@ impl MenuRow {
     }
 }
 
-/// A tooltip as drawn (the app owns when it shows): [tooltip] surface, small text.
+/// A tooltip as drawn (the app owns when it shows): [tooltip] surface, small text, and an
+/// optional shortcut as Keycaps after it.
 pub struct Tooltip {
     label: String,
+    shortcut: Option<String>,
 }
 
 impl Tooltip {
     pub fn new(label: impl Into<String>) -> Tooltip {
-        Tooltip { label: label.into() }
+        Tooltip { label: label.into(), shortcut: None }
+    }
+    /// A key combination shown after the text, as a KeyCombo ("Ctrl+S").
+    pub fn shortcut(mut self, combo: impl Into<String>) -> Self {
+        self.shortcut = Some(combo.into());
+        self
     }
 
     pub fn build(self, t: &Theme) -> El {
@@ -153,6 +160,10 @@ impl Tooltip {
             .py(sp.control_padding_y as f32 + bw)
             .fill(color(s.background))
             .child(text(self.label).font(t.text_style(tk.font.body_small)).color(color(s.text)));
+        let e = match self.shortcut {
+            Some(combo) => e.items_center().gap(sp.control_gap as f32).child(super::KeyCombo::new(combo).build(t)),
+            None => e,
+        };
         border(e, &s.border)
     }
 }

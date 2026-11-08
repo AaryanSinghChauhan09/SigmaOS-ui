@@ -5,6 +5,8 @@ pub mod inputs;
 pub mod lists;
 pub mod messages;
 pub mod progress;
+pub mod menus;
+pub mod navigation;
 pub mod slider;
 pub mod surfaces;
 pub mod tiles;

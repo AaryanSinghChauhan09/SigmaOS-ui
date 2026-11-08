@@ -9,6 +9,8 @@ mod button;
 pub mod feedback;
 mod field;
 mod lists;
+mod menu;
+mod navigation;
 mod slider;
 mod surface;
 mod toggle;
@@ -20,6 +22,8 @@ pub use lists::{
     Avatar, AvatarSize, Badge, CursorKey, CursorModel, CursorSection, Hero, KeyValue, ListRow, ScrollArea, StatusDot, Tile, TileGrid,
     Tone, printable,
 };
+pub use menu::{ContextMenu, Menu, MenuItem};
+pub use navigation::{IconRail, KeyCombo, Keycap, ShortcutSheet, Tabs, Toolbar, key_combo_width, key_label, keycap_width, split_combo, toolbar_separator};
 pub use slider::Slider;
 pub use surface::{Card, ConfirmDialog, MenuRow, Tooltip, section_header, separator};
 pub use toggle::{Toggle, ToggleSwitch};

@@ -19,6 +19,8 @@ ColumnLayout {
     "tiles",
     "progress",
     "messages",
+    "menus",
+    "navigation",
     "tokens",
   ]
 

@@ -44,6 +44,19 @@ Meter 1.0 Meter.qml
 ProgressBar 1.0 ProgressBar.qml
 Spinner 1.0 Spinner.qml
 Toast 1.0 Toast.qml
+ContextMenu 1.0 ContextMenu.qml
+IconRail 1.0 IconRail.qml
+KeyCombo 1.0 KeyCombo.qml
+Keycap 1.0 Keycap.qml
+Menu 1.0 Menu.qml
+MenuItem 1.0 MenuItem.qml
+MenuSection 1.0 MenuSection.qml
+MenuSeparator 1.0 MenuSeparator.qml
+ShortcutSheet 1.0 ShortcutSheet.qml
+Tabs 1.0 Tabs.qml
+Toolbar 1.0 Toolbar.qml
+ToolbarSeparator 1.0 ToolbarSeparator.qml
+Tooltip 1.0 Tooltip.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml

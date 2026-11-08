@@ -141,7 +141,8 @@ impl IconButton {
         let icon = tk.font.icon;
         let size = ((t.space(22.0)).max((icon + tk.spacing.sm * 2) as f32).round() as i64 | 1) as f32;
         let rest = Look::new(Rgba::TRANSPARENT, if self.bordered { c.normal.border.clone() } else { BorderSpec::none() });
-        let hot = Look::new(c.hover.fill, c.hover.border.clone());
+        // PanelActionButton shows the hover border only when bordered.
+        let hot = Look::new(c.hover.fill, if self.bordered { c.hover.border.clone() } else { BorderSpec::none() });
         let base = row()
             .size(size, size)
             .center()
