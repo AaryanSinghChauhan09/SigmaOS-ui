@@ -321,6 +321,34 @@ mod tests {
         }
     }
 
+    /// The kit's default labels come from the catalog Qt reads, in the display language: the
+    /// ConfirmDialog's buttons (surfaces), the MultiSelect's count, placeholder and calendar
+    /// steppers (pickers, layout).
+    #[test]
+    fn default_labels_follow_the_display_language() {
+        let lookup = |l: &str, k: &str| omarchy_theme::strings::lookup(l, k).unwrap().to_string();
+        for language in ["en", "de", "ja"] {
+            let shows = |section: &'static str, want: &[String]| {
+                let mut s = init();
+                let mut tokens = fixture("tokyo-night").tokens().clone();
+                tokens.language = language.into();
+                s.theme = Theme::from_tokens(tokens);
+                s.section = Some(section);
+                let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+                rt.frame(0.0);
+                let els = rt.elements();
+                for w in want {
+                    let found = els.iter().any(|e| e.text.as_deref() == Some(w.as_str()) || e.label.as_deref() == Some(w.as_str()));
+                    assert!(found, "{language}/{section}: no {w:?}");
+                }
+            };
+            shows("surfaces", &[lookup(language, "common.cancel"), lookup(language, "common.confirm")]);
+            shows("pickers", &[lookup(language, "multiSelect.selectedCount").replace("%1", "4"), lookup(language, "common.search")]);
+            shows("layout", &[lookup(language, "clock.previousMonth"), lookup(language, "clock.nextMonth")]);
+        }
+        assert_eq!(lookup("de", "common.cancel"), "Abbrechen");
+    }
+
     /// A gallery section, laid out once, in tokyo-night.
     fn runtime(section: &'static str) -> Runtime<State> {
         let mut s = init();

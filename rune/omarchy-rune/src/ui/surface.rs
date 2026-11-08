@@ -344,8 +344,8 @@ impl Tooltip {
 /// no title, the message in `title` size.
 pub struct ConfirmDialog {
     message: String,
-    cancel: String,
-    confirm: String,
+    /// `None`: Dialog's defaults, the catalog's `common.cancel` and `common.confirm`.
+    labels: Option<(String, String)>,
     selected: usize,
     width: Option<f32>,
     on_cancel: Option<Attach>,
@@ -356,8 +356,7 @@ impl ConfirmDialog {
     pub fn new(message: impl Into<String>) -> ConfirmDialog {
         ConfirmDialog {
             message: message.into(),
-            cancel: "Cancel".into(),
-            confirm: "Confirm".into(),
+            labels: None,
             selected: 1,
             width: None,
             on_cancel: None,
@@ -365,8 +364,7 @@ impl ConfirmDialog {
         }
     }
     pub fn labels(mut self, cancel: impl Into<String>, confirm: impl Into<String>) -> Self {
-        self.cancel = cancel.into();
-        self.confirm = confirm.into();
+        self.labels = Some((cancel.into(), confirm.into()));
         self
     }
     /// 0 for Cancel, 1 for Confirm (the default).
@@ -390,11 +388,10 @@ impl ConfirmDialog {
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
         let message = text(self.message).font(t.text_style(tk.font.title)).color(t.fg()).wrap();
-        let mut d = super::Dialog::new("")
-            .body(message)
-            .labels(self.cancel, self.confirm)
-            .destructive(true)
-            .selected(self.selected);
+        let mut d = super::Dialog::new("").body(message).destructive(true).selected(self.selected);
+        if let Some((cancel, confirm)) = self.labels {
+            d = d.labels(cancel, confirm);
+        }
         if let Some(w) = self.width {
             d = d.width(w);
         }

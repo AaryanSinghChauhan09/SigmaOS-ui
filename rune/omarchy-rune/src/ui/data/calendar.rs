@@ -167,8 +167,8 @@ impl Calendar {
                     .w_full()
                     .items_center()
                     .justify_between()
-                    .child(stepper("\u{f0141}", "Previous month", -1))
-                    .child(stepper("\u{f0142}", "Next month", 1)),
+                    .child(stepper("\u{f0141}", &tk.string("clock.previousMonth", "Previous month"), -1))
+                    .child(stepper("\u{f0142}", &tk.string("clock.nextMonth", "Next month"), 1)),
             );
 
         // ---- Weekdays

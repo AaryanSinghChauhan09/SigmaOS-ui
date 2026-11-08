@@ -34,9 +34,8 @@ pub struct MultiSelect {
     width: Option<f32>,
     search: Option<TextEdit>,
     search_access: Option<Box<dyn FnOnce(El) -> El>>,
-    placeholder: String,
-    none_text: String,
-    empty_text: String,
+    /// `None`: the catalog's `common.search`, `common.noneSelected` and `common.noOptions`.
+    texts: Option<(String, String, String)>,
     toggle: Option<Attach>,
     choose: Option<Box<dyn Fn(El, String) -> El>>,
     chooser: Option<Chooser>,
@@ -183,9 +182,7 @@ impl MultiSelect {
             width: None,
             search: None,
             search_access: None,
-            placeholder: "Search...".into(),
-            none_text: "None selected".into(),
-            empty_text: "No options".into(),
+            texts: None,
             toggle: None,
             choose: None,
             chooser: None,
@@ -225,11 +222,9 @@ impl MultiSelect {
         self
     }
     /// The search placeholder, the trigger's text with nothing chosen, and the popup's text
-    /// with nothing to show (translated by the app; English by default).
+    /// with nothing to show (by default the catalog's, in the display language, as Qt's).
     pub fn texts(mut self, placeholder: impl Into<String>, none_selected: impl Into<String>, no_options: impl Into<String>) -> Self {
-        self.placeholder = placeholder.into();
-        self.none_text = none_selected.into();
-        self.empty_text = no_options.into();
+        self.texts = Some((placeholder.into(), none_selected.into(), no_options.into()));
         self
     }
     pub fn on_toggle<S: 'static>(mut self, f: impl Fn(&mut S) + 'static) -> Self {
@@ -272,12 +267,12 @@ impl MultiSelect {
             .collect()
     }
 
-    fn selection_label(&self) -> String {
+    fn selection_label(&self, t: &Theme) -> String {
         if self.values.is_empty() {
             return String::new();
         }
         if self.values.len() > 3 {
-            return format!("{} selected", self.values.len());
+            return t.tokens().string("multiSelect.selectedCount", "%1 selected").replace("%1", &self.values.len().to_string());
         }
         let label = |v: &String| self.options.iter().find(|(o, _)| o == v).map_or_else(|| v.clone(), |(_, l)| l.clone());
         self.values.iter().map(label).collect::<Vec<_>>().join(", ")
@@ -293,9 +288,16 @@ impl MultiSelect {
         let width = self.width.unwrap_or(sp.searchable_dropdown_width as f32);
         let bw = c.normal.border.max_width() as f32;
 
-        let chosen = self.selection_label();
+        let chosen = self.selection_label(t);
+        let (placeholder, none_text, empty_text) = self.texts.take().unwrap_or_else(|| {
+            (
+                tk.string("common.search", "Search..."),
+                tk.string("common.noneSelected", "None selected"),
+                tk.string("common.noOptions", "No options"),
+            )
+        });
         let (words, words_ink) =
-            if chosen.is_empty() { (self.none_text.clone(), t.dim()) } else { (chosen, ink) };
+            if chosen.is_empty() { (none_text, t.dim()) } else { (chosen, ink) };
         let words = text(words).font(t.text_style(tk.font.body)).color(words_ink).single_line().truncate().grow(1.0).min_w(0.0);
         let chevron = glyph(t, "\u{f0140}", tk.font.body, color(pop.text.darker(1.2)));
         let base = row()
@@ -320,7 +322,7 @@ impl MultiSelect {
 
         if self.open {
             let access = self.search_access.take();
-            layer.push(self.popup(t, width, access).anchored(self.key.clone(), Side::Bottom, Align::Start, sp.xxs as f32));
+            layer.push(self.popup(t, width, access, placeholder, empty_text).anchored(self.key.clone(), Side::Bottom, Align::Start, sp.xxs as f32));
         }
 
         let mut out = col().gap(sp.label_gap as f32);
@@ -330,7 +332,7 @@ impl MultiSelect {
         out.child(trigger)
     }
 
-    fn popup(&self, t: &Theme, width: f32, access: Option<Box<dyn FnOnce(El) -> El>>) -> El {
+    fn popup(&self, t: &Theme, width: f32, access: Option<Box<dyn FnOnce(El) -> El>>, placeholder: String, empty_text: String) -> El {
         let tk = t.tokens();
         let sp = &tk.spacing;
         let c = &tk.controls;
@@ -359,7 +361,7 @@ impl MultiSelect {
         let (rest, hot) = input_looks(t);
         let fbw = c.normal.border.max_width().max(c.hover.border.max_width()) as f32;
         let edit = self.search.clone().unwrap_or_else(|| TextEdit::new(""));
-        let mut input = bare_input(t, &edit, self.placeholder.clone());
+        let mut input = bare_input(t, &edit, placeholder);
         if let Some(wire) = &self.wire {
             input = wire.input(input, Rc::new(self.shown_values()), self.chooser.clone());
         } else if let Some(access) = access {
@@ -381,7 +383,7 @@ impl MultiSelect {
         let list_h = height - 2.0 * pad - header_h - 1.0;
         let mut list = col().w_full().h(list_h.max(0.0)).gap(gap).clip_rounded(0.0);
         if shown.is_empty() {
-            list = list.center().child(text(self.empty_text.clone()).font(t.text_style(tk.font.body)).color(t.faint()));
+            list = list.center().child(text(empty_text).font(t.text_style(tk.font.body)).color(t.faint()));
         }
         let box_size = t.space(16.0);
         let box_radius = (t.radius() / 2.0).max(2.0);

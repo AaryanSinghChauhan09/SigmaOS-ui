@@ -111,7 +111,7 @@ Qt: `handleThickness` (= `md`).
 | Today | `today: "YYYY-MM-DD"` (the app passes it; nothing reads the clock) | `.today(Date::new(y, m, d))` |
 | Selected | `selected: "YYYY-MM-DD"` | `.selected(Option<Date>)` |
 | Cursor | `cursorDate: "YYYY-MM-DD"`, `hasCursor` | `.cursor(Option<Date>)` |
-| Labels | `monthNames`, `weekdayNames` (English by default) | English |
+| Labels | `monthNames`, `weekdayNames` (English by default); the steppers' names `clock.previousMonth`, `clock.nextMonth` from the catalog | English month and weekday names (the catalog has none); the steppers' names from the same catalog |
 | Pick | `picked(string date)` (click, Return/Space; also sets `selected`) | `.on_pick(\|s, Date\|)` |
 | Step month | the buttons and PageUp/PageDown change `year`/`month` | `.on_month(\|s, year, month\|)` |
 | Keys | arrows move `cursorDate` by a day or week, following it into the next month | `.key(p)`: days `p-YYYY-MM-DD`, steppers `p-prev`, `p-next` |

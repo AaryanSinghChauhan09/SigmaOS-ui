@@ -17,8 +17,9 @@ pub struct Dialog {
     title: String,
     message: String,
     body: Vec<El>,
-    secondary: String,
-    primary: String,
+    /// `None`: the catalog's `common.cancel` and `common.confirm`, in the display language.
+    secondary: Option<String>,
+    primary: Option<String>,
     destructive: bool,
     selected: usize,
     width: Option<f32>,
@@ -35,8 +36,8 @@ impl Dialog {
             title: title.into(),
             message: String::new(),
             body: Vec::new(),
-            secondary: "Cancel".into(),
-            primary: "Confirm".into(),
+            secondary: None,
+            primary: None,
             destructive: false,
             selected: 1,
             width: None,
@@ -57,10 +58,11 @@ impl Dialog {
         self.body.push(e);
         self
     }
-    /// The secondary and primary button labels (Cancel and Confirm by default).
+    /// The secondary and primary button labels (`common.cancel` and `common.confirm` by default,
+    /// Cancel and Confirm in English, as Qt's Dialog).
     pub fn labels(mut self, secondary: impl Into<String>, primary: impl Into<String>) -> Self {
-        self.secondary = secondary.into();
-        self.primary = primary.into();
+        self.secondary = Some(secondary.into());
+        self.primary = Some(primary.into());
         self
     }
     /// Draw the primary button in urgent, for actions that destroy something.
@@ -109,6 +111,8 @@ impl Dialog {
 
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
+        let secondary = self.secondary.unwrap_or_else(|| tk.string("common.cancel", "Cancel"));
+        let primary = self.primary.unwrap_or_else(|| tk.string("common.confirm", "Confirm"));
         let p = &tk.palette;
         let line = tk.controls.normal.border.max_width().max(1.0);
         let accent = tk.surfaces.menu.selected_text;
@@ -172,8 +176,8 @@ impl Dialog {
                 .w_full()
                 .justify_end()
                 .gap(t.space(10.0))
-                .child(choice(self.secondary, 0, self.on_cancel))
-                .child(choice(self.primary, 1, self.on_accept)),
+                .child(choice(secondary, 0, self.on_cancel))
+                .child(choice(primary, 1, self.on_accept)),
         );
         if self.modal
             && let Some(dismiss) = self.dismiss

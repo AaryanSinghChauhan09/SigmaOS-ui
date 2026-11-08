@@ -39,6 +39,8 @@ Each group has its own file with every component's anatomy, API in both bindings
 
 ## Shared rules
 
+- **Strings** a component shows by default (Cancel, Confirm, Search..., None selected, No matches for “%1”, Previous month) come from one catalog in both bindings: `qt/qml/Omarchy/Theme/Strings.js`, harvested from Omarchy's `default/i18n` for every key a Qt kit file asks for (`I18n.t`), read by Rust through `omarchy_theme::strings` (`Tokens::string`). Both follow `~/.config/omarchy/language`. A component that adds one asks for it with `I18n.t(key, english)` in Qt and `tk.string(key, english)` in Rune, then `bin/harvest-qt` carries it.
+
 - **States** follow `[controls]`: pressed > focus > hover-cursor > selected > normal. Focus looks like hover unless the theme says otherwise. Every component takes a `cursor` / `hasCursor` flag that forces the hover-cursor look, for keyboard-driven lists and for still renders.
 - **No relayout on state change.** A component reserves the widest border any of its states paints.
 - **Corners** are `radius` (Hyprland's rounding, usually 0). Small parts use `min(4, radius)`. Switches and slider knobs are the only round things, and switches only when `radius > 0`.
