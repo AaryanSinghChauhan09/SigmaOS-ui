@@ -29,7 +29,7 @@ What makes it read as Omarchy, in order of how often agents get it wrong:
 
 ```sh
 bin/build                  # both galleries + the token CLI
-bin/test                   # Rust tests + Qt/Rune token parity on every fixture
+bin/test                   # Rust tests, Qt Quick tests (qt/tests), Qt/Rune token and icon parity
 bin/review --open          # render every section in both, compare in the browser
 bin/review --live          # both galleries as windows, following the desktop
 bin/harvest-qt --check     # what changed in the shell since the last harvest
@@ -40,6 +40,6 @@ The Omarchy checkout is `~/omarchy` on `quattro` (`$OMARCHY_SRC` to override). P
 
 - **Tokens**: `spec/tokens.md` is the contract. Change it first, then `crates/omarchy-theme` (Rust resolver) and the Qt side (`qt/qml/Omarchy/Theme`), and keep `bin/test` green: the two must dump byte-identical JSON for every fixture.
 - **Qt components** are harvested from the shell (`qt/HARVEST.md`). Don't edit harvested files: fix them in the shell, or add a patch under `qt/patches/` when the fix only matters outside the shell.
-- **A new component** goes in `spec/components.md` with its metrics, then in every binding under the same name, then into every gallery as `spec/gallery.md` lists it. Check it with `bin/review`.
+- **A new component** goes in `spec/components.md` with its metrics, then in every binding under the same name, then into every gallery as `spec/gallery.md` lists it. Check it with `bin/review`. Behavior gets a test in both: a `qt/tests/tst_*.qml` case and a Rune gallery test (`rune/gallery/src/main.rs`) driving the same keys and clicks.
 - **A new framework** gets `<framework>/` with a binding that resolves tokens (reuse `omarchy-theme` from Rust), a gallery with the `spec/gallery.md` sections, `--dump-tokens`, a still-render mode at 2×, and the `OMARCHY_UI_*` overrides; then a column in `tools/review.py`.
 - **Commits**: short, imperative, one change each.
