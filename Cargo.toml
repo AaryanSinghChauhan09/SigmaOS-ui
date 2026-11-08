@@ -5,6 +5,8 @@ members = [
     "rune/omarchy-rune",
     "rune/gallery",
 ]
+# Built as an app outside the workspace would be (bin/test-examples).
+exclude = ["examples/rune"]
 
 [workspace.package]
 edition = "2024"

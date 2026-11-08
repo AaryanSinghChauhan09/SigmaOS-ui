@@ -1,0 +1,16 @@
+# A Rune app outside the omarchy-ui workspace (the root Cargo.toml excludes this directory), the
+# way an app in its own repository depends on the kit. Only omarchy-rune is a dependency: Rune
+# comes through its re-exports (omarchy_rune::rune, omarchy_rune::rune_kit), at the kit's pinned rev.
+#
+# From another repository, as a git dependency instead (<omarchy-ui-repo>: see docs/using-rust.md):
+#
+#   omarchy-rune = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+
+[package]
+name = "omarchy-ui-example-rune"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+omarchy-rune = { path = "../../rune/omarchy-rune" }
