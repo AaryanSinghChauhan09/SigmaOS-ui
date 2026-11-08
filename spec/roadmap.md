@@ -24,9 +24,9 @@ These go in `spec/tokens.md`, then both resolvers, keeping `bin/test` green.
 
 | Token | Value | Why |
 |---|---|---|
-| `text.dim` | foreground darker 1.5 | 48 copies. Secondary lines, subtitles, values. |
+| `text.dim` | foreground darker 1.5 (what the shell writes by hand; the theme's `dark_foreground` is often too dark to read on `lighter_background`) | 48 copies. Secondary lines, subtitles, values. |
 | `text.faint` | foreground darker 2.0 | Disabled and placeholder text, already `Qt.darker(fg, 2.0)` in the kit. |
-| `success`, `warning` | `color2`, `color3` | Status dots, meters, banners. Today only `urgent` exists, so "connected" and "low battery" have no color. |
+| `success`, `warning` | the theme's `green`, `yellow` (falling back to `color2`, `color3`), as `urgent` already falls back from `red` to `color1` | Status dots, meters, banners. Today only `urgent` exists, so "connected" and "low battery" have no color. |
 | `track` | foreground at 0.12 | Meter, progress and slider tracks, today ad hoc rgba at 0.12–0.45. |
 | `scrim` | `menu.scrim` (background at 0.5) | Modals. hype repeats `#660b0d14` six times. |
 | `meter.thickness`, `scrollbar.thickness` | `space(6)`, `space(6)` | OSD uses 6, power 8, agents `controlHeight × 0.14`. |
