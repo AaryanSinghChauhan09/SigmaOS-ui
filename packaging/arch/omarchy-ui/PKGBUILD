@@ -1,0 +1,54 @@
+# Omarchy UI for any app on the system: the Qt Quick modules (`import Omarchy.Theme`,
+# `import Omarchy.Ui`) installed into Qt's QML directory, and the omarchy-theme token CLI. Built
+# from this checkout, as Omarchy's own apps package themselves (source=(), $startdir):
+#
+#   cd packaging/arch/omarchy-ui && makepkg -fsi
+#
+# The Rust crates aren't packaged: Rust apps depend on them through Cargo (docs/using-rust.md).
+
+pkgname=omarchy-ui
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Omarchy UI kit: Qt Quick modules that follow the live Omarchy theme, and the omarchy-theme token CLI'
+arch=('x86_64' 'aarch64')
+license=('MIT')
+# The plugin is built against the installed Qt and loads into that version or a newer 6.x:
+# rebuild it when Qt updates, like any package with a QML plugin.
+depends=('qt6-base' 'qt6-declarative')
+makedepends=('gcc' 'make' 'cargo')
+source=()
+sha256sums=()
+
+_root="$startdir/../../.."
+
+# 0.1.0.r<commits>.g<hash>, so an installed build names the commit it came from.
+pkgver() {
+  cd "$_root"
+  printf '0.1.0.r%s.g%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+build() {
+  mkdir -p "$srcdir/qt-module"
+  cd "$srcdir/qt-module"
+  qmake6 "$_root/qt/module/module.pro" \
+    QMAKE_CFLAGS_RELEASE="$CFLAGS" QMAKE_CXXFLAGS_RELEASE="$CXXFLAGS" QMAKE_LFLAGS_RELEASE="$LDFLAGS"
+  make
+
+  cd "$_root"
+  cargo build --release --locked -p omarchy-theme --target-dir "$srcdir/target"
+}
+
+package() {
+  make -C "$srcdir/qt-module" install INSTALL_ROOT="$pkgdir"
+  install -Dm755 "$srcdir/target/release/omarchy-theme" "$pkgdir/usr/bin/omarchy-theme"
+
+  cd "$_root"
+  # snap.qml renders any QML window to a PNG with the qml tool (docs/using-qt.md).
+  install -Dm644 examples/qt-installed/snap.qml "$pkgdir/usr/share/omarchy-ui/snap.qml"
+  install -Dm644 examples/qt-installed/main.qml "$pkgdir/usr/share/omarchy-ui/examples/panel.qml"
+  install -Dm644 -t "$pkgdir/usr/share/doc/omarchy-ui" docs/*.md
+  # Every Omarchy theme rendered as omarchy-theme-set would, for OMARCHY_UI_THEME_DIR previews.
+  for dir in fixtures/themes/*/; do
+    install -Dm644 -t "$pkgdir/usr/share/omarchy-ui/themes/$(basename "$dir")" "$dir"*
+  done
+}
