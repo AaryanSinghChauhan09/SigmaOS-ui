@@ -36,6 +36,8 @@ pub(crate) struct State {
     pub stepped: f32,
     pub align: String,
     pub network: String,
+    pub lists: sections::lists::Lists,
+    pub tiles: sections::tiles::Tiles,
 }
 
 pub(crate) fn init() -> State {
@@ -55,6 +57,8 @@ pub(crate) fn init() -> State {
         stepped: 0.75,
         align: "center".into(),
         network: "basecamp".into(),
+        lists: sections::lists::Lists::init(),
+        tiles: sections::tiles::Tiles::init(),
     }
 }
 
@@ -84,6 +88,8 @@ gallery! {
     inputs: "Inputs",
     slider: "Slider",
     surfaces: "Surfaces",
+    lists: "Lists",
+    tiles: "Tiles",
     tokens: "Tokens",
 }
 
@@ -168,5 +174,31 @@ mod tests {
         rt.pointer_up(x, y);
         rt.frame(1.0 / 60.0);
         assert_ne!(before, rt.state.switches[0]);
+    }
+
+    /// The lists section's rows follow its CursorModel: the pointer moves the cursor (only when
+    /// it really moves) and the keys move it from there.
+    #[test]
+    fn lists_cursor_follows_pointer_and_keys() {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some("lists");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        assert!(rt.state.lists.cursor.is_at("rows", 1));
+        let (x, y) = rt.find("lists-row-4").expect("row 4");
+        rt.pointer_move(x, y);
+        rt.frame(1.0 / 60.0);
+        rt.pointer_move(x, y + 3.0);
+        rt.frame(2.0 / 60.0);
+        assert!(rt.state.lists.cursor.is_at("rows", 4));
+        rt.pointer_down(x, y + 3.0);
+        rt.pointer_up(x, y + 3.0);
+        rt.frame(3.0 / 60.0);
+        rt.key(rune::KeyEvent { key: rune::Key::Down, mods: Default::default() });
+        rt.frame(4.0 / 60.0);
+        rt.key(rune::KeyEvent { key: rune::Key::Text("j".into()), mods: Default::default() });
+        rt.frame(5.0 / 60.0);
+        assert!(rt.state.lists.cursor.is_at("rows", 6), "the still pointer doesn't pull the cursor back");
     }
 }
