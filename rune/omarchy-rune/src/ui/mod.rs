@@ -14,7 +14,6 @@ mod lists;
 mod menu;
 mod navigation;
 mod dialog;
-mod field;
 mod forms;
 mod pickers;
 mod slider;
@@ -33,7 +32,6 @@ pub use lists::{
 pub use menu::{ContextMenu, Menu, MenuItem};
 pub use navigation::{IconRail, KeyCombo, Keycap, ShortcutSheet, Tabs, Toolbar, key_combo_width, key_label, keycap_width, split_combo, toolbar_separator};
 pub use dialog::Dialog;
-pub use field::{Dropdown, NumberField, TextField};
 pub use forms::{Checkbox, PasswordField, Radio, RadioGroup, SettingRow, TextArea};
 pub use pickers::{ColorWell, MultiSelect, SwatchStrip};
 pub use slider::Slider;

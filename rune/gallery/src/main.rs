@@ -206,11 +206,7 @@ mod tests {
     /// it really moves) and the keys move it from there.
     #[test]
     fn lists_cursor_follows_pointer_and_keys() {
-        let mut s = init();
-        s.theme = fixture("tokyo-night");
-        s.section = Some("lists");
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
-        rt.frame(0.0);
+        let mut rt = runtime("lists");
         assert!(rt.state.lists.cursor.is_at("rows", 1));
         let (x, y) = rt.find("lists-row-4").expect("row 4");
         rt.pointer_move(x, y);
@@ -226,7 +222,19 @@ mod tests {
         rt.key(rune::KeyEvent { key: rune::Key::Text("j".into()), mods: Default::default() });
         rt.frame(5.0 / 60.0);
         assert!(rt.state.lists.cursor.is_at("rows", 6), "the still pointer doesn't pull the cursor back");
-    fn press(section: &'static str, key: &str) -> Runtime<State> {
+    }
+
+    /// A gallery section, laid out once, in tokyo-night.
+    fn runtime(section: &'static str) -> Runtime<State> {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some(section);
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        rt
+    }
+
+    /// Click the element keyed `key`.
     fn press(rt: &mut Runtime<State>, key: &str) {
         let (x, y) = rt.find(key).unwrap_or_else(|| panic!("no element keyed {key}"));
         rt.pointer_down(x, y);
@@ -234,32 +242,25 @@ mod tests {
         rt.frame(1.0 / 60.0);
     }
 
-    fn runtime(section: &'static str) -> Runtime<State> {
-        let mut s = init();
-        s.theme = fixture("tokyo-night");
-        s.section = Some(section);
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
-        rt.frame(0.0);
-        let (x, y) = rt.find(key).unwrap_or_else(|| panic!("no element keyed {key}"));
-        rt.pointer_down(x, y);
-        rt.pointer_up(x, y);
-        rt.frame(1.0 / 60.0);
+    /// A fresh `section` with the element keyed `key` clicked.
+    fn pressed(section: &'static str, key: &str) -> Runtime<State> {
+        let mut rt = runtime(section);
+        press(&mut rt, key);
         rt
     }
 
     /// Pressing a menu row runs it: a check row flips, a plain row reports itself.
     #[test]
     fn menu_rows_run() {
-        assert!(!press("menus", "menu-sidebar").state.menus.sidebar);
-        assert_eq!(press("menus", "menu-new").state.menus.ran, Some("New"));
+        assert!(!pressed("menus", "menu-sidebar").state.menus.sidebar);
+        assert_eq!(pressed("menus", "menu-new").state.menus.ran, Some("New"));
     }
 
     /// Pressing a tab or a rail item chooses it.
     #[test]
     fn tabs_and_rail_choose() {
-        assert_eq!(press("navigation", "tab-3").state.navigation.tab, 3);
-        assert_eq!(press("navigation", "rail-4").state.navigation.panel, 4);
-        rt
+        assert_eq!(pressed("navigation", "tab-3").state.navigation.tab, 3);
+        assert_eq!(pressed("navigation", "rail-4").state.navigation.panel, 4);
     }
 
     /// A checkbox flips, a disabled one doesn't, and a radio takes the group's value.
@@ -282,14 +283,12 @@ mod tests {
         assert!(rt.state.pickers.notify.iter().any(|v| v == "Calendar"));
         press(&mut rt, "ms-notify-Mail");
         assert!(!rt.state.pickers.notify.iter().any(|v| v == "Mail"));
+    }
+
     /// Pressing a table row selects it, a tree chevron folds its branch, a tree row selects it.
     #[test]
     fn data_selects_and_folds() {
-        let mut s = init();
-        s.theme = fixture("tokyo-night");
-        s.section = Some("data");
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
-        rt.frame(0.0);
+        let mut rt = runtime("data");
         press(&mut rt, "files-4");
         assert_eq!(rt.state.data.row, 4);
         press(&mut rt, "files-col-0");
@@ -303,11 +302,7 @@ mod tests {
     /// The sidebar picks, the split handle drags, the calendar picks a day and steps months.
     #[test]
     fn layout_picks_drags_and_steps() {
-        let mut s = init();
-        s.theme = fixture("tokyo-night");
-        s.section = Some("layout");
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
-        rt.frame(0.0);
+        let mut rt = runtime("layout");
         press(&mut rt, "places-downloads");
         assert_eq!(rt.state.layout.place, "downloads");
 
@@ -323,29 +318,17 @@ mod tests {
         assert_eq!(rt.state.layout.day, omarchy_rune::ui::Date::new(2026, 11, 20));
         press(&mut rt, "cal-next");
         assert_eq!(rt.state.layout.month, (2026, 12));
+    }
+
     /// Pressing a clip selects it; pressing a swatch picks its color.
     #[test]
     fn editing_selects_and_picks() {
-        let mut s = init();
-        s.theme = fixture("tokyo-night");
-        s.section = Some("timeline");
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
-        rt.frame(0.0);
-        let (x, y) = rt.find("clip-1-0").expect("the voiceover clip");
-        rt.pointer_down(x, y);
-        rt.pointer_up(x, y);
-        rt.frame(1.0 / 60.0);
+        let mut rt = runtime("timeline");
+        press(&mut rt, "clip-1-0");
         assert_eq!(rt.state.timeline.selected, Some((1, 0)));
 
-        let mut s = init();
-        s.theme = fixture("tokyo-night");
-        s.section = Some("color");
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
-        rt.frame(0.0);
-        let (x, y) = rt.find("swatch-red").expect("the red swatch");
-        rt.pointer_down(x, y);
-        rt.pointer_up(x, y);
-        rt.frame(1.0 / 60.0);
+        let mut rt = runtime("color");
+        press(&mut rt, "swatch-red");
         assert_eq!(rt.state.color.value.hex(), "#f7768e");
         assert_eq!(rt.state.color.hex.text, "#f7768e");
     }
