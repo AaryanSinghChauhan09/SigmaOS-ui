@@ -6,8 +6,11 @@ import Omarchy.Ui
 import ".."
 
 Section {
+  id: section
   name: "surfaces"
   title: "Surfaces"
+
+  function g(cp) { return String.fromCodePoint(cp) }
 
   RowLayout {
     spacing: Style.spacing.huge
@@ -62,6 +65,73 @@ Section {
           message: "Remove the Coffee Shop network?"
         }
       }
+    }
+  }
+
+  // Panes: an app's side panel with a rule against its neighbour, and a bordered settings group.
+  RowLayout {
+    spacing: Style.spacing.huge
+    Layout.alignment: Qt.AlignTop
+
+    Pane {
+      title: "Layers"
+      subtitle: "3 items"
+      divider: "left"
+      actions: [ IconButton { iconText: section.g(0xF067) } ]
+      Layout.preferredWidth: 240
+      Layout.alignment: Qt.AlignTop
+
+      Column {
+        Layout.fillWidth: true
+        PopupMenuRow { text: "Background" }
+        PopupMenuRow { text: "Title"; checked: true }
+        PopupMenuRow { text: "Logo" }
+      }
+    }
+
+    Pane {
+      title: "Night light"
+      subtitle: "Sunset to sunrise"
+      bordered: true
+      actions: [ ToggleSwitch { checked: true } ]
+      Layout.preferredWidth: 240
+      Layout.alignment: Qt.AlignTop
+
+      SettingRow {
+        Layout.fillWidth: true
+        label: "Strength"
+        ValueSlider { width: 100; value: 0.6 }
+      }
+    }
+  }
+
+  // Headings: the three levels, a trailing action, and a toolbar's centered title.
+  RowLayout {
+    spacing: Style.spacing.huge
+    Layout.alignment: Qt.AlignTop
+
+    ColumnLayout {
+      spacing: Style.spacing.huge
+      Layout.preferredWidth: 240
+      Layout.fillWidth: false
+      Layout.alignment: Qt.AlignTop
+
+      Heading { text: "Settings"; subtitle: "Omarchy"; level: "display"; Layout.fillWidth: true }
+      Heading { text: "Appearance"; subtitle: "Theme, font and rounding"; level: "heading"; Layout.fillWidth: true }
+    }
+
+    ColumnLayout {
+      spacing: Style.spacing.huge
+      Layout.preferredWidth: 240
+      Layout.fillWidth: false
+      Layout.alignment: Qt.AlignTop
+
+      Heading {
+        text: "Frame"
+        Layout.fillWidth: true
+        IconButton { iconText: section.g(0xF141) }
+      }
+      Heading { text: "notes.md"; subtitle: "~/Documents"; centered: true; Layout.fillWidth: true }
     }
   }
 }
