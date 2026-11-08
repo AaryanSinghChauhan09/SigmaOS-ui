@@ -5,8 +5,12 @@
 //! falling back to `Yaru-blue` when the theme has none. A lookup walks that theme, its
 //! `index.theme` `Inherits` chain depth-first, then `hicolor`; in each it prefers an SVG (from a
 //! `Scalable` directory first), else the PNG from the smallest directory at or above the
-//! requested size, else the largest. Nothing in any theme: a loose file in a search root
-//! (`/usr/share/pixmaps`).
+//! requested size, else the largest.
+//!
+//! App icons come first: the walk looks only in the `Applications` and `Devices` contexts, then
+//! at loose files in a search root (`/usr/share/pixmaps`), and only then in every context. The
+//! shell's app library does the same (`AppLibrary.iconSource`), so an app named like an action
+//! (`zoom`, `edit`) shows its own icon rather than the theme's magnifier.
 //!
 //! ```no_run
 //! let icons = omarchy_theme::icons::IconLookup::current();
@@ -83,6 +87,17 @@ struct Subdir {
     /// `Size × Scale`: the pixels its icons have.
     pixels: u32,
     kind: Kind,
+    /// An app or device directory: `Context=Applications` or `Devices`, or with no `Context`, a
+    /// path with an `apps` or `devices` part (`48x48/apps`), as the shell's app index takes it.
+    app: bool,
+}
+
+/// Whether a directory holds app (or device) icons, from its `Context` or else its path.
+fn is_app_dir(context: Option<&str>, path: &str) -> bool {
+    match context {
+        Some(c) => c == "Applications" || c == "Devices",
+        None => path.split('/').any(|part| part == "apps" || part == "devices"),
+    }
 }
 
 /// A parsed `index.theme`: its parents and its directories, in the file's order.
@@ -126,7 +141,8 @@ fn parse_index(text: &str) -> Index {
                 Some("Scalable") => Kind::Scalable,
                 _ => Kind::Threshold,
             };
-            Some(Subdir { path: name, pixels: size * num("Scale").unwrap_or(1).max(1), kind })
+            let app = is_app_dir(g.get("Context").map(String::as_str), &name);
+            Some(Subdir { path: name, pixels: size * num("Scale").unwrap_or(1).max(1), kind, app })
         })
         .collect();
     Index { inherits: list(head.and_then(|h| h.get("Inherits"))), dirs }
@@ -185,7 +201,8 @@ impl IconLookup {
     }
 
     /// The file for icon `name` at `size` device pixels, or `None` when no theme and no search
-    /// root has it. An absolute path to an existing file is returned as is.
+    /// root has it: app and device icons first, then loose files, then any context. An absolute
+    /// path to an existing file is returned as is.
     pub fn find(&self, name: &str, size: u32) -> Option<PathBuf> {
         if name.is_empty() {
             return None;
@@ -207,20 +224,18 @@ impl IconLookup {
         if name.contains('/') {
             return None;
         }
-        for (theme, index) in &self.chain {
-            if let Some(p) = self.in_theme(theme, index, name, size) {
-                return Some(p);
-            }
-        }
+        let themed = |apps: bool| self.chain.iter().find_map(|(theme, index)| self.in_theme(theme, index, name, size, apps));
         // Loose files in a root: /usr/share/pixmaps.
-        self.roots.iter().find_map(|r| EXTENSIONS.iter().map(|e| r.join(format!("{name}.{e}"))).find(|p| p.is_file()))
+        let loose = || self.roots.iter().find_map(|r| EXTENSIONS.iter().map(|e| r.join(format!("{name}.{e}"))).find(|p| p.is_file()));
+        themed(true).or_else(loose).or_else(|| themed(false))
     }
 
-    fn in_theme(&self, theme: &str, index: &Index, name: &str, size: u32) -> Option<PathBuf> {
+    /// `name` in one theme, from its app and device directories only when `apps`.
+    fn in_theme(&self, theme: &str, index: &Index, name: &str, size: u32, apps: bool) -> Option<PathBuf> {
         // Every directory's file, from the first root that has one.
         let mut svgs: Vec<(&Subdir, PathBuf)> = Vec::new();
         let mut pngs: Vec<(&Subdir, PathBuf)> = Vec::new();
-        for dir in &index.dirs {
+        for dir in index.dirs.iter().filter(|d| d.app || !apps) {
             for ext in EXTENSIONS {
                 let file = format!("{name}.{ext}");
                 if let Some(p) = self.roots.iter().map(|r| r.join(theme).join(&dir.path).join(&file)).find(|p| p.is_file()) {
@@ -252,7 +267,8 @@ mod tests {
     // The icons carry real app names so the live galleries show real icons for the same
     // specimens: utilities-terminal is PNGs at 16, 48 and 96 in Fixture-Accent (and an SVG in
     // its parent), org.gnome.Nautilus an SVG beside a 32px PNG, firefox only in Fixture-Base,
-    // chromium only in hicolor, btop in local/ and in the parent, steam only in pixmaps.
+    // chromium only in hicolor, btop in local/ and in the parent, steam only in pixmaps; zoom an
+    // action in Fixture-Accent and an app in hicolor, edit-copy only an action, printer a device.
     fn fixture() -> (PathBuf, IconLookup) {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/icons").canonicalize().unwrap();
         let roots = ["local", "system", "pixmaps"].map(|d| root.join(d)).to_vec();
@@ -306,6 +322,29 @@ mod tests {
         // Fixture-Accent's index.theme is under system/, but local/ adds an icon to it, which
         // wins over the parent theme's copy.
         assert_eq!(rel(&root, icons.find("btop", 48)).as_deref(), Some("local/Fixture-Accent/48x48/apps/btop.png"));
+    }
+
+    #[test]
+    fn app_and_device_icons_come_first() {
+        let (root, icons) = fixture();
+        // Fixture-Accent has a zoom action (a magnifier); the zoom app's icon is hicolor's, two
+        // themes down the chain. The app wins, as in the shell's app library.
+        assert_eq!(rel(&root, icons.find("zoom", 48)).as_deref(), Some("system/hicolor/48x48/apps/zoom.png"));
+        // Devices count as apps (a printer settings entry names one).
+        assert_eq!(rel(&root, icons.find("printer", 48)).as_deref(), Some("system/Fixture-Base/48x48/devices/printer.png"));
+        // An icon only in another context is still found, after everything else.
+        assert_eq!(rel(&root, icons.find("edit-copy", 48)).as_deref(), Some("system/Fixture-Accent/scalable/actions/edit-copy.svg"));
+    }
+
+    #[test]
+    fn app_dirs_by_context_else_path() {
+        assert!(is_app_dir(Some("Applications"), "x"));
+        assert!(is_app_dir(Some("Devices"), "x"));
+        assert!(!is_app_dir(Some("Actions"), "48x48/apps"), "the Context decides when there is one");
+        assert!(is_app_dir(None, "48x48/apps"));
+        assert!(is_app_dir(None, "devices/scalable"));
+        assert!(!is_app_dir(None, "48x48/actions"));
+        assert!(!is_app_dir(None, "48x48/apps-extra"));
     }
 
     #[test]

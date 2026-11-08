@@ -32,7 +32,7 @@ done
 # above the fixture's directories.
 icons="$ROOT/fixtures/icons"
 export_icons=(OMARCHY_UI_ICON_DIRS="$icons/local:$icons/system:$icons/pixmaps" OMARCHY_UI_ICON_THEME=Fixture-Accent)
-for name in utilities-terminal org.gnome.Nautilus firefox chromium btop steam no-such-app; do
+for name in utilities-terminal org.gnome.Nautilus firefox chromium btop steam zoom printer edit-copy no-such-app; do
   for size in 8 32 56 200; do
     qt="$(env "${export_icons[@]}" "$ROOT/build/qt/omarchy-qt-gallery" --icon "$name" --icon-size "$size")"
     rs="$(env "${export_icons[@]}" "$ROOT/target/release/omarchy-theme" --icon "$name" "$size")"

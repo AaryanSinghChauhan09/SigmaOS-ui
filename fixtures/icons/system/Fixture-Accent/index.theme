@@ -2,7 +2,7 @@
 Name=Fixture Accent
 Comment=Test theme for the icon lookup: inherits Fixture-Base
 Inherits=Fixture-Base
-Directories=16x16/apps,32x32/apps,48x48/apps,96x96/apps,scalable/apps
+Directories=16x16/apps,32x32/apps,48x48/apps,96x96/apps,scalable/apps,scalable/actions
 
 [16x16/apps]
 Size=16
@@ -29,4 +29,11 @@ Size=48
 MinSize=8
 MaxSize=512
 Context=Applications
+Type=Scalable
+
+[scalable/actions]
+Size=48
+MinSize=8
+MaxSize=512
+Context=Actions
 Type=Scalable

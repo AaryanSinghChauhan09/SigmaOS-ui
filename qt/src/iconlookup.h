@@ -21,7 +21,10 @@ class QJSEngine;
 //    /usr/share/pixmaps; OMARCHY_UI_ICON_DIRS (colon-separated) replaces them.
 // 4. In each theme an SVG wins (from a Scalable directory first), else the PNG from the
 //    smallest directory at or above the requested size, else the largest.
-// 5. No theme has it: a loose file in a root (pixmaps). Else "".
+// 5. App icons first: steps 2 and 4 look only in the Applications and Devices contexts (a
+//    directory's Context, else an `apps` or `devices` part of its path), then come loose files
+//    in a root (pixmaps), then steps 2 and 4 again in every context. Else "". The shell's app
+//    library does the same, so an app named like an action ("zoom") gets its own icon.
 //
 // From QML (`import Omarchy.Theme.Native`):
 //
@@ -64,6 +67,8 @@ private:
     QString path;
     int pixels = 0;
     Kind kind = Kind::Threshold;
+    // An Applications or Devices directory.
+    bool app = false;
   };
   struct Index {
     QString name;
@@ -74,7 +79,7 @@ private:
   void follow();
   void visit(const QString &name, QStringList &seen);
   QString search(const QString &name, int size) const;
-  QString inTheme(const Index &index, const QString &name, int size) const;
+  QString inTheme(const Index &index, const QString &name, int size, bool apps) const;
 
   QString m_theme;
   QStringList m_roots;

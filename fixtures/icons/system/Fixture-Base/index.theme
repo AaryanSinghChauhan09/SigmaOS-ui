@@ -2,7 +2,7 @@
 Name=Fixture Base
 Comment=Inherited by Fixture-Accent; names a theme that isn't installed, which is skipped
 Inherits=Fixture-Missing,hicolor
-Directories=48x48/apps,scalable/apps
+Directories=48x48/apps,scalable/apps,48x48/devices
 
 [48x48/apps]
 Size=48
@@ -15,3 +15,8 @@ MinSize=8
 MaxSize=512
 Context=Applications
 Type=Scalable
+
+[48x48/devices]
+Size=48
+Context=Devices
+Type=Fixed

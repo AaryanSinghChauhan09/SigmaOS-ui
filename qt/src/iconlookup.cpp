@@ -26,6 +26,15 @@ QStringList splitList(const QString &value) {
 
 bool isFile(const QString &path) { return QFileInfo(path).isFile(); }
 
+// Whether a directory holds app (or device) icons: its Context, else its path's parts.
+bool isAppDir(const QHash<QString, QString> &group, const QString &path) {
+  const auto context = group.constFind(QStringLiteral("Context"));
+  if (context != group.constEnd())
+    return context.value() == QLatin1String("Applications") || context.value() == QLatin1String("Devices");
+  const QStringList parts = path.split(QLatin1Char('/'));
+  return parts.contains(QStringLiteral("apps")) || parts.contains(QStringLiteral("devices"));
+}
+
 }  // namespace
 
 IconLookup::IconLookup(QObject *parent) : QObject(parent) {
@@ -130,6 +139,7 @@ void IconLookup::visit(const QString &name, QStringList &seen) {
     s.kind = type == QLatin1String("Fixed") ? Kind::Fixed
              : type == QLatin1String("Scalable") ? Kind::Scalable
                                                   : Kind::Threshold;
+    s.app = isAppDir(g, dir);
     index.dirs << s;
   }
 
@@ -156,20 +166,28 @@ QUrl IconLookup::url(const QString &name, int size) {
 QString IconLookup::search(const QString &name, int size) const {
   if (QDir::isAbsolutePath(name)) return isFile(name) ? name : QString();
   if (name.contains(QLatin1Char('/'))) return QString();
-  for (const Index &index : m_chain) {
-    const QString hit = inTheme(index, name, size);
-    if (!hit.isEmpty()) return hit;
-  }
+  auto themed = [&](bool apps) {
+    for (const Index &index : m_chain) {
+      const QString hit = inTheme(index, name, size, apps);
+      if (!hit.isEmpty()) return hit;
+    }
+    return QString();
+  };
+  // App and device icons first.
+  QString hit = themed(true);
+  if (!hit.isEmpty()) return hit;
   // Loose files in a root: /usr/share/pixmaps.
   for (const QString &root : m_roots)
     for (const char *ext : kExtensions) {
       const QString file = root + QLatin1Char('/') + name + QLatin1Char('.') + QLatin1String(ext);
       if (isFile(file)) return file;
     }
-  return QString();
+  // Then any context.
+  return themed(false);
 }
 
-QString IconLookup::inTheme(const Index &index, const QString &name, int size) const {
+// `name` in one theme, from its app and device directories only when `apps`.
+QString IconLookup::inTheme(const Index &index, const QString &name, int size, bool apps) const {
   struct Hit {
     const Subdir *dir;
     QString path;
@@ -177,6 +195,7 @@ QString IconLookup::inTheme(const Index &index, const QString &name, int size) c
   // Every directory's file, from the first root that has one.
   QVector<Hit> svgs, pngs;
   for (const Subdir &dir : index.dirs) {
+    if (apps && !dir.app) continue;
     for (const char *ext : kExtensions) {
       const QString file = name + QLatin1Char('.') + QLatin1String(ext);
       for (const QString &root : m_roots) {
