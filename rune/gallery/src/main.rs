@@ -84,6 +84,8 @@ gallery! {
     inputs: "Inputs",
     slider: "Slider",
     surfaces: "Surfaces",
+    progress: "Progress",
+    messages: "Messages",
     tokens: "Tokens",
 }
 
