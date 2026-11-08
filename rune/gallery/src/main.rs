@@ -46,6 +46,7 @@ pub(crate) struct State {
     pub layout: sections::layout::Layout,
     pub timeline: sections::timeline::Editing,
     pub color: sections::color::Picker,
+    pub composed: sections::composed::Composed,
 }
 
 pub(crate) fn init() -> State {
@@ -75,6 +76,7 @@ pub(crate) fn init() -> State {
         layout: sections::layout::init(),
         timeline: sections::timeline::init(),
         color: sections::color::init(),
+        composed: sections::composed::init(),
     }
 }
 
@@ -116,6 +118,7 @@ gallery! {
     layout: "Layout",
     timeline: "Timeline",
     color: "Color",
+    composed: "Composed",
     tokens: "Tokens",
 }
 
@@ -222,6 +225,31 @@ mod tests {
         rt.key(rune::KeyEvent { key: rune::Key::Text("j".into()), mods: Default::default() });
         rt.frame(5.0 / 60.0);
         assert!(rt.state.lists.cursor.is_at("rows", 6), "the still pointer doesn't pull the cursor back");
+    }
+
+    /// The composed SearchList: typing filters, arrows move the cursor, Return activates the
+    /// row under it, Escape clears the query.
+    #[test]
+    fn search_list_filters_moves_and_activates() {
+        use rune::{Key, KeyEvent};
+        let key = |rt: &mut Runtime<State>, k: Key, at: f64| {
+            rt.key(KeyEvent { key: k, mods: Default::default() });
+            rt.frame(at);
+        };
+        let mut rt = runtime("composed");
+        press(&mut rt, "composed-search-filter");
+        key(&mut rt, Key::Down, 2.0 / 60.0);
+        assert_eq!(rt.state.composed.cursor.index(), 2);
+        key(&mut rt, Key::Enter, 3.0 / 60.0);
+        assert_eq!(rt.state.composed.picked.as_deref(), Some("Terminal theme"));
+        key(&mut rt, Key::Text("i".into()), 4.0 / 60.0);
+        assert_eq!(rt.state.composed.query.text, "termi");
+        assert_eq!(rt.state.composed.cursor.index(), 0, "a new query starts at the first match");
+        key(&mut rt, Key::Text("x".into()), 5.0 / 60.0);
+        assert!(rt.find("composed-search-row-0").is_none(), "nothing matches termix");
+        key(&mut rt, Key::Escape, 6.0 / 60.0);
+        assert_eq!(rt.state.composed.query.text, "");
+        assert!(rt.find("composed-search-row-3").is_some(), "an empty query lists everything");
     }
 
     /// A gallery section, laid out once, in tokyo-night.

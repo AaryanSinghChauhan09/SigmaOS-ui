@@ -27,6 +27,7 @@ ColumnLayout {
     "layout",
     "timeline",
     "color",
+    "composed",
     "tokens",
   ]
 
