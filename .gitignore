@@ -7,3 +7,4 @@ qrc_*
 .qmake.stash
 Makefile
 /out/
+/build/

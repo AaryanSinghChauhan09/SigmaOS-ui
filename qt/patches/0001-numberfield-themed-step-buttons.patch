@@ -1,0 +1,45 @@
+--- a/qt/qml/Omarchy/Ui/NumberField.qml
++++ b/qt/qml/Omarchy/Ui/NumberField.qml
+@@ -82,5 +82,42 @@
+       validator: spin.validator
+       inputMethodHints: Qt.ImhFormattedNumbersOnly
+     }
++
++    // The step buttons, drawn from the kit's tokens instead of the platform style (which paints
++    // light blocks outside the shell): a glyph in the foreground, hover and pressed fills.
++    component StepIndicator: Rectangle {
++      required property var control
++      required property string glyph
++      readonly property real inset: Border.top(spin._borderSpec)
++      y: inset
++      width: spin.height - inset * 2
++      height: width
++      radius: Math.min(4, Style.cornerRadius)
++      color: control.pressed ? Style.pressedFillFor(root.foreground, root.accent)
++        : control.hovered ? Style.hoverFillFor(root.foreground, root.accent)
++        : "transparent"
++      Text {
++        anchors.centerIn: parent
++        text: parent.glyph
++        color: root.foreground
++        opacity: parent.enabled ? 1 : 0.4
++        font.family: root.fontFamily
++        font.pixelSize: root.fontSize
++      }
++    }
++
++    down.indicator: StepIndicator {
++      control: spin.down
++      glyph: "\u2212"
++      x: spin.mirrored ? spin.width - width - inset : inset
++      enabled: spin.value > spin.from
++    }
++
++    up.indicator: StepIndicator {
++      control: spin.up
++      glyph: "+"
++      x: spin.mirrored ? inset : spin.width - width - inset
++      enabled: spin.value < spin.to
++    }
+   }
+ }

@@ -1,0 +1,36 @@
+module Omarchy.Ui
+
+# Harvested from the Omarchy shell (bin/harvest-qt), under their shell names.
+BorderOverlay 1.0 BorderOverlay.qml
+BorderSurface 1.0 BorderSurface.qml
+Button 1.0 Button.qml
+ButtonGroup 1.0 ButtonGroup.qml
+ConfirmDialog 1.0 ConfirmDialog.qml
+CursorSurface 1.0 CursorSurface.qml
+Dropdown 1.0 Dropdown.qml
+FilterInput 1.0 FilterInput.qml
+IconContentBounds 1.0 IconContentBounds.qml
+NumberField 1.0 NumberField.qml
+OpticalGlyph 1.0 OpticalGlyph.qml
+PanelActionButton 1.0 PanelActionButton.qml
+PanelHero 1.0 PanelHero.qml
+PanelSectionHeader 1.0 PanelSectionHeader.qml
+PanelSeparator 1.0 PanelSeparator.qml
+PanelSlider 1.0 PanelSlider.qml
+PanelToolTip 1.0 PanelToolTip.qml
+PopupMenuRow 1.0 PopupMenuRow.qml
+SearchableDropdown 1.0 SearchableDropdown.qml
+SizedImage 1.0 SizedImage.qml
+TextField 1.0 TextField.qml
+Toggle 1.0 Toggle.qml
+ToggleSwitch 1.0 ToggleSwitch.qml
+
+# The kit's own components (not in the shell).
+Card 1.0 Card.qml
+
+# The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
+IconButton 1.0 PanelActionButton.qml
+MenuRow 1.0 PopupMenuRow.qml
+SectionHeader 1.0 PanelSectionHeader.qml
+Separator 1.0 PanelSeparator.qml
+ValueSlider 1.0 PanelSlider.qml

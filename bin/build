@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Build both galleries (and the token CLI) into build/.
+#
+#   bin/build          # everything
+#   bin/build qt       # just the Qt gallery
+#   bin/build rune     # just the Rune gallery and omarchy-theme
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+what="${1:-all}"
+
+if [[ $what == "all" || $what == "qt" ]]; then
+  mkdir -p "$ROOT/build/qt"
+  (cd "$ROOT/build/qt" && qmake6 "$ROOT/qt/gallery/gallery.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
+  [[ -x $ROOT/build/qt/omarchy-qt-gallery ]] || { echo "Qt gallery failed to build" >&2; exit 1; }
+  echo "build/qt/omarchy-qt-gallery"
+fi
+
+if [[ $what == "all" || $what == "rune" ]]; then
+  cargo build --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-rune-gallery -p omarchy-theme
+  echo "target/release/omarchy-rune-gallery"
+  echo "target/release/omarchy-theme"
+fi
