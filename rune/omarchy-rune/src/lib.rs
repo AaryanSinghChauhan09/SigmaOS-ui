@@ -123,6 +123,31 @@ impl Theme {
     pub fn urgent(&self) -> Color {
         color(self.tokens.palette.urgent)
     }
+    /// Secondary text (`roles.textDim`).
+    pub fn dim(&self) -> Color {
+        color(self.tokens.roles.text_dim)
+    }
+    /// Disabled and placeholder text (`roles.textFaint`).
+    pub fn faint(&self) -> Color {
+        color(self.tokens.roles.text_faint)
+    }
+    /// Meter, progress and scrollbar tracks (`roles.track`).
+    pub fn track(&self) -> Color {
+        color(self.tokens.roles.track)
+    }
+    /// Behind modals (`roles.scrim`).
+    pub fn scrim(&self) -> Color {
+        color(self.tokens.roles.scrim)
+    }
+    pub fn success(&self) -> Color {
+        color(self.tokens.palette.success)
+    }
+    pub fn warning(&self) -> Color {
+        color(self.tokens.palette.warning)
+    }
+    pub fn muted(&self) -> Color {
+        color(self.tokens.palette.muted)
+    }
     /// Foreground darkened as Qt's `darker(factor)`: 1.4 for labels and headers, 1.5 for
     /// descriptions, 1.6 for placeholders.
     pub fn fg_darker(&self, factor: f64) -> Color {

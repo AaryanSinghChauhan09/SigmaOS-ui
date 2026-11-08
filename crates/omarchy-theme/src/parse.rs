@@ -14,6 +14,8 @@ pub struct ColorsFile {
     pub accent: Rgba,
     pub urgent: Rgba,
     pub muted: Rgba,
+    pub success: Rgba,
+    pub warning: Rgba,
     pub dark: bool,
     /// Every `key = "#rrggbb"` in the file, by key.
     pub named: BTreeMap<String, Rgba>,
@@ -27,6 +29,8 @@ impl Default for ColorsFile {
             accent: Rgba::rgb(0xca, 0xcc, 0xcc),
             urgent: Rgba::rgb(0xa5, 0x55, 0x55),
             muted: Rgba::rgb(0x70, 0x78, 0x80),
+            success: Rgba::rgb(0x7f, 0x9f, 0x6f),
+            warning: Rgba::rgb(0xc0, 0xa0, 0x60),
             dark: true,
             named: BTreeMap::new(),
         }
@@ -45,7 +49,7 @@ fn split_kv(line: &str) -> Option<(&str, &str)> {
 pub fn parse_colors(raw: &str) -> ColorsFile {
     let mut out = ColorsFile::default();
     let (mut fg, mut bg, mut accent, mut muted) = (None, None, None, None);
-    let mut urgent = None;
+    let (mut urgent, mut success, mut warning) = (None, None, None);
     for line in raw.lines() {
         let Some((key, value)) = split_kv(line) else { continue };
         let unquoted = value.trim_matches(|c| c == '"' || c == '\'');
@@ -66,6 +70,8 @@ pub fn parse_colors(raw: &str) -> ColorsFile {
             "accent" => accent = Some(c),
             "muted" => muted = Some(c),
             "red" | "color1" => urgent = Some(c),
+            "green" | "color2" => success = Some(c),
+            "yellow" | "color3" => warning = Some(c),
             _ => {}
         }
     }
@@ -75,6 +81,8 @@ pub fn parse_colors(raw: &str) -> ColorsFile {
     out.accent = accent.or(n("color4")).unwrap_or(out.accent);
     out.muted = muted.or(n("color8")).unwrap_or(out.foreground);
     out.urgent = urgent.unwrap_or(out.urgent);
+    out.success = success.unwrap_or(out.success);
+    out.warning = warning.unwrap_or(out.warning);
     out
 }
 

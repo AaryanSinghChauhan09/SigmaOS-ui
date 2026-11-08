@@ -8,7 +8,7 @@ The rules are lifted from the Omarchy shell (`shell/Commons/Color.qml`, `Style.q
 
 | Source | Default location | Provides |
 |---|---|---|
-| Theme palette | `~/.local/state/omarchy/current/theme/colors.toml` | `foreground`, `background`, `accent`, `muted`, `red` (urgent), every named color, `mode` |
+| Theme palette | `~/.local/state/omarchy/current/theme/colors.toml` | `foreground`, `background`, `accent`, `muted`, `red` (urgent), `green` (success), `yellow` (warning), every named color, `mode` |
 | Theme shell tokens | `~/.local/state/omarchy/current/theme/shell.toml` | `[controls]` state tokens, `[spacing]`, `[font]`, per-surface roles (`[popups]`, `[tooltip]`, `[menu]`, …), `[hyprland]` border refs |
 | User shell overrides | `~/.config/omarchy/shell.toml` | Same keys as above; user keys win over the theme's (this is where `omarchy display text size` writes `[font] base-size`) |
 | Hyprland | `j/getoption` on the instance socket | `decoration:rounding` → `radius`, `general:gaps_out` → `gapsOut` (halved), `animations:enabled` → `reduceMotion`, `general:border_size` → `windowBorder` |
@@ -35,8 +35,22 @@ Every binding honors these, so a gallery can render any fixture without touching
 - `foreground`, `background`, `accent`, `muted` come from the keys of the same name.
 - Missing `background` falls back to `color0`, missing `foreground` to `color7`, missing `accent` to `color4`, missing `muted` to `color8`, then to `foreground`.
 - `urgent` is `red`, else `color1`. There is no `urgent` key.
+- `success` is `green`, else `color2`; `warning` is `yellow`, else `color3`. (The kit's own; the shell has neither.)
 - `mode` is `"light"` or `"dark"` (default dark).
-- Defaults when nothing is found: foreground `#cacccc`, background `#101315`, accent `#cacccc`, urgent `#a55555`, muted `#707880`.
+- Defaults when nothing is found: foreground `#cacccc`, background `#101315`, accent `#cacccc`, urgent `#a55555`, muted `#707880`, success `#7f9f6f`, warning `#c0a060`.
+
+### Roles
+
+Colors derived from the palette, so components share them instead of each re-deriving its own (the shell writes `Qt.darker(foreground, 1.5)` by hand 48 times).
+
+| Role | Value | For |
+|---|---|---|
+| `textDim` | foreground darker 1.5 | Secondary text: subtitles, values, hints, status lines |
+| `textFaint` | foreground darker 2.0 | Disabled and placeholder text |
+| `track` | foreground at 0.12 | The unfilled part of meters, progress bars and scrollbars; also the separator color |
+| `scrim` | `surfaces.menu.scrim` | Behind modal dialogs |
+
+`darker(f)` is Qt's `QColor::darker(round(f × 100))`, exactly: HSV value divided in 16-bit channels with float math, so halves round as Qt rounds them.
 
 ## Colors in shell.toml
 
@@ -101,6 +115,8 @@ Each surface has `background`, `text`, `border` (spec), and some extras. Default
 | | | `searchableDropdownWidth` | 260 |
 | | | `numberFieldWidth` | 120 |
 | | | `searchablePopupMinHeight` | 220 |
+| | | `meterThickness` | 6 |
+| | | `scrollbarThickness` | 6 |
 
 ## Typography
 
@@ -134,7 +150,8 @@ Short and quiet. `fast` 120 ms for color and state changes, `press` 160 ms for t
 {
   "schema": 1,
   "mode": "dark",
-  "palette": { "foreground": "#a9b1d6ff", "background": "#1a1b26ff", "accent": "#7aa2f7ff", "urgent": "#f7768eff", "muted": "#414868ff" },
+  "palette": { "foreground": "#a9b1d6ff", "background": "#1a1b26ff", "accent": "#7aa2f7ff", "urgent": "#f7768eff", "muted": "#414868ff", "success": "#9ece6aff", "warning": "#e0af68ff" },
+  "roles": { "textDim": "#71768fff", "textFaint": "#54596bff", "track": "#a9b1d61f", "scrim": "#1a1b2680" },
   "radius": 0,
   "gapsOut": 5,
   "reduceMotion": false,

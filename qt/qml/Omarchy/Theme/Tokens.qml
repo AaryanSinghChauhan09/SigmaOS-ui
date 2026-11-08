@@ -56,7 +56,11 @@ QtObject {
     return {
       schema: 1,
       mode: C.dark ? "dark" : "light",
-      palette: { foreground: hex(fg), background: hex(C.background), accent: hex(ac), urgent: hex(C.urgent), muted: hex(C.muted) },
+      palette: {
+        foreground: hex(fg), background: hex(C.background), accent: hex(ac), urgent: hex(C.urgent), muted: hex(C.muted),
+        success: hex(C.success), warning: hex(C.warning),
+      },
+      roles: { textDim: hex(C.textDim), textFaint: hex(C.textFaint), track: hex(C.track), scrim: hex(C.scrim) },
       radius: S.cornerRadius,
       gapsOut: S.gapsOut,
       reduceMotion: S.reduceMotion,
@@ -75,6 +79,7 @@ QtObject {
         panelPadding: sp.panelPadding, popupPadding: sp.popupPadding,
         dropdownWidth: sp.dropdownWidth, searchableDropdownWidth: sp.searchableDropdownWidth,
         numberFieldWidth: sp.numberFieldWidth, searchablePopupMinHeight: sp.searchablePopupMinHeight,
+        meterThickness: sp.meterThickness, scrollbarThickness: sp.scrollbarThickness,
       },
       controls: {
         normal: state("normal", S.normalFillFor(fg, ac), fg),

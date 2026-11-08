@@ -23,6 +23,14 @@ QtObject {
   // colors.toml `mode`; light themes say "light". (Not in the shell, which has no use for it.)
   property bool dark: true
 
+  // The kit's own additions (spec/tokens.md "Palette" and "Roles"); not in the shell.
+  property color success: "#7f9f6f"
+  property color warning: "#c0a060"
+  readonly property color textDim: Qt.darker(foreground, 1.5)
+  readonly property color textFaint: Qt.darker(foreground, 2.0)
+  readonly property color track: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.12)
+  readonly property color scrim: menu.scrim
+
   // Flat dictionary of "section.key" -> raw string from shell.toml.
   // Reassigning this whole property is what makes surface bindings below
   // re-evaluate when the theme swaps; mutating it in place would not.
@@ -148,6 +156,8 @@ QtObject {
     var color7Value = ""
     var color8Value = ""
     var nextDark = true
+    var nextSuccess = "#7f9f6f"
+    var nextWarning = "#c0a060"
     for (var i = 0; i < lines.length; i++) {
       var modeMatch = lines[i].match(/^\s*mode\s*=\s*["']?([A-Za-z]+)/)
       if (modeMatch) nextDark = modeMatch[1].toLowerCase() !== "light"
@@ -165,12 +175,16 @@ QtObject {
       else if (match[1] === "color7") color7Value = match[2]
       else if (match[1] === "color8") color8Value = match[2]
       else if (match[1] === "red" || match[1] === "color1") urgent = match[2]
+      else if (match[1] === "green" || match[1] === "color2") nextSuccess = match[2]
+      else if (match[1] === "yellow" || match[1] === "color3") nextWarning = match[2]
     }
     if (!loadedBackground && color0Value.length > 0) background = color0Value
     if (!loadedForeground && color7Value.length > 0) foreground = color7Value
     if (!foundAccent && color4Value.length > 0) accent = color4Value
     if (!foundMuted) muted = color8Value.length > 0 ? color8Value : foreground
     dark = nextDark
+    success = nextSuccess
+    warning = nextWarning
   }
 
   // Last theme-supplied and user-supplied shell.toml dicts, kept separate so

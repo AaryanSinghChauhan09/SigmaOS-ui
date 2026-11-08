@@ -258,6 +258,9 @@ QtObject {
     readonly property int searchableDropdownWidth: root.spacingToken("searchable-dropdown-width", 260)
     readonly property int numberFieldWidth: root.spacingToken("number-field-width", 120)
     readonly property int searchablePopupMinHeight: root.spacingToken("searchable-popup-min-height", 220)
+    // The kit's own additions (not in the shell).
+    readonly property int meterThickness: root.spacingToken("meter-thickness", 6)
+    readonly property int scrollbarThickness: root.spacingToken("scrollbar-thickness", 6)
     readonly property int rowGap: root.spacingToken("row-gap", 8)
     readonly property int rowPaddingX: root.spacingToken("row-padding-x", 12)
     readonly property int labelGap: root.spacingToken("label-gap", 4)

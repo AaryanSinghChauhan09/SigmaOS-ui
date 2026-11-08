@@ -422,6 +422,8 @@ pub fn resolve(src: &Sources) -> Tokens {
         searchable_dropdown_width: sp("searchable-dropdown-width", 260.0),
         number_field_width: sp("number-field-width", 120.0),
         searchable_popup_min_height: sp("searchable-popup-min-height", 220.0),
+        meter_thickness: sp("meter-thickness", 6.0),
+        scrollbar_thickness: sp("scrollbar-thickness", 6.0),
     };
 
     // ---- surfaces
@@ -485,7 +487,15 @@ pub fn resolve(src: &Sources) -> Tokens {
             accent: c.accent,
             urgent: c.urgent,
             muted: c.muted,
+            success: c.success,
+            warning: c.warning,
             named,
+        },
+        roles: Roles {
+            text_dim: c.foreground.darker(1.5),
+            text_faint: c.foreground.darker(2.0),
+            track: c.foreground.with_alpha(0.12),
+            scrim: surfaces.menu.scrim,
         },
         radius: src.hypr.rounding.max(0.0).round() as i64,
         gaps_out: round(src.hypr.gaps_out.max(0.0) / 2.0).max(0),

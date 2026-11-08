@@ -52,15 +52,77 @@ impl Rgba {
         0.2126 * lin(self.r) + 0.7152 * lin(self.g) + 0.0722 * lin(self.b)
     }
 
-    /// Qt's `QColor::darker(factor × 100)`, which the shell uses for secondary text (labels at
-    /// 1.4, descriptions at 1.5, placeholders at 1.6): HSV value divided by `factor`, hue and
-    /// saturation kept, so every channel scales by `1 / factor`.
+    /// Qt's `Qt.darker(color, factor)`, which the shell uses for secondary text (labels at 1.4,
+    /// descriptions at 1.5, placeholders at 1.6): `QColor::darker(round(factor × 100))`, which
+    /// divides the HSV value with Qt's 16-bit channels and float math. Ported step for step so
+    /// halves round the way Qt rounds them (169 / 2 is 84 in Qt, not 85).
     pub fn darker(self, factor: f64) -> Rgba {
-        if factor <= 0.0 {
+        let factor = (factor * 100.0).round() as i64;
+        if factor <= 0 {
             return self;
         }
-        let d = |c: u8| ((c as f64) / factor).round().clamp(0.0, 255.0) as u8;
-        Rgba { r: d(self.r), g: d(self.g), b: d(self.b), a: self.a }
+        if factor < 100 {
+            return self; // lighter(); the kit never asks for it
+        }
+        const MAX: f32 = 65535.0;
+        let q_round = |d: f32| if d >= 0.0 { (d + 0.5) as i64 } else { (d - 0.5) as i64 };
+        let fuzzy_eq = |a: f32, b: f32| (a - b).abs() * 100000.0 <= a.abs().min(b.abs());
+        // toHsv()
+        let (r, g, b) = (self.r as f32 * 257.0 / MAX, self.g as f32 * 257.0 / MAX, self.b as f32 * 257.0 / MAX);
+        let max = r.max(g).max(b);
+        let min = r.min(g).min(b);
+        let delta = max - min;
+        let value = q_round(max * MAX) as u32;
+        let (hue, sat) = if delta.abs() <= 0.00001 {
+            (u16::MAX as i64, 0i64)
+        } else {
+            let sat = q_round((delta / max) * MAX);
+            let mut h = if fuzzy_eq(r, max) {
+                (g - b) / delta
+            } else if fuzzy_eq(g, max) {
+                2.0 + (b - r) / delta
+            } else {
+                4.0 + (r - g) / delta
+            };
+            h *= 60.0;
+            if h < 0.0 {
+                h += 360.0;
+            }
+            (q_round(h * 100.0), sat)
+        };
+        // value / factor, then toRgb()
+        let v16 = (value * 100) / factor as u32;
+        let h = if hue == u16::MAX as i64 { 0.0 } else { hue as f32 / 6000.0 };
+        let s = sat as f32 / MAX;
+        let v = v16 as f32 / MAX;
+        let (rr, gg, bb) = if s == 0.0 {
+            (v, v, v)
+        } else {
+            let i = h as i32;
+            let f = h - i as f32;
+            let p = v * (1.0 - s);
+            if i & 1 == 1 {
+                let q = v * (1.0 - s * f);
+                match i {
+                    1 => (q, v, p),
+                    3 => (p, q, v),
+                    _ => (v, p, q),
+                }
+            } else {
+                let t = v * (1.0 - s * (1.0 - f));
+                match i {
+                    0 => (v, t, p),
+                    2 => (p, v, t),
+                    _ => (t, p, v),
+                }
+            }
+        };
+        // 16-bit channels, read back as QML does (channel / 65535 × 255, rounded).
+        let byte = |c: f32| {
+            let c16 = q_round(c * MAX).clamp(0, 65535) as f64;
+            (c16 / 65535.0 * 255.0).round() as u8
+        };
+        Rgba { r: byte(rr), g: byte(gg), b: byte(bb), a: self.a }
     }
 
     /// Mix toward `other` by `t` (0 keeps self, 1 is other), in sRGB like the theme templates' `mix`.

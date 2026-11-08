@@ -42,6 +42,14 @@ fn tokyo_night_matches_the_shell() {
 }
 
 #[test]
+fn darker_rounds_halves_as_qt_does() {
+    use crate::Rgba;
+    // tokyo-night's foreground: 0xa9 / 2 = 84.5, which Qt's 16-bit HSV math lands on 84.
+    assert_eq!(Rgba::rgb(0xa9, 0xb1, 0xd6).darker(2.0).hex(), "#54596bff");
+    assert_eq!(Rgba::rgb(0xa9, 0xb1, 0xd6).darker(1.5).hex(), "#71768fff");
+}
+
+#[test]
 fn every_fixture_resolves() {
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/themes");
     let mut n = 0;

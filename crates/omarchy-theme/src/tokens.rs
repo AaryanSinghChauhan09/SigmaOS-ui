@@ -57,6 +57,10 @@ pub struct Palette {
     pub accent: Rgba,
     pub urgent: Rgba,
     pub muted: Rgba,
+    /// `green`, else `color2`: connected, done, healthy.
+    pub success: Rgba,
+    /// `yellow`, else `color3`: low, degraded, needs attention.
+    pub warning: Rgba,
     /// Every color in `colors.toml` by its key (`red`, `bright_blue`, `lighter_background`, …).
     #[serde(skip)]
     pub named: BTreeMap<String, Rgba>,
@@ -127,6 +131,8 @@ pub struct Spacing {
     pub searchable_dropdown_width: i64,
     pub number_field_width: i64,
     pub searchable_popup_min_height: i64,
+    pub meter_thickness: i64,
+    pub scrollbar_thickness: i64,
 }
 
 impl Font {
@@ -233,6 +239,20 @@ impl Default for Motion {
     }
 }
 
+/// Colors derived from the palette that components share, so none of them re-derives its own.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Roles {
+    /// Secondary text: subtitles, values, hints. Foreground darker 1.5.
+    pub text_dim: Rgba,
+    /// Disabled and placeholder text. Foreground darker 2.0.
+    pub text_faint: Rgba,
+    /// The unfilled part of meters, progress bars, sliders and scrollbars. Foreground at 0.12.
+    pub track: Rgba,
+    /// Behind modal dialogs: the menu surface's scrim.
+    pub scrim: Rgba,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Tokens {
@@ -241,6 +261,7 @@ pub struct Tokens {
     pub theme: String,
     pub mode: Mode,
     pub palette: Palette,
+    pub roles: Roles,
     /// Hyprland's `decoration:rounding`; 0 is sharp.
     pub radius: i64,
     /// Half of Hyprland's `general:gaps_out`.
