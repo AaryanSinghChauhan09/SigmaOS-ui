@@ -1,8 +1,8 @@
-//! Surfaces: Card (the shell's panels and popups), section headers, separators, menu rows,
-//! tooltips and the confirm dialog.
+//! Surfaces: Card (the shell's panels and popups), Pane (an app's in-window panels), Heading,
+//! section headers, separators, menu rows, tooltips and the confirm dialog.
 
 use omarchy_theme::Rgba;
-use rune::{El, col, el, row, text};
+use rune::{Align, El, Side, col, el, row, text};
 
 use super::Attach;
 use crate::{Theme, border, color};
@@ -78,6 +78,179 @@ impl Card {
 impl Default for Card {
     fn default() -> Self {
         Card::new()
+    }
+}
+
+/// Which font token a [`Heading`] is set in: `title` for panes and toolbars, `heading` for
+/// sections and dialogs, `display` for pages.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum HeadingLevel {
+    #[default]
+    Title,
+    Heading,
+    Display,
+}
+
+/// The title of a pane, toolbar, section or page: one bold line at the level's font token, an
+/// optional `textDim` subtitle under it, and an optional trailing slot of actions. Not
+/// [`section_header`] (the caption-sized dim label over a group of rows) and not
+/// [`super::Hero`] (a shell panel's glyph, title and uppercased status). Both lines elide;
+/// trailing items sit xxs apart, controlGap after the lines, centered against them.
+pub struct Heading {
+    text: String,
+    subtitle: String,
+    level: HeadingLevel,
+    centered: bool,
+    trailing: Vec<El>,
+}
+
+impl Heading {
+    pub fn new(text: impl Into<String>) -> Heading {
+        Heading { text: text.into(), subtitle: String::new(), level: HeadingLevel::Title, centered: false, trailing: Vec::new() }
+    }
+    pub fn subtitle(mut self, s: impl Into<String>) -> Self {
+        self.subtitle = s.into();
+        self
+    }
+    pub fn level(mut self, level: HeadingLevel) -> Self {
+        self.level = level;
+        self
+    }
+    /// Center the lines (a toolbar's title) in the space before the trailing slot.
+    pub fn centered(mut self, on: bool) -> Self {
+        self.centered = on;
+        self
+    }
+    pub fn trailing(mut self, items: impl IntoIterator<Item = El>) -> Self {
+        self.trailing.extend(items);
+        self
+    }
+
+    pub fn build(self, t: &Theme) -> El {
+        let tk = t.tokens();
+        let f = &tk.font;
+        let sp = &tk.spacing;
+        let (size, sub) = match self.level {
+            HeadingLevel::Title => (f.title, f.body_small),
+            HeadingLevel::Heading => (f.heading, f.body),
+            HeadingLevel::Display => (f.display, f.subtitle),
+        };
+        let align = if self.centered { Align::Center } else { Align::Start };
+        let mut lines = col().grow(1.0).min_w(0.0).gap(sp.xxs as f32).child(
+            text(self.text.clone()).font(t.text_style_bold(size)).color(t.fg()).single_line().truncate().align(align),
+        );
+        if self.centered {
+            lines = lines.items_center();
+        }
+        if !self.subtitle.is_empty() {
+            lines = lines.child(text(self.subtitle).font(t.text_style(sub)).color(t.dim()).single_line().truncate().align(align));
+        }
+        let mut e = row().items_center().role("heading").label(self.text).child(lines);
+        if !self.trailing.is_empty() {
+            e = e.gap(sp.control_gap as f32).child(row().items_center().gap(sp.xxs as f32).children(self.trailing));
+        }
+        e
+    }
+}
+
+/// A flat surface inside an app window: an inspector, a side panel, a settings group. Not a
+/// [`Card`] (the raised [popups] surface with the accent border): a pane sits on the window, so
+/// by default it draws nothing but its padding, plus a hairline track rule on one side against
+/// its neighbour (`divider`). `bordered` gives it the controls' normal glass instead, with the
+/// theme's corners, for a group set off inside a page. Never a shadow.
+///
+/// The header is a [`Heading`] (title level) with `actions` as its trailing slot. Children stack
+/// in a column under it, panelGap apart, panelPadding inside the edges.
+pub struct Pane {
+    title: String,
+    subtitle: String,
+    actions: Vec<El>,
+    bordered: bool,
+    divider: Option<Side>,
+    width: Option<f32>,
+    children: Vec<El>,
+}
+
+impl Pane {
+    pub fn new() -> Pane {
+        Pane { title: String::new(), subtitle: String::new(), actions: Vec::new(), bordered: false, divider: None, width: None, children: Vec::new() }
+    }
+    pub fn title(mut self, title: impl Into<String>) -> Self {
+        self.title = title.into();
+        self
+    }
+    pub fn subtitle(mut self, s: impl Into<String>) -> Self {
+        self.subtitle = s.into();
+        self
+    }
+    /// IconButtons or Buttons at the end of the header.
+    pub fn actions(mut self, items: impl IntoIterator<Item = El>) -> Self {
+        self.actions.extend(items);
+        self
+    }
+    /// The controls' normal fill and border, and the theme's corners.
+    pub fn bordered(mut self, on: bool) -> Self {
+        self.bordered = on;
+        self
+    }
+    /// A hairline track rule along one side, against the pane's neighbour.
+    pub fn divider(mut self, side: Side) -> Self {
+        self.divider = Some(side);
+        self
+    }
+    pub fn width(mut self, w: f32) -> Self {
+        self.width = Some(w);
+        self
+    }
+    pub fn child(mut self, e: El) -> Self {
+        self.children.push(e);
+        self
+    }
+    pub fn children(mut self, es: impl IntoIterator<Item = El>) -> Self {
+        self.children.extend(es);
+        self
+    }
+
+    pub fn build(self, t: &Theme) -> El {
+        let tk = t.tokens();
+        let sp = &tk.spacing;
+        let normal = &tk.controls.normal;
+        let pad = sp.panel_padding as f32;
+        let gap = sp.panel_gap as f32;
+        let hair = sp.hairline as f32;
+        let bw = if self.bordered { normal.border.widths.map(|w| w as f32) } else { [0.0; 4] };
+        let rule = |side: Side| if self.divider == Some(side) { hair } else { 0.0 };
+        let mut c = col()
+            .gap(gap)
+            .pt(pad + bw[0] + rule(Side::Top))
+            .pr(pad + bw[1] + rule(Side::Right))
+            .pb(pad + bw[2] + rule(Side::Bottom))
+            .pl(pad + bw[3] + rule(Side::Left));
+        if self.bordered {
+            c = border(c.fill(color(normal.fill)).radius(t.radius()), &normal.border);
+        }
+        if let Some(w) = self.width {
+            c = c.w(w);
+        }
+        if let Some(side) = self.divider {
+            let line = match side {
+                Side::Top => el().pin(Some(0.0), Some(0.0), Some(0.0), None).h(hair),
+                Side::Right => el().pin(None, Some(0.0), Some(0.0), Some(0.0)).w(hair),
+                Side::Bottom => el().pin(Some(0.0), None, Some(0.0), Some(0.0)).h(hair),
+                Side::Left => el().pin(Some(0.0), Some(0.0), None, Some(0.0)).w(hair),
+            };
+            c = c.child(line.fill(t.track()));
+        }
+        if !self.title.is_empty() {
+            c = c.child(Heading::new(self.title).subtitle(self.subtitle).trailing(self.actions).build(t).w_full());
+        }
+        c.child(col().w_full().gap(gap).children(self.children))
+    }
+}
+
+impl Default for Pane {
+    fn default() -> Self {
+        Pane::new()
     }
 }
 

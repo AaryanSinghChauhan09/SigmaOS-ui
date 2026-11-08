@@ -38,6 +38,7 @@ pub use pickers::{ColorWell, MultiSelect, SwatchStrip};
 pub use search::{SEARCH_SECTION, SearchItem, SearchList};
 pub use slider::Slider;
 pub use surface::{Card, ConfirmDialog, MenuRow, Tooltip, section_header, separator};
+pub use surface::{Heading, HeadingLevel, Pane};
 pub use toggle::{Toggle, ToggleSwitch};
 
 use omarchy_theme::{BorderSpec, Rgba};

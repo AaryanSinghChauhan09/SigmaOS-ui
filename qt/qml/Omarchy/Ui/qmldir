@@ -80,6 +80,8 @@ Scrubber 1.0 Scrubber.qml
 Timeline 1.0 Timeline.qml
 TrimHandle 1.0 TrimHandle.qml
 SearchList 1.0 SearchList.qml
+Heading 1.0 Heading.qml
+Pane 1.0 Pane.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml
