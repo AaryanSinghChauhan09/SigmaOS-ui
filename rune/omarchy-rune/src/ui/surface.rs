@@ -139,9 +139,6 @@ impl Heading {
         let mut lines = col().grow(1.0).min_w(0.0).gap(sp.xxs as f32).child(
             text(self.text.clone()).font(t.text_style_bold(size)).color(t.fg()).single_line().truncate().align(align),
         );
-        if self.centered {
-            lines = lines.items_center();
-        }
         if !self.subtitle.is_empty() {
             lines = lines.child(text(self.subtitle).font(t.text_style(sub)).color(t.dim()).single_line().truncate().align(align));
         }
