@@ -290,6 +290,42 @@ mod tests {
         assert_eq!(pressed("menus", "menu-new").state.menus.ran, Some("New"));
     }
 
+    /// A menu with no `on_close` still walks with j and k as with Down and Up (Qt's Menu takes
+    /// both), skipping its disabled row, and Enter runs the row the walk lands on.
+    #[test]
+    fn menu_walks_with_vim_keys_and_arrows() {
+        use rune::{Key, KeyEvent};
+        let mut rt = pressed("menus", "menu-new");
+        assert_eq!(rt.state.menus.ran, Some("New"));
+        let mut at = 1.0 / 60.0;
+        let mut key = |rt: &mut Runtime<State>, k: &str| {
+            let key = match k {
+                "Down" => Key::Down,
+                "Up" => Key::Up,
+                "Enter" => Key::Enter,
+                c => Key::Text(c.into()),
+            };
+            at += 1.0 / 60.0;
+            rt.key(KeyEvent { key, mods: Default::default() });
+            rt.frame(at);
+        };
+        for (keys, ran) in [
+            (&["j", "Enter"][..], "Open…"),
+            (&["Down", "Enter"], "Save"),
+            (&["k", "Enter"], "Open…"),
+            (&["j", "j", "Enter"], "Sidebar"),
+        ] {
+            for k in keys {
+                key(&mut rt, k);
+            }
+            if ran == "Sidebar" {
+                assert!(!rt.state.menus.sidebar, "j skips the disabled row to Sidebar and Enter flips it");
+            } else {
+                assert_eq!(rt.state.menus.ran, Some(ran), "after {keys:?}");
+            }
+        }
+    }
+
     /// A Pane's header actions are live controls at the end of its Heading: the Night light
     /// switch sits at the bordered pane's right edge and flips its setting.
     #[test]

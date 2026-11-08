@@ -11,6 +11,9 @@ use crate::{Theme, border, color};
 type Open = Box<dyn FnOnce(El, bool) -> El>;
 type Close = Box<dyn FnOnce(El, bool, bool) -> El>;
 
+/// The vim keys every menu walks with, as Qt's `Menu.handleKey` does.
+const VIM: &[(&str, Key)] = &[("j", Key::Down), ("k", Key::Up), ("l", Key::Right)];
+
 /// One row of a Menu: an optional leading glyph, the label, a dim shortcut hint at the right, and
 /// a trailing mark: an accent check (or a radio dot) when checked, or a chevron when the row
 /// opens a submenu. Under the pointer, keyboard focus or `cursor` it takes the menu surface's
@@ -226,8 +229,8 @@ enum Entry {
 ///
 /// Without `anchor` or `at` it draws in place (held open, for galleries and still renders).
 /// With `anchor(key)` it goes below that keyed element: push it into the root's overlay layer.
-/// Up and Down (or k and j, with `on_close`) walk the rows, Enter runs one, Right opens a
-/// submenu row's `on_open`; Escape and a press outside call `on_close`, and so do Left and h in
+/// Up and Down (or k and j) walk the rows, Enter runs one, Right (or l) opens a submenu row's
+/// `on_open`; Escape and a press outside call `on_close`, and so do Left and h in
 /// a menu marked `submenu`.
 pub struct Menu {
     entries: Vec<Entry>,
@@ -286,7 +289,7 @@ impl Menu {
         self
     }
     /// Closing: Escape, a press outside (when anchored or at a point), Left or h in a submenu.
-    /// Also maps j, k and l to Down, Up and Right.
+    /// (j, k and l map to Down, Up and Right with or without it.)
     pub fn on_close<S: 'static>(mut self, f: impl Fn(&mut S) + Clone + 'static) -> Self {
         self.close = Some(Box::new(move |e: El, popup: bool, submenu: bool| {
             let g = f.clone();
@@ -348,7 +351,7 @@ impl Menu {
         }
         match self.close {
             Some(attach) => attach(frame, popup, self.submenu),
-            None => frame,
+            None => t.key_aliases(frame, VIM),
         }
     }
 }

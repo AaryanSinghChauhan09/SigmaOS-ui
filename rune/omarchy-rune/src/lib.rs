@@ -55,6 +55,20 @@ pub struct Theme {
     inbox: Arc<Mutex<Option<Tokens>>>,
     watch: Option<omarchy_theme::Watch>,
     icons: Arc<Icons>,
+    /// Key aliases typed for the app's state, from [`Theme::apply`] (see [`Theme::key_aliases`]).
+    aliases: Arc<Mutex<Option<Aliases>>>,
+}
+
+/// Attaches an `on_key` that re-sends each listed text key as another key.
+type Aliases = fn(El, &'static [(&'static str, rune::Key)]) -> El;
+
+fn aliases<S: 'static>(e: El, map: &'static [(&'static str, rune::Key)]) -> El {
+    e.on_key(move |_: &mut S, k: &rune::KeyEvent, tx: &mut rune::Tx| {
+        let rune::Key::Text(typed) = &k.key else { return false };
+        let Some((_, to)) = map.iter().find(|(from, _)| from == typed) else { return false };
+        tx.send_key(rune::KeyEvent { key: to.clone(), mods: k.mods });
+        true
+    })
 }
 
 impl Theme {
@@ -66,7 +80,7 @@ impl Theme {
     pub fn from_tokens(tokens: Tokens) -> Theme {
         let family = family_for(&tokens);
         let kit = build_kit(&tokens, family);
-        Theme { tokens, kit, family, inbox: Arc::default(), watch: None, icons: Arc::default() }
+        Theme { tokens, kit, family, inbox: Arc::default(), watch: None, icons: Arc::default(), aliases: Arc::default() }
     }
 
     /// Start following the desktop: theme switches, `omarchy font set`, `omarchy display text
@@ -84,7 +98,13 @@ impl Theme {
     pub fn poll(&mut self) -> bool {
         let Some(fresh) = self.inbox.lock().unwrap().take() else { return false };
         // The icon store carries over: it re-resolves by itself when the icon theme changed.
-        *self = Theme { inbox: self.inbox.clone(), watch: self.watch.take(), icons: self.icons.clone(), ..Theme::from_tokens(fresh) };
+        *self = Theme {
+            inbox: self.inbox.clone(),
+            watch: self.watch.take(),
+            icons: self.icons.clone(),
+            aliases: self.aliases.clone(),
+            ..Theme::from_tokens(fresh)
+        };
         true
     }
 
@@ -100,13 +120,25 @@ impl Theme {
 
     /// Window-wide settings a view should apply once per frame: Omarchy's focus ring (focus
     /// mirrors hover by default) and Hyprland's animations toggle as reduced motion.
-    pub fn apply<S>(&self, cx: &mut Cx<S>) {
+    pub fn apply<S: 'static>(&self, cx: &mut Cx<S>) {
         let focus = &self.tokens.controls.focus.border;
         cx.focus_ring(focus.max_width().max(1.0) as f32, 0.0, color(focus.color));
         if self.tokens.reduce_motion {
             cx.reduced_motion(true);
         }
         self.icons.scale.store(cx.env().scale.to_bits(), Ordering::Relaxed);
+        *self.aliases.lock().unwrap_or_else(|e| e.into_inner()) = Some(aliases::<S>);
+    }
+
+    /// `e` with each `(text, key)` in `map` re-sent as `key` while it or something in it has
+    /// focus: `[("j", Key::Down), ("k", Key::Up)]` walks a focus group the vim way. Primitives use
+    /// it for keys that need no app state; it needs a [`Theme::apply`] first (to learn the
+    /// state's type) and is a no-op before one.
+    pub fn key_aliases(&self, e: El, map: &'static [(&'static str, rune::Key)]) -> El {
+        match *self.aliases.lock().unwrap_or_else(|e| e.into_inner()) {
+            Some(attach) => attach(e, map),
+            None => e,
+        }
     }
 
     /// The icon named `name` (`firefox`, `org.gnome.Nautilus`) in the theme's icon theme
