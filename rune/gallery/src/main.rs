@@ -36,6 +36,8 @@ pub(crate) struct State {
     pub stepped: f32,
     pub align: String,
     pub network: String,
+    pub menus: sections::menus::Menus,
+    pub navigation: sections::navigation::Navigation,
 }
 
 pub(crate) fn init() -> State {
@@ -55,6 +57,8 @@ pub(crate) fn init() -> State {
         stepped: 0.75,
         align: "center".into(),
         network: "basecamp".into(),
+        menus: sections::menus::Menus::init(),
+        navigation: sections::navigation::Navigation::init(),
     }
 }
 
@@ -84,6 +88,8 @@ gallery! {
     inputs: "Inputs",
     slider: "Slider",
     surfaces: "Surfaces",
+    menus: "Menus",
+    navigation: "Navigation",
     tokens: "Tokens",
 }
 
@@ -168,5 +174,32 @@ mod tests {
         rt.pointer_up(x, y);
         rt.frame(1.0 / 60.0);
         assert_ne!(before, rt.state.switches[0]);
+    }
+
+    fn press(section: &'static str, key: &str) -> Runtime<State> {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some(section);
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        let (x, y) = rt.find(key).unwrap_or_else(|| panic!("no element keyed {key}"));
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(1.0 / 60.0);
+        rt
+    }
+
+    /// Pressing a menu row runs it: a check row flips, a plain row reports itself.
+    #[test]
+    fn menu_rows_run() {
+        assert!(!press("menus", "menu-sidebar").state.menus.sidebar);
+        assert_eq!(press("menus", "menu-new").state.menus.ran, Some("New"));
+    }
+
+    /// Pressing a tab or a rail item chooses it.
+    #[test]
+    fn tabs_and_rail_choose() {
+        assert_eq!(press("navigation", "tab-3").state.navigation.tab, 3);
+        assert_eq!(press("navigation", "rail-4").state.navigation.panel, 4);
     }
 }
