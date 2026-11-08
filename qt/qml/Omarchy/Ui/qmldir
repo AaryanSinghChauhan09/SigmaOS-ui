@@ -29,6 +29,11 @@ ToggleSwitch 1.0 ToggleSwitch.qml
 
 # The kit's own components (not in the shell).
 Card 1.0 Card.qml
+Calendar 1.0 Calendar.qml
+Sidebar 1.0 Sidebar.qml
+SplitView 1.0 SplitView.qml
+Table 1.0 Table.qml
+Tree 1.0 Tree.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml
