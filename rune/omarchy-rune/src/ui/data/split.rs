@@ -8,7 +8,7 @@ use crate::{Theme, color};
 
 /// One pane: its content and either a size (the pane the handle resizes) or a share of what the
 /// sized panes leave.
-pub struct Pane {
+pub struct SplitPane {
     content: El,
     size: Option<f32>,
     min: f32,
@@ -16,9 +16,9 @@ pub struct Pane {
     visible: bool,
 }
 
-impl Pane {
-    pub fn new(content: El) -> Pane {
-        Pane { content, size: None, min: 0.0, max: f32::INFINITY, visible: true }
+impl SplitPane {
+    pub fn new(content: El) -> SplitPane {
+        SplitPane { content, size: None, min: 0.0, max: f32::INFINITY, visible: true }
     }
     /// A fixed size along the split (width when horizontal); the handle beside it changes it.
     pub fn size(mut self, s: f32) -> Self {
@@ -44,7 +44,7 @@ type Resize = std::rc::Rc<dyn Fn(El, usize, f32, f32, f32, f32) -> El>;
 
 pub struct SplitView {
     key: Option<String>,
-    panes: Vec<Pane>,
+    panes: Vec<SplitPane>,
     vertical: bool,
     cursor: bool,
     resize: Option<Resize>,
@@ -54,7 +54,7 @@ impl SplitView {
     pub fn new() -> SplitView {
         SplitView { panes: Vec::new(), vertical: false, cursor: false, resize: None, key: None }
     }
-    pub fn pane(mut self, p: Pane) -> Self {
+    pub fn pane(mut self, p: SplitPane) -> Self {
         self.panes.push(p);
         self
     }
@@ -121,7 +121,7 @@ impl SplitView {
             h
         };
 
-        let visible: Vec<(usize, Pane)> = self.panes.into_iter().enumerate().filter(|(_, p)| p.visible).collect();
+        let visible: Vec<(usize, SplitPane)> = self.panes.into_iter().enumerate().filter(|(_, p)| p.visible).collect();
         // Which pane each handle resizes: the sized one beside it, the left (top) one first.
         let sized_beside = |i: usize| -> Option<(usize, f32, f32, f32, f32)> {
             let (ai, a) = &visible[i];

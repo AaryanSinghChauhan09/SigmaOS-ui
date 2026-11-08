@@ -23,7 +23,7 @@ mod toggle;
 
 pub use button::{Button, ButtonGroup, IconButton};
 pub use feedback::{Banner, EmptyState, Meter, ProgressBar, Spinner, Toast};
-pub use data::{Calendar, Column, Date, Pane, Sidebar, SidebarItem, SidebarSection, SplitView, Table, Tree, TreeNode};
+pub use data::{Calendar, Column, Date, Sidebar, SidebarItem, SidebarSection, SplitPane, SplitView, Table, Tree, TreeNode};
 pub use editing::{Clip, ColorPicker, CropFrame, DragHandle, DropIndicator, Edge, Hsva, Scrubber, Timeline, TimelineView, TrimHandle};
 pub use field::{Dropdown, NumberField, TextField};
 pub use lists::{

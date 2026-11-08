@@ -6,7 +6,7 @@ Tables, trees, split panes, sidebars and the month grid. Roadmap Tier 2 #24 (Spl
 |---|---|---|---|
 | Table | `Table` | `Table`, `Column` | Header of dim bold captions with a sort chevron, rows of elided text, hairline rules, one selected and one cursor row. |
 | Tree | `Tree` | `Tree`, `TreeNode` | FileTree-style rows: indent per level, chevron on branches, optional glyph, label. |
-| SplitView | `SplitView` (wraps QtQuick.Controls `SplitView`) | `SplitView`, `Pane` | Panes with a draggable handle: a hairline that lights with the hover glass. |
+| SplitView | `SplitView` (wraps QtQuick.Controls `SplitView`) | `SplitView`, `SplitPane` | Panes with a draggable handle: a hairline that lights with the hover glass. |
 | Sidebar | `Sidebar` | `Sidebar`, `SidebarSection`, `SidebarItem` | Sections of SectionHeaders over glyph + label rows, one selected; collapses to a glyph rail. |
 | Calendar | `Calendar` | `Calendar`, `Date` | Month grid from Monday, today ringed in accent, selected day filled, previous/next IconButtons. |
 
@@ -68,8 +68,8 @@ The Qt body is a `ListView`: give the Table a height and the rows scroll under a
 
 | | Qt | Rune |
 |---|---|---|
-| Panes | children, sized with `QQC.SplitView.preferredWidth`, `minimumWidth`, `maximumWidth`, `fillWidth` (import `QtQuick.Controls as QQC`) | `.pane(Pane::new(el).size(200.0).min(120.0).max(..))`, `Pane::new(el)` fills |
-| Collapse | the pane's `visible: false` | `Pane::visible(false)` |
+| Panes | children, sized with `QQC.SplitView.preferredWidth`, `minimumWidth`, `maximumWidth`, `fillWidth` (import `QtQuick.Controls as QQC`) | `.pane(SplitPane::new(el).size(200.0).min(120.0).max(..))`, `SplitPane::new(el)` fills |
+| Collapse | the pane's `visible: false` | `SplitPane::visible(false)` |
 | Direction | `orientation` | `.vertical(bool)` |
 | Hot look | `hasCursor: bool` | `.cursor(bool)` |
 | Resize | Qt's own (the attached `preferredWidth` changes); `saveState()`/`restoreState()` | `.on_resize(\|s, pane_index, size\|)`; the app stores the size |

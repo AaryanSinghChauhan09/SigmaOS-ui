@@ -1,7 +1,7 @@
 //! The `layout` section (spec/gallery.md): a SplitView with a Sidebar, and a Calendar.
 
 use omarchy_rune::Theme;
-use omarchy_rune::ui::{Calendar, Date, Pane, Sidebar, SidebarItem, SidebarSection, SplitView};
+use omarchy_rune::ui::{Calendar, Date, SplitPane, Sidebar, SidebarItem, SidebarSection, SplitView};
 use rune::{El, el, row, text};
 
 use crate::State;
@@ -42,8 +42,8 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     .build(t);
     let content = row().center().child(text("No file selected").font(t.text_style(tk.font.body)).color(t.faint()));
     let split = SplitView::new()
-        .pane(Pane::new(sidebar).size(l.sidebar).min(120.0))
-        .pane(Pane::new(content))
+        .pane(SplitPane::new(sidebar).size(l.sidebar).min(120.0))
+        .pane(SplitPane::new(content))
         .on_resize(|s: &mut State, _, w| s.layout.sidebar = w)
         .key("split")
         .build(t);

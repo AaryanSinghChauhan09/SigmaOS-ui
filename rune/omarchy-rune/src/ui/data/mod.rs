@@ -10,7 +10,7 @@ mod tree;
 
 pub use calendar::{Calendar, Date};
 pub use sidebar::{Sidebar, SidebarItem, SidebarSection};
-pub use split::{Pane, SplitView};
+pub use split::{SplitPane, SplitView};
 pub use table::{Column, Table};
 pub use tree::{Tree, TreeNode};
 
