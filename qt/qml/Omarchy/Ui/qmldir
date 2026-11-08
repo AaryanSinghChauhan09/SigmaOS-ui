@@ -28,7 +28,16 @@ Toggle 1.0 Toggle.qml
 ToggleSwitch 1.0 ToggleSwitch.qml
 
 # The kit's own components (not in the shell).
+Avatar 1.0 Avatar.qml
+Badge 1.0 Badge.qml
 Card 1.0 Card.qml
+CursorModel 1.0 CursorModel.qml
+Hero 1.0 Hero.qml
+KeyValue 1.0 KeyValue.qml
+ListRow 1.0 ListRow.qml
+ScrollArea 1.0 ScrollArea.qml
+StatusDot 1.0 StatusDot.qml
+TileGrid 1.0 TileGrid.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml
