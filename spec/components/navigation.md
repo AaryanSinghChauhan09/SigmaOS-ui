@@ -122,7 +122,7 @@ Qt `ShortcutSheet`; Rune `ShortcutSheet`. Grouped keyboard shortcuts: the sheet'
 
 Qt `Tooltip` (the kit's own; `PanelToolTip` is unchanged); Rune `Tooltip` with `.shortcut(..)`.
 
-**Anatomy.** The `surfaces.tooltip` surface (border `max(1, normal border width)`), padding `controlPaddingX` × `controlPaddingY` inside the border. It holds the text (`bodySmall`, tooltip text) and, when there is a shortcut, a KeyCombo `controlGap` after it, both vertically centered. Without a shortcut it is the plain Tooltip. Like the existing Rune Tooltip and Button's tooltip, its corners are square; `PanelToolTip` rounds them (see the open questions below).
+**Anatomy.** The `surfaces.tooltip` surface (border `max(1, normal border width)`), padding `controlPaddingX` × `controlPaddingY` inside the border. It holds the text (`bodySmall`, tooltip text) and, when there is a shortcut, a KeyCombo `controlGap` after it, both vertically centered. Without a shortcut it is the plain Tooltip. Corners are the theme's `radius`, as every popup's: PanelToolTip, Button's built-in tooltip and this one all agree.
 
 **API.**
 
@@ -194,7 +194,6 @@ Qt `IconRail`; Rune `IconRail`. A vertical tab rail for switching an app's side 
 
 ## Open questions
 
-- Tooltip corners: `PanelToolTip` uses `radius`, but Button's built-in tooltip and the Rune Tooltip draw square ones. The new Tooltip follows the square ones so the `surfaces` section keeps matching. The kit should pick one.
 - No tokens were added. Candidates if these recur: a keycap height (`space(18)` here), a toolbar separator height (`space(16)`), and a menu minimum width (`space(160)`).
 
 ## Gallery

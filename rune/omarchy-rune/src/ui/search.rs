@@ -279,7 +279,7 @@ impl SearchList {
             .grow(1.0)
             .min_w(0.0)
             .color(color(menu.text))
-            .placeholder(self.placeholder, t.dim())
+            .placeholder(self.placeholder, t.faint())
             .caret(rune::Color::TRANSPARENT, color(tk.controls.selection.fill));
         if let Some(wire) = &self.wire {
             input = wire.input(input, &self.key, n, self.cb.clone());

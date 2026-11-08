@@ -16,7 +16,7 @@ fn rest_and_hot(t: &Theme) -> (Look, Look) {
 fn field_label(t: &Theme, label: &str, bold: bool) -> El {
     let size = t.tokens().font.body_small;
     let style = if bold { t.text_style_bold(size) } else { t.text_style(size) };
-    text(label.to_string()).font(style).color(t.fg_darker(1.4))
+    text(label.to_string()).font(style).color(t.dim())
 }
 
 /// A single-line text input. The editing (caret, selection, IME, clipboard) is Rune's; the

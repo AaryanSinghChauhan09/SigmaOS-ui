@@ -168,7 +168,7 @@ Item {
       textFormat: Text.PlainText
       visible: root.showLabel && root.label !== ""
       text: root.label
-      color: Qt.darker(root.foreground, 1.4)
+      color: Commons.Color.textDim
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
       font.bold: true
@@ -212,7 +212,7 @@ Item {
         anchors.leftMargin: trigger.borderLeft + Style.spacing.controlPaddingX
         anchors.rightMargin: trigger.borderRight + Style.spacing.md
         text: root.selectionLabel() || root.triggerLabel || root.noSelectionText
-        color: root.selectionLabel() ? root.foreground : Qt.darker(root.foreground, 1.5)
+        color: root.selectionLabel() ? root.foreground : Commons.Color.textDim
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
         elide: Text.ElideRight
@@ -409,7 +409,7 @@ Item {
               anchors.centerIn: parent
               visible: resultList.count === 0
               text: root.loadingOptions ? Commons.I18n.t("common.loading") : (root.optionsError !== "" ? root.optionsError : root.emptyText)
-              color: Qt.darker(root.foreground, 1.6)
+              color: Commons.Color.textFaint
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
             }
@@ -513,7 +513,7 @@ Item {
                       textFormat: Text.PlainText
                       visible: text !== ""
                       text: modelData.description
-                      color: Qt.darker(root.foreground, 1.5)
+                      color: Commons.Color.textDim
                       font.family: root.fontFamily
                       font.pixelSize: Style.font.caption
                       elide: Text.ElideRight

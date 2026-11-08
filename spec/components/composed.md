@@ -87,7 +87,7 @@ Fixed in the primitives while building it (both bindings):
 
 - **ListRow** had no way to open: the network panel's password row hangs a field and a button under the row. Added `expansion`.
 - **ValueSlider** (Qt) drew a hard-coded `#333` track and `#101315` knob ring without the shell's `bar` object. It now defaults to the theme, as the Rune Slider does.
-- **PasswordField**'s placeholder was TextField's `darker(1.6)`, which is stronger than the text in a light theme. It is `textFaint` now, as TextArea's.
+- **PasswordField**'s placeholder was TextField's `darker(1.6)`, which is stronger than the text in a light theme. It is `textFaint` now, as TextArea's. The harvested TextField, Dropdown, MultiSelect and the rest followed (`qt/patches/0003-semantic-text-roles.patch`): every placeholder is `textFaint` and every hand-darkened label `textDim`, the theme's own `muted` and `dark_foreground`.
 
 Still missing:
 
@@ -95,5 +95,4 @@ Still missing:
 - **A pane surface.** Card is the popups surface (accent border). An app's side panel or inspector sits on the window, with at most a rule against its neighbour; there is no component for it, so the inspector specimen is a Card.
 - **A persistent trailing glyph on ListRow.** The network panel shows a lock that turns into forget under the cursor. The kit has the revealed action only, so the lock is passed as `value` text (`bodySmall`, `textDim`, not the shell's `subtitle`, darker 1.4).
 - **ScrollArea's reserved gutter** makes a short list `scrollbarThickness + space(4)` narrower than its siblings (the Hero, the Separator), so row fills stop short of the panel's content edge.
-- **TextField's placeholder** (harvested) is still `darker(1.6)`, too strong in light themes; fix in the shell.
 - **`common.noMatchesFor`** is not in the harvested strings (`bin/harvest-qt` carries `common.noMatches` only), so Qt falls back to the English "No matches for “%1”".

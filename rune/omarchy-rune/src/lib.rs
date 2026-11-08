@@ -226,6 +226,12 @@ fn build_kit(t: &Tokens, family: Family) -> Kit {
     k.c.danger.icon = color(p.urgent);
     k.c.danger.fg = color(p.urgent);
     k.c.danger.border = color(p.urgent);
+    // Secondary and faint text are the theme's own stops (roles), not the kit's derived ones.
+    k.c.text_muted = color(t.roles.text_dim);
+    k.c.text_weak = color(t.roles.text_dim);
+    k.c.text_faint = color(t.roles.text_faint);
+    k.c.icon_muted = color(t.roles.text_dim);
+    k.c.icon_faint = color(t.roles.text_faint);
     k.c.text_accent = color(p.accent);
     k.c.icon_accent = color(p.accent);
     k.c.scrim = color(t.surfaces.menu.scrim);

@@ -1,0 +1,13 @@
+Button's built-in tooltip takes the theme's corners, as PanelToolTip does, instead of square.
+
+--- a/qt/qml/Omarchy/Ui/Button.qml
++++ b/qt/qml/Omarchy/Ui/Button.qml
+@@ -156,7 +156,7 @@
+     background: BorderSurface {
+       color: root.tooltipBackground
+       borderSpec: root._tooltipBorderSpec
+-      radius: 0
++      radius: Style.cornerRadius
+     }
+     contentItem: Text {
+       textFormat: Text.PlainText

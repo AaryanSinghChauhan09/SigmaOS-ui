@@ -132,7 +132,7 @@ impl MultiSelect {
 
         let chosen = self.selection_label();
         let (words, words_ink) =
-            if chosen.is_empty() { (self.none_text.clone(), color(pop.text.darker(1.5))) } else { (chosen, ink) };
+            if chosen.is_empty() { (self.none_text.clone(), t.dim()) } else { (chosen, ink) };
         let words = text(words).font(t.text_style(tk.font.body)).color(words_ink).single_line().truncate().grow(1.0).min_w(0.0);
         let chevron = glyph(t, "\u{f0140}", tk.font.body, color(pop.text.darker(1.2)));
         let base = row()
@@ -159,7 +159,7 @@ impl MultiSelect {
 
         let mut out = col().gap(sp.label_gap as f32);
         if !self.label.is_empty() {
-            out = out.child(text(self.label.clone()).font(t.text_style_bold(tk.font.caption)).color(color(pop.text.darker(1.4))));
+            out = out.child(text(self.label.clone()).font(t.text_style_bold(tk.font.caption)).color(t.dim()));
         }
         out.child(trigger)
     }
@@ -213,7 +213,7 @@ impl MultiSelect {
         let list_h = height - 2.0 * pad - header_h - 1.0;
         let mut list = col().w_full().h(list_h.max(0.0)).gap(gap).clip_rounded(0.0);
         if shown.is_empty() {
-            list = list.center().child(text(self.empty_text.clone()).font(t.text_style(tk.font.body)).color(color(pop.text.darker(1.6))));
+            list = list.center().child(text(self.empty_text.clone()).font(t.text_style(tk.font.body)).color(t.faint()));
         }
         let box_size = t.space(16.0);
         let box_radius = (t.radius() / 2.0).max(2.0);

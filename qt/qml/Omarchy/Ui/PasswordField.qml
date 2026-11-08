@@ -48,7 +48,7 @@ Item {
     password: !root.revealed
     passwordCharacter: "•"
     passwordMaskDelay: 0
-    // textFaint, as TextArea's: TextField's darker(1.6) is stronger than the text in a light theme.
+    // textFaint, as every placeholder.
     placeholderTextColor: Commons.Color.textFaint
     hasCursor: root.hasCursor
     foreground: root.foreground

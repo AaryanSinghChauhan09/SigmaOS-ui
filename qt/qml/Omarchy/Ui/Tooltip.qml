@@ -32,6 +32,7 @@ ToolTip {
   background: BorderSurface {
     color: Commons.Color.tooltip.background
     borderSpec: root.panelBorderSpec
+    radius: Style.cornerRadius
   }
 
   contentItem: Item {

@@ -121,7 +121,7 @@ FocusScope {
         verticalAlignment: Text.AlignVCenter
         visible: input.text === "" && input.preeditText === ""
         text: root.placeholderText
-        color: Commons.Color.textDim
+        color: Commons.Color.textFaint
         font.family: Style.font.family
         font.pixelSize: Style.font.heading
         elide: Text.ElideRight

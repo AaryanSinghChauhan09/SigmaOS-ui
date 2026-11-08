@@ -7,12 +7,12 @@ use rune::{El, col, el, row, text};
 use super::Attach;
 use crate::{Theme, border, color};
 
-/// A caption-sized bold header, foreground darkened 1.4: what heads a panel section.
+/// A caption-sized bold header in `textDim`: what heads a panel section.
 pub fn section_header(t: &Theme, label: impl Into<String>) -> El {
     let size = t.tokens().font.caption;
     text(label.into())
         .font(t.text_style_bold(size))
-        .color(t.fg_darker(1.4))
+        .color(t.dim())
         .pt((size as f32 * 0.15).ceil())
         .role("heading")
 }
@@ -133,8 +133,8 @@ impl MenuRow {
     }
 }
 
-/// A tooltip as drawn (the app owns when it shows): [tooltip] surface, small text, and an
-/// optional shortcut as Keycaps after it.
+/// A tooltip as drawn (the app owns when it shows): [tooltip] surface with the theme's corners,
+/// small text, and an optional shortcut as Keycaps after it.
 pub struct Tooltip {
     label: String,
     shortcut: Option<String>,
@@ -159,6 +159,7 @@ impl Tooltip {
             .px(sp.control_padding_x as f32 + bw)
             .py(sp.control_padding_y as f32 + bw)
             .fill(color(s.background))
+            .radius(t.radius())
             .child(text(self.label).font(t.text_style(tk.font.body_small)).color(color(s.text)));
         let e = match self.shortcut {
             Some(combo) => e.items_center().gap(sp.control_gap as f32).child(super::KeyCombo::new(combo).build(t)),

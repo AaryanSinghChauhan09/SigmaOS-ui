@@ -60,5 +60,5 @@ Each group has its own file with every component's anatomy, API in both bindings
 | Slider | track `max(4, round(controlHeight × 0.11))`, knob `max(14, round(controlHeight × 0.38))` with a `space(2)` ring in the surface color, notches `space(2)` wide |
 | Card | `panelPadding` 18, children `panelGap` 14 apart, popups border at `max(1, space(2))` |
 | MenuRow | `popupRowHeight` 28, text inset `controlPaddingX` |
-| Tooltip | padding `controlPaddingX` × `controlPaddingY`, border `max(1, normal border width)` |
+| Tooltip | padding `controlPaddingX` × `controlPaddingY`, border `max(1, normal border width)`, corners `radius` (Button's built-in tooltip too: `qt/patches/0004`) |
 | ConfirmDialog | `space(370)` wide, `space(18)` padding, message `title`, buttons `space(88)` × `space(34)` `space(10)` apart, labels `caption` |

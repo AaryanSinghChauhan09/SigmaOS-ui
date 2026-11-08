@@ -43,7 +43,7 @@ TextField {
   color: foreground
   selectionColor: selectionTint
   selectedTextColor: foreground
-  placeholderTextColor: Qt.darker(foreground, 1.6)
+  placeholderTextColor: Commons.Color.textFaint
 
   leftPadding: horizontalPadding + Border.left(_borderSpec)
   rightPadding: horizontalPadding + Border.right(_borderSpec)

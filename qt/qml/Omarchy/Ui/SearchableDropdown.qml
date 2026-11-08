@@ -97,7 +97,7 @@ Item {
       textFormat: Text.PlainText
       visible: root.showLabel && root.label !== ""
       text: root.label
-      color: Qt.darker(root.foreground, 1.4)
+      color: Commons.Color.textDim
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
       font.bold: true
@@ -141,7 +141,7 @@ Item {
         anchors.leftMargin: trigger.borderLeft + Style.spacing.controlPaddingX
         anchors.rightMargin: trigger.borderRight + Style.spacing.md
         text: root.currentLabel() || root.triggerLabel || root.placeholderText
-        color: (root.currentLabel() || root.triggerLabel) ? root.foreground : Qt.darker(root.foreground, 1.5)
+        color: (root.currentLabel() || root.triggerLabel) ? root.foreground : Commons.Color.textDim
         font.family: root.fontFamily
         font.pixelSize: Style.font.body
         elide: Text.ElideRight
@@ -257,7 +257,7 @@ Item {
               anchors.centerIn: parent
               visible: resultList.count === 0
               text: root.emptyText
-              color: Qt.darker(root.foreground, 1.6)
+              color: Commons.Color.textFaint
               font.family: root.fontFamily
               font.pixelSize: Style.font.body
             }
@@ -333,7 +333,7 @@ Item {
                     textFormat: Text.PlainText
                     visible: text !== ""
                     text: root.optionDescription(modelData)
-                    color: Qt.darker(root.foreground, 1.5)
+                    color: Commons.Color.textDim
                     font.family: root.fontFamily
                     font.pixelSize: Style.font.caption
                     elide: Text.ElideRight

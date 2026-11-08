@@ -156,7 +156,7 @@ BorderSurface {
     background: BorderSurface {
       color: root.tooltipBackground
       borderSpec: root._tooltipBorderSpec
-      radius: 0
+      radius: Style.cornerRadius
     }
     contentItem: Text {
       textFormat: Text.PlainText

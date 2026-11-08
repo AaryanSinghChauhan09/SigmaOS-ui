@@ -29,7 +29,7 @@ Column {
     textFormat: Text.PlainText
     visible: root.label !== ""
     text: root.label
-    color: Qt.darker(root.foreground, 1.4)
+    color: Commons.Color.textDim
     font.family: root.fontFamily
     font.pixelSize: Style.font.bodySmall
   }

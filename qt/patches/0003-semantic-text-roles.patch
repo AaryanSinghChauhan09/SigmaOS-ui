@@ -1,0 +1,158 @@
+Placeholders in textFaint and hand-darkened labels in textDim: the theme's own muted and
+dark_foreground (spec/tokens.md Roles) instead of Qt.darker(foreground, 1.4-2.0), which in a
+light theme is stronger than the text. Upstream candidate: the shell's Color.qml would grow the
+same two roles.
+
+--- a/qt/qml/Omarchy/Ui/TextField.qml
++++ b/qt/qml/Omarchy/Ui/TextField.qml
+@@ -43,7 +43,7 @@
+   color: foreground
+   selectionColor: selectionTint
+   selectedTextColor: foreground
+-  placeholderTextColor: Qt.darker(foreground, 1.6)
++  placeholderTextColor: Commons.Color.textFaint
+ 
+   leftPadding: horizontalPadding + Border.left(_borderSpec)
+   rightPadding: horizontalPadding + Border.right(_borderSpec)
+--- a/qt/qml/Omarchy/Ui/Toggle.qml
++++ b/qt/qml/Omarchy/Ui/Toggle.qml
+@@ -84,7 +84,7 @@
+         textFormat: Text.PlainText
+         visible: root.description !== ""
+         text: root.description
+-        color: Qt.darker(root.foreground, 1.5)
++        color: Commons.Color.textDim
+         font.family: root.fontFamily
+         font.pixelSize: root.descriptionSize
+         wrapMode: Text.WordWrap
+--- a/qt/qml/Omarchy/Ui/PanelSectionHeader.qml
++++ b/qt/qml/Omarchy/Ui/PanelSectionHeader.qml
+@@ -16,7 +16,7 @@
+   // here. AutoText would let a section title that happens to carry a device or
+   // network name promote itself to rich text.
+   textFormat: Text.PlainText
+-  color: Qt.darker(foreground, 1.4)
++  color: Commons.Color.textDim
+   font.family: fontFamily
+   font.pixelSize: fontSize
+   font.bold: true
+--- a/qt/qml/Omarchy/Ui/PanelHero.qml
++++ b/qt/qml/Omarchy/Ui/PanelHero.qml
+@@ -20,7 +20,7 @@
+   // space itself, so callers never do the geometry.
+   property Component trailingControl: null
+ 
+-  readonly property color dim: Qt.darker(foreground, 1.4)
++  readonly property color dim: Commons.Color.textDim
+   readonly property real trailingInset: trailingLoader.item && trailingLoader.item.visible ? trailingLoader.width + Style.space(12) : 0
+ 
+   width: parent ? parent.width : implicitWidth
+--- a/qt/qml/Omarchy/Ui/PanelActionButton.qml
++++ b/qt/qml/Omarchy/Ui/PanelActionButton.qml
+@@ -79,7 +79,7 @@
+     text: root.iconText
+     color: root.enabled
+       ? (root._hot ? root.hoverColor : root.foreground)
+-      : Qt.darker(root.foreground, 2.0)
++      : Commons.Color.textFaint
+     font.family: root.fontFamily
+     font.pixelSize: root.fontSize
+   }
+--- a/qt/qml/Omarchy/Ui/NumberField.qml
++++ b/qt/qml/Omarchy/Ui/NumberField.qml
+@@ -29,7 +29,7 @@
+     textFormat: Text.PlainText
+     visible: root.label !== ""
+     text: root.label
+-    color: Qt.darker(root.foreground, 1.4)
++    color: Commons.Color.textDim
+     font.family: root.fontFamily
+     font.pixelSize: Style.font.bodySmall
+   }
+--- a/qt/qml/Omarchy/Ui/Dropdown.qml
++++ b/qt/qml/Omarchy/Ui/Dropdown.qml
+@@ -75,7 +75,7 @@
+       textFormat: Text.PlainText
+       visible: root.showLabel && root.label !== ""
+       text: root.label
+-      color: Qt.darker(root.foreground, 1.4)
++      color: Commons.Color.textDim
+       font.family: root.fontFamily
+       font.pixelSize: Style.font.caption
+       font.bold: true
+--- a/qt/qml/Omarchy/Ui/MultiSelect.qml
++++ b/qt/qml/Omarchy/Ui/MultiSelect.qml
+@@ -168,7 +168,7 @@
+       textFormat: Text.PlainText
+       visible: root.showLabel && root.label !== ""
+       text: root.label
+-      color: Qt.darker(root.foreground, 1.4)
++      color: Commons.Color.textDim
+       font.family: root.fontFamily
+       font.pixelSize: Style.font.caption
+       font.bold: true
+@@ -212,7 +212,7 @@
+         anchors.leftMargin: trigger.borderLeft + Style.spacing.controlPaddingX
+         anchors.rightMargin: trigger.borderRight + Style.spacing.md
+         text: root.selectionLabel() || root.triggerLabel || root.noSelectionText
+-        color: root.selectionLabel() ? root.foreground : Qt.darker(root.foreground, 1.5)
++        color: root.selectionLabel() ? root.foreground : Commons.Color.textDim
+         font.family: root.fontFamily
+         font.pixelSize: Style.font.body
+         elide: Text.ElideRight
+@@ -409,7 +409,7 @@
+               anchors.centerIn: parent
+               visible: resultList.count === 0
+               text: root.loadingOptions ? Commons.I18n.t("common.loading") : (root.optionsError !== "" ? root.optionsError : root.emptyText)
+-              color: Qt.darker(root.foreground, 1.6)
++              color: Commons.Color.textFaint
+               font.family: root.fontFamily
+               font.pixelSize: Style.font.body
+             }
+@@ -513,7 +513,7 @@
+                       textFormat: Text.PlainText
+                       visible: text !== ""
+                       text: modelData.description
+-                      color: Qt.darker(root.foreground, 1.5)
++                      color: Commons.Color.textDim
+                       font.family: root.fontFamily
+                       font.pixelSize: Style.font.caption
+                       elide: Text.ElideRight
+--- a/qt/qml/Omarchy/Ui/SearchableDropdown.qml
++++ b/qt/qml/Omarchy/Ui/SearchableDropdown.qml
+@@ -97,7 +97,7 @@
+       textFormat: Text.PlainText
+       visible: root.showLabel && root.label !== ""
+       text: root.label
+-      color: Qt.darker(root.foreground, 1.4)
++      color: Commons.Color.textDim
+       font.family: root.fontFamily
+       font.pixelSize: Style.font.caption
+       font.bold: true
+@@ -141,7 +141,7 @@
+         anchors.leftMargin: trigger.borderLeft + Style.spacing.controlPaddingX
+         anchors.rightMargin: trigger.borderRight + Style.spacing.md
+         text: root.currentLabel() || root.triggerLabel || root.placeholderText
+-        color: (root.currentLabel() || root.triggerLabel) ? root.foreground : Qt.darker(root.foreground, 1.5)
++        color: (root.currentLabel() || root.triggerLabel) ? root.foreground : Commons.Color.textDim
+         font.family: root.fontFamily
+         font.pixelSize: Style.font.body
+         elide: Text.ElideRight
+@@ -257,7 +257,7 @@
+               anchors.centerIn: parent
+               visible: resultList.count === 0
+               text: root.emptyText
+-              color: Qt.darker(root.foreground, 1.6)
++              color: Commons.Color.textFaint
+               font.family: root.fontFamily
+               font.pixelSize: Style.font.body
+             }
+@@ -333,7 +333,7 @@
+                     textFormat: Text.PlainText
+                     visible: text !== ""
+                     text: root.optionDescription(modelData)
+-                    color: Qt.darker(root.foreground, 1.5)
++                    color: Commons.Color.textDim
+                     font.family: root.fontFamily
+                     font.pixelSize: Style.font.caption
+                     elide: Text.ElideRight

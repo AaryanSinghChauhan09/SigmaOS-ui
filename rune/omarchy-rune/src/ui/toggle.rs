@@ -127,7 +127,7 @@ impl Toggle {
             text(self.label.clone()).font(t.text_style_bold(tk.font.subtitle)).color(t.fg()).single_line().truncate(),
         );
         if !self.description.is_empty() {
-            words = words.child(text(self.description).font(t.text_style(tk.font.caption)).color(t.fg_darker(1.5)).wrap());
+            words = words.child(text(self.description).font(t.text_style(tk.font.caption)).color(t.dim()).wrap());
         }
         let switch = ToggleSwitch::new(self.checked).interactive(false).build(t);
 

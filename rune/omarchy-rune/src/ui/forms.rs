@@ -318,7 +318,7 @@ pub(crate) fn bare_input(t: &Theme, edit: &TextEdit, placeholder: String) -> El 
         .min_w(0.0)
         .color(t.fg())
         .label(placeholder.clone())
-        .placeholder(placeholder, t.fg_darker(1.6))
+        .placeholder(placeholder, t.faint())
         .caret(t.fg(), color(tk.controls.selection.fill))
 }
 
@@ -423,8 +423,7 @@ impl PasswordField {
 
         let mut edit = self.edit.clone();
         edit.set_secure(true);
-        // The placeholder in textFaint, as TextArea's: TextField's `darker(1.6)` would be
-        // stronger than the text in a light theme.
+        // The placeholder in textFaint, as every placeholder.
         let placeholder = self.placeholder.clone();
         let mut input = bare_input(t, &edit, self.placeholder).placeholder(placeholder, t.faint()).revealed(self.revealed);
         if let Some(access) = self.access {
