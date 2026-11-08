@@ -20,11 +20,13 @@ THEME_OUT="$ROOT/qt/qml/Omarchy/Theme"
 REV_FILE="$ROOT/qt/HARVEST_REV"
 
 # Components that only need the shell's tokens. Anything that opens a layer-shell window or runs
-# Quickshell processes (PopupCard, Panel, KeyboardPanel, MultiSelect, bar widgets) stays behind.
+# Quickshell processes (PopupCard, Panel, KeyboardPanel, MultiSelect, bar widgets) stays behind;
+# MultiSelect only for its command-backed options, which a patch could drop.
 UI_FILES=(
   BorderOverlay BorderSurface Button ButtonGroup ConfirmDialog CursorSurface Dropdown
   FilterInput IconContentBounds NumberField OpticalGlyph PanelActionButton PanelHero
-  PanelSectionHeader PanelSeparator PanelSlider PanelToolTip PopupMenuRow SearchableDropdown
+  PanelKeyCatcher PanelSectionHeader PanelSeparator PanelSlider PanelToolTip PointerMoveGate
+  PopupMenuRow SearchableDropdown
   SizedImage TextField Toggle ToggleSwitch
 )
 THEME_FILES=(Border.qml BorderGeometry.js Numbers.js)

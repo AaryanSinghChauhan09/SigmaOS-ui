@@ -14,10 +14,12 @@ NumberField 1.0 NumberField.qml
 OpticalGlyph 1.0 OpticalGlyph.qml
 PanelActionButton 1.0 PanelActionButton.qml
 PanelHero 1.0 PanelHero.qml
+PanelKeyCatcher 1.0 PanelKeyCatcher.qml
 PanelSectionHeader 1.0 PanelSectionHeader.qml
 PanelSeparator 1.0 PanelSeparator.qml
 PanelSlider 1.0 PanelSlider.qml
 PanelToolTip 1.0 PanelToolTip.qml
+PointerMoveGate 1.0 PointerMoveGate.qml
 PopupMenuRow 1.0 PopupMenuRow.qml
 SearchableDropdown 1.0 SearchableDropdown.qml
 SizedImage 1.0 SizedImage.qml
