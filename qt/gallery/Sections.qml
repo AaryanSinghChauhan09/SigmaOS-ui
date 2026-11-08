@@ -25,6 +25,8 @@ ColumnLayout {
     "pickers",
     "data",
     "layout",
+    "timeline",
+    "color",
     "tokens",
   ]
 

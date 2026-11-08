@@ -2,6 +2,7 @@
 
 pub mod buttons;
 pub mod forms;
+pub mod color;
 pub mod inputs;
 pub mod lists;
 pub mod messages;
@@ -15,5 +16,6 @@ pub mod layout;
 pub mod slider;
 pub mod surfaces;
 pub mod tiles;
+pub mod timeline;
 pub mod tokens;
 pub mod toggles;

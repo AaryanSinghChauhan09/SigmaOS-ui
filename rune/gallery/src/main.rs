@@ -44,6 +44,8 @@ pub(crate) struct State {
     pub pickers: sections::pickers::Pickers,
     pub data: sections::data::Data,
     pub layout: sections::layout::Layout,
+    pub timeline: sections::timeline::Editing,
+    pub color: sections::color::Picker,
 }
 
 pub(crate) fn init() -> State {
@@ -71,6 +73,8 @@ pub(crate) fn init() -> State {
         pickers: sections::pickers::init(),
         data: sections::data::init(),
         layout: sections::layout::init(),
+        timeline: sections::timeline::init(),
+        color: sections::color::init(),
     }
 }
 
@@ -110,6 +114,8 @@ gallery! {
     pickers: "Pickers",
     data: "Data",
     layout: "Layout",
+    timeline: "Timeline",
+    color: "Color",
     tokens: "Tokens",
 }
 
@@ -317,5 +323,30 @@ mod tests {
         assert_eq!(rt.state.layout.day, omarchy_rune::ui::Date::new(2026, 11, 20));
         press(&mut rt, "cal-next");
         assert_eq!(rt.state.layout.month, (2026, 12));
+    /// Pressing a clip selects it; pressing a swatch picks its color.
+    #[test]
+    fn editing_selects_and_picks() {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some("timeline");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        let (x, y) = rt.find("clip-1-0").expect("the voiceover clip");
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(1.0 / 60.0);
+        assert_eq!(rt.state.timeline.selected, Some((1, 0)));
+
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some("color");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        let (x, y) = rt.find("swatch-red").expect("the red swatch");
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(1.0 / 60.0);
+        assert_eq!(rt.state.color.value.hex(), "#f7768e");
+        assert_eq!(rt.state.color.hex.text, "#f7768e");
     }
 }
