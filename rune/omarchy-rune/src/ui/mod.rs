@@ -7,6 +7,7 @@
 
 mod button;
 pub mod feedback;
+mod data;
 mod field;
 mod lists;
 mod menu;
@@ -21,6 +22,7 @@ mod toggle;
 
 pub use button::{Button, ButtonGroup, IconButton};
 pub use feedback::{Banner, EmptyState, Meter, ProgressBar, Spinner, Toast};
+pub use data::{Calendar, Column, Date, Pane, Sidebar, SidebarItem, SidebarSection, SplitView, Table, Tree, TreeNode};
 pub use field::{Dropdown, NumberField, TextField};
 pub use lists::{
     Avatar, AvatarSize, Badge, CursorKey, CursorModel, CursorSection, Hero, KeyValue, ListRow, ScrollArea, StatusDot, Tile, TileGrid,

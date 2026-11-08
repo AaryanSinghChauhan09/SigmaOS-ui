@@ -42,6 +42,8 @@ pub(crate) struct State {
     pub navigation: sections::navigation::Navigation,
     pub forms: sections::forms::Forms,
     pub pickers: sections::pickers::Pickers,
+    pub data: sections::data::Data,
+    pub layout: sections::layout::Layout,
 }
 
 pub(crate) fn init() -> State {
@@ -67,6 +69,8 @@ pub(crate) fn init() -> State {
         navigation: sections::navigation::Navigation::init(),
         forms: sections::forms::init(),
         pickers: sections::pickers::init(),
+        data: sections::data::init(),
+        layout: sections::layout::init(),
     }
 }
 
@@ -104,6 +108,8 @@ gallery! {
     navigation: "Navigation",
     forms: "Forms",
     pickers: "Pickers",
+    data: "Data",
+    layout: "Layout",
     tokens: "Tokens",
 }
 
@@ -270,5 +276,46 @@ mod tests {
         assert!(rt.state.pickers.notify.iter().any(|v| v == "Calendar"));
         press(&mut rt, "ms-notify-Mail");
         assert!(!rt.state.pickers.notify.iter().any(|v| v == "Mail"));
+    /// Pressing a table row selects it, a tree chevron folds its branch, a tree row selects it.
+    #[test]
+    fn data_selects_and_folds() {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some("data");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        press(&mut rt, "files-4");
+        assert_eq!(rt.state.data.row, 4);
+        press(&mut rt, "files-col-0");
+        assert!(!rt.state.data.sort_ascending);
+        press(&mut rt, "tree-qt-toggle");
+        assert!(!rt.state.data.expanded.iter().any(|e| e == "qt"));
+        press(&mut rt, "tree-spec/tokens");
+        assert_eq!(rt.state.data.node, "spec/tokens");
+    }
+
+    /// The sidebar picks, the split handle drags, the calendar picks a day and steps months.
+    #[test]
+    fn layout_picks_drags_and_steps() {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some("layout");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        press(&mut rt, "places-downloads");
+        assert_eq!(rt.state.layout.place, "downloads");
+
+        let (x, y) = rt.find("split-handle-0").expect("the split handle");
+        rt.pointer_down(x, y);
+        rt.pointer_move(x + 40.0, y);
+        rt.frame(1.0 / 60.0);
+        rt.pointer_up(x + 40.0, y);
+        rt.frame(2.0 / 60.0);
+        assert_eq!(rt.state.layout.sidebar, 240.0);
+
+        press(&mut rt, "cal-2026-11-20");
+        assert_eq!(rt.state.layout.day, omarchy_rune::ui::Date::new(2026, 11, 20));
+        press(&mut rt, "cal-next");
+        assert_eq!(rt.state.layout.month, (2026, 12));
     }
 }

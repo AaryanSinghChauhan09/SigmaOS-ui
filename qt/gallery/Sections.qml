@@ -23,6 +23,8 @@ ColumnLayout {
     "navigation",
     "forms",
     "pickers",
+    "data",
+    "layout",
     "tokens",
   ]
 
