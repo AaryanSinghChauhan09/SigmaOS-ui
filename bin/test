@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Rust tests, then Qt/Rune token parity for every fixture theme at radius 0 and 8. Renders are
-# bin/review's job; this stays fast enough to run on every change.
+# Rust tests, then Qt/Rune token parity for every fixture theme at radius 0 and 8, and icon
+# lookup parity on the fixture icon tree. Renders are bin/review's job; this stays fast enough
+# to run on every change.
 
 set -euo pipefail
 
@@ -22,7 +23,23 @@ for dir in "$ROOT"/fixtures/themes/*/; do
   done
 done
 
+# The icon lookup, the same algorithm in both: every fixture icon at sizes below, between and
+# above the fixture's directories.
+icons="$ROOT/fixtures/icons"
+export_icons=(OMARCHY_UI_ICON_DIRS="$icons/local:$icons/system:$icons/pixmaps" OMARCHY_UI_ICON_THEME=Fixture-Accent)
+for name in fixture-app fixture-vector fixture-inherited fixture-hicolor fixture-local fixture-pixmap fixture-missing; do
+  for size in 8 32 56 200; do
+    qt="$(env "${export_icons[@]}" "$ROOT/build/qt/omarchy-qt-gallery" --icon "$name" --icon-size "$size")"
+    rs="$(env "${export_icons[@]}" "$ROOT/target/release/omarchy-theme" --icon "$name" "$size")"
+    if [[ $qt != "$rs" ]]; then
+      echo "icon parity: $name at $size: qt=${qt:-none} rune=${rs:-none}"
+      fail=1
+    fi
+  done
+done
+
 if (( fail )); then
   exit 1
 fi
 echo "token parity: Qt and Rune agree on every fixture"
+echo "icon parity: Qt and Rune resolve every fixture icon alike"

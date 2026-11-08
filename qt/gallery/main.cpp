@@ -6,6 +6,7 @@
 //   omarchy-qt-gallery --dump-tokens            print the canonical token JSON and exit
 //   omarchy-qt-gallery --qml view.qml --snap out.png   render any QML file with the kit (an Item or a Window)
 //   omarchy-qt-gallery --watch-tokens           print it again on every theme, font or Hyprland change
+//   omarchy-qt-gallery --icon firefox --icon-size 96   print the file an icon name resolves to
 //   OMARCHY_UI_THEME_DIR=fixtures/themes/nord omarchy-qt-gallery --snap nord.png
 
 #include <QCommandLineParser>
@@ -25,6 +26,7 @@
 
 #include "omarchyui.h"
 #include "themesource.h"
+#include "iconlookup.h"
 
 class Gallery : public QObject {
   Q_OBJECT
@@ -49,7 +51,7 @@ static const char *argValue(int argc, char **argv, const char *flag, const char 
 }
 
 int main(int argc, char **argv) {
-  const bool headless = hasArg(argc, argv, "--snap") || hasArg(argc, argv, "--dump-tokens") || hasArg(argc, argv, "--watch-tokens");
+  const bool headless = hasArg(argc, argv, "--snap") || hasArg(argc, argv, "--dump-tokens") || hasArg(argc, argv, "--watch-tokens") || hasArg(argc, argv, "--icon");
   if (headless) qputenv("QT_QPA_PLATFORM", "offscreen");
   // The device pixel ratio has to be set before the application exists.
   if (hasArg(argc, argv, "--snap")) qputenv("QT_SCALE_FACTOR", argValue(argc, argv, "--scale", "2"));
@@ -70,6 +72,8 @@ int main(int argc, char **argv) {
   args.addOption({"width", "Window width in points (default 760).", "n", "760"});
   args.addOption({"dump-tokens", "Print the resolved tokens as canonical JSON and exit."});
   args.addOption({"watch-tokens", "Print the resolved tokens, then again whenever they change."});
+  args.addOption({"icon", "Print the file this icon name resolves to in the icon theme (empty if none) and exit.", "name"});
+  args.addOption({"icon-size", "Size in pixels for --icon (default 48).", "n", "48"});
   args.process(app);
 
   Gallery gallery;
@@ -77,6 +81,10 @@ int main(int argc, char **argv) {
   gallery.width = args.value("width").toInt();
 
   OmarchyUi::registerTypes();
+  if (args.isSet("icon")) {
+    printf("%s\n", qPrintable(IconLookup::instance()->path(args.value("icon"), args.value("icon-size").toInt())));
+    return 0;
+  }
   QQmlApplicationEngine engine;
   engine.rootContext()->setContextProperty("gallery", &gallery);
 
