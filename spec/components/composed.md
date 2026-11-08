@@ -69,8 +69,8 @@ Built only from kit components and tokens; the gallery adds nothing but layout (
    - A Separator.
    - KeyValue, one pair to a line: IP 192.168.1.24 · Gateway 192.168.1.1 · DNS 1.1.1.1.
 
-   **An app inspector**: a Card 300 wide holding, `panelGap` apart:
-   - A column of a Toolbar (no rule; leading IconButtons U+F0E2 undo and U+F01E redo; trailing a bordered Button "Export") over Tabs Shape, Cursor, Zoom with Shape selected.
+   **An app inspector**: a Pane ([`surfaces.md`](surfaces.md)) 300 wide with its divider on the left, as a side panel ruled off from the canvas. Its header: title "Recording 1", subtitle "1920 × 1080 · 0:42", actions IconButtons U+F0E2 undo and U+F01E redo and a bordered Button "Export". Then, `panelGap` apart:
+   - Tabs Shape, Cursor, Zoom with Shape selected.
    - SectionHeader "Frame", then SettingRows: "Radius" with a 110-wide Slider at 0.4; "Border" with a 110-wide Dropdown (no label) = Solid (Solid, None); "Shadow" under the cursor with a ToggleSwitch on.
    - SectionHeader "Background", then SettingRows: "Fill" with a ColorWell in accent; "Padding" with a NumberField (no label) 24 (0–96).
 2. **A SearchList** 360 × 300 with "term" typed, the detail pane on, and four results, the second under the cursor (so the pane shows "Terminal font" / "Pick the monospace font every terminal uses."):
@@ -88,11 +88,11 @@ Fixed in the primitives while building it (both bindings):
 - **ListRow** had no way to open: the network panel's password row hangs a field and a button under the row. Added `expansion`.
 - **ValueSlider** (Qt) drew a hard-coded `#333` track and `#101315` knob ring without the shell's `bar` object. It now defaults to the theme, as the Rune Slider does.
 - **PasswordField**'s placeholder was TextField's `darker(1.6)`, which is stronger than the text in a light theme. It is `textFaint` now, as TextArea's. The harvested TextField, Dropdown, MultiSelect and the rest followed (`qt/patches/0003-semantic-text-roles.patch`): every placeholder is `textFaint` and every hand-darkened label `textDim`, the theme's own `muted` and `dark_foreground`.
+- **A toolbar or pane title.** A centered "notes.md" or an inspector heading needed an ad-hoc `Text`; SectionHeader is a caption. Added **Heading** ([`surfaces.md`](surfaces.md)): title, heading and display levels, a dim subtitle, a trailing slot, centered for a toolbar. The `navigation` toolbar's title and the inspector's header use it.
+- **A pane surface.** Card is the popups surface (accent border), so the inspector was a Card. Added **Pane** ([`surfaces.md`](surfaces.md)): flat on the window, with a one-side hairline rule or the controls' normal glass, and a Heading header with actions. The inspector is a Pane now.
 
 Still missing:
 
-- **A toolbar or pane title.** A centered "notes.md" or an inspector heading needs an ad-hoc `Text` (the `navigation` section has one); SectionHeader is the only label component, and it is a caption.
-- **A pane surface.** Card is the popups surface (accent border). An app's side panel or inspector sits on the window, with at most a rule against its neighbour; there is no component for it, so the inspector specimen is a Card.
 - **A persistent trailing glyph on ListRow.** The network panel shows a lock that turns into forget under the cursor. The kit has the revealed action only, so the lock is passed as `value` text (`bodySmall`, `textDim`, not the shell's `subtitle`, darker 1.4).
 - **ScrollArea's reserved gutter** makes a short list `scrollbarThickness + space(4)` narrower than its siblings (the Hero, the Separator), so row fills stop short of the panel's content edge.
 - **`common.noMatchesFor`** is not in the harvested strings (`bin/harvest-qt` carries `common.noMatches` only), so Qt falls back to the English "No matches for “%1”".

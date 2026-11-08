@@ -9,6 +9,7 @@ Every binding ships a gallery with these sections, in this order, with these spe
 | `inputs` | Three TextFields 220 wide: placeholder "Search…"; text "Omarchy"; text "Hovered" with cursor. Then NumberField "Gaps" 10 (0–40) and Dropdown "Theme" = Tokyo Night. |
 | `slider` | Slider at 0.35, 360 wide. Slider at 0.75 with 5 notches, 360 wide. |
 | `surfaces` | Card "Network" 300 wide: Toggle "Wi-Fi" / "Basecamp" on, Separator, MenuRows Basecamp (checked), Basecamp Guest (highlighted), Coffee Shop. Beside it: Tooltip "Restart Wi-Fi", and a ConfirmDialog "Remove the Coffee Shop network?" centered in a 340 × 170 box. |
+| `surfaces` (cont.) | Then Panes and Headings: see the Gallery part of [`components/surfaces.md`](components/surfaces.md). |
 | `tokens` | Swatches (64 × 32) for foreground, background, accent, urgent, muted. State chips (120 × controlHeight) normal, hover-cursor, focus, selected. The type scale from displayLarge to caption. |
 | `lists`, `tiles` | See the Gallery part of [`components/lists.md`](components/lists.md). |
 | `progress`, `messages` | See [`components/feedback.md`](components/feedback.md). |

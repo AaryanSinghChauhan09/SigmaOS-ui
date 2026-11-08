@@ -28,6 +28,7 @@ Each group has its own file with every component's anatomy, API in both bindings
 
 | Group | Spec | Components | Gallery sections |
 |---|---|---|---|
+| Surfaces | [`components/surfaces.md`](components/surfaces.md) | Pane, Heading | `surfaces` |
 | Lists | [`components/lists.md`](components/lists.md) | ListRow, CursorModel, ScrollArea, KeyValue, Hero, Badge, StatusDot, Avatar, TileGrid | `lists`, `tiles` |
 | Feedback | [`components/feedback.md`](components/feedback.md) | Meter, ProgressBar, Spinner, EmptyState, Banner, Toast | `progress`, `messages` |
 | Navigation | [`components/navigation.md`](components/navigation.md) | Menu, ContextMenu, Keycap, KeyCombo, ShortcutSheet, Tooltip (with shortcut), Toolbar, Tabs, IconRail | `menus`, `navigation` |

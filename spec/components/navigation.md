@@ -232,7 +232,7 @@ Qt `IconRail`; Rune `IconRail`. A vertical tab rail for switching an app's side 
      - IconButtons U+F032, U+F033 (under the cursor), U+F0CD
      - U+F0CA, U+F0CB
      - U+F03E, U+F0C1
-   - Center: "notes.md" (`body`, `textDim`).
+   - Center: a Heading "notes.md" (title level, centered).
    - Trailing: a bordered Button "Share", then the overflow.
 2. **Tabs**, full width: General, Display, Audio, Network. Display is selected and Audio is under the cursor.
 3. A row:
