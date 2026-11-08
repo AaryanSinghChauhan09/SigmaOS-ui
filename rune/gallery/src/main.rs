@@ -347,9 +347,12 @@ mod tests {
                 "Enter" => Key::Enter,
                 c => Key::Text(c.into()),
             };
-            at += 1.0 / 60.0;
             rt.key(KeyEvent { key, mods: Default::default() });
-            rt.frame(at);
+            // j and k are re-sent as Down and Up, which land on the next frame.
+            for _ in 0..2 {
+                at += 1.0 / 60.0;
+                rt.frame(at);
+            }
         };
         for (keys, ran) in [
             (&["j", "Enter"][..], "Open…"),
@@ -388,6 +391,54 @@ mod tests {
     fn tabs_and_rail_choose() {
         assert_eq!(pressed("navigation", "tab-3").state.navigation.tab, 3);
         assert_eq!(pressed("navigation", "rail-4").state.navigation.panel, 4);
+    }
+
+    /// Keys on the choosers, as `qt/tests/tst_navigation.qml` and `tst_forms.qml` drive Qt's:
+    /// Tabs take Left/Right and h/l, the IconRail Up/Down and k/j, a RadioGroup the arrows and
+    /// j/k; each selects as it moves, stops at the ends, and Home/End jump (tabs and rail).
+    #[test]
+    fn choosers_follow_keys_as_in_qt() {
+        use rune::{Key, KeyEvent};
+        fn walk(rt: &mut Runtime<State>, keys: &[&str], at: &mut f64) {
+            for k in keys {
+                let key = match *k {
+                    "Left" => Key::Left,
+                    "Right" => Key::Right,
+                    "Up" => Key::Up,
+                    "Down" => Key::Down,
+                    "Home" => Key::Home,
+                    "End" => Key::End,
+                    c => Key::Text(c.into()),
+                };
+                rt.key(KeyEvent { key, mods: Default::default() });
+                // A key a handler re-sends (an alias) lands on the next frame.
+                for _ in 0..2 {
+                    *at += 1.0 / 60.0;
+                    rt.frame(*at);
+                }
+            }
+        }
+        let mut at = 1.0 / 60.0;
+        let mut rt = pressed("navigation", "tab-1");
+        assert_eq!(rt.state.navigation.tab, 1);
+        for (keys, want) in [(&["Right"][..], 2), (&["l"], 3), (&["Right"], 3), (&["h", "Left"], 1), (&["Home"], 0), (&["Left"], 0), (&["End"], 3), (&["Up", "Down"], 3)] {
+            walk(&mut rt, keys, &mut at);
+            assert_eq!(rt.state.navigation.tab, want, "tabs after {keys:?}");
+        }
+
+        let mut rt = pressed("navigation", "rail-0");
+        let last = 4;
+        for (keys, want) in [(&["Down"][..], 1), (&["j"], 2), (&["k", "Up"], 0), (&["Up"], 0), (&["End"], last), (&["Down"], last), (&["Home"], 0), (&["Right", "Left"], 0)] {
+            walk(&mut rt, keys, &mut at);
+            assert_eq!(rt.state.navigation.panel, want, "rail after {keys:?}");
+        }
+
+        let mut rt = pressed("forms", "radio-top");
+        assert_eq!(rt.state.forms.position, "top");
+        for (keys, want) in [(&["Down"][..], "bottom"), (&["j"], "hidden"), (&["Down"], "hidden"), (&["k"], "bottom"), (&["Up", "Up"], "top"), (&["Right"], "bottom"), (&["Left"], "top")] {
+            walk(&mut rt, keys, &mut at);
+            assert_eq!(rt.state.forms.position, want, "radios after {keys:?}");
+        }
     }
 
     /// A checkbox flips, a disabled one doesn't, and a radio takes the group's value.

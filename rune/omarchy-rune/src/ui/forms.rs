@@ -3,8 +3,9 @@
 //! `PasswordField.qml` and `TextArea.qml` draw them.
 
 use omarchy_theme::BorderSpec;
-use rune::{El, Live, Spring, TextEdit, col, el, row, text};
+use rune::{El, Key, Live, Spring, TextEdit, col, el, row, text};
 
+use super::navigation::{Axis, ends};
 use super::{Attach, Look, glyph};
 use crate::{Theme, border, color};
 
@@ -288,6 +289,7 @@ impl RadioGroup {
 
     pub fn build(self, t: &Theme) -> El {
         let mut g = col().gap(t.tokens().spacing.lg as f32).role("radiogroup").focus_group();
+        let n = self.options.len();
         for (i, (value, label, description)) in self.options.into_iter().enumerate() {
             let r = Radio::new(label)
                 .description(description)
@@ -295,12 +297,14 @@ impl RadioGroup {
                 .cursor(self.cursor == Some(i))
                 .key(format!("radio-{value}"))
                 .build(t);
+            let r = t.key_map(r, ends(i, n, Axis::Both));
             g = g.child(match &self.choose {
                 Some(attach) => attach(r, value),
                 None => r,
             });
         }
-        g
+        // As Qt's RadioGroup: j and k walk too, and the ends don't wrap (above).
+        t.key_map(g, &[("j", Some(Key::Down)), ("k", Some(Key::Up))])
     }
 }
 

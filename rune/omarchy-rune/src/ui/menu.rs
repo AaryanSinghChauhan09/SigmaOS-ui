@@ -12,7 +12,7 @@ type Open = Box<dyn FnOnce(El, bool) -> El>;
 type Close = Box<dyn FnOnce(El, bool, bool) -> El>;
 
 /// The vim keys every menu walks with, as Qt's `Menu.handleKey` does.
-const VIM: &[(&str, Key)] = &[("j", Key::Down), ("k", Key::Up), ("l", Key::Right)];
+const VIM: crate::KeyMap = &[("j", Some(Key::Down)), ("k", Some(Key::Up)), ("l", Some(Key::Right))];
 
 /// One row of a Menu: an optional leading glyph, the label, a dim shortcut hint at the right, and
 /// a trailing mark: an accent check (or a radio dot) when checked, or a chevron when the row
@@ -351,7 +351,7 @@ impl Menu {
         }
         match self.close {
             Some(attach) => attach(frame, popup, self.submenu),
-            None => t.key_aliases(frame, VIM),
+            None => t.key_map(frame, VIM),
         }
     }
 }

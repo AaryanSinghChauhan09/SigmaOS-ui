@@ -3,7 +3,7 @@
 //! Menus are in `menu.rs`.
 
 use omarchy_theme::BorderSpec;
-use rune::{El, TextStyle, col, el, row, text};
+use rune::{El, Key, TextStyle, col, el, row, text};
 
 use super::{Attach, Look, chrome, section_header};
 use crate::{Theme, border, color};
@@ -293,6 +293,35 @@ impl Default for Toolbar {
 
 type Choose = Box<dyn Fn(El, usize) -> El>;
 
+/// The axis a chooser walks along: Tabs a row, IconRail a column, RadioGroup either.
+#[derive(Clone, Copy)]
+pub(crate) enum Axis {
+    Row,
+    Column,
+    Both,
+}
+
+/// What item `i` of `n` in a chooser swallows so its focus group stops at the ends instead of
+/// wrapping, as Qt's clamp: the backward keys on the first, the forward keys on the last.
+pub(crate) fn ends(i: usize, n: usize, axis: Axis) -> crate::KeyMap {
+    const L: (&str, Option<Key>) = ("Left", None);
+    const R: (&str, Option<Key>) = ("Right", None);
+    const U: (&str, Option<Key>) = ("Up", None);
+    const D: (&str, Option<Key>) = ("Down", None);
+    match (axis, i == 0, i + 1 == n) {
+        (Axis::Row, true, true) => &[L, R],
+        (Axis::Row, true, false) => &[L],
+        (Axis::Row, false, true) => &[R],
+        (Axis::Column, true, true) => &[U, D],
+        (Axis::Column, true, false) => &[U],
+        (Axis::Column, false, true) => &[D],
+        (Axis::Both, true, true) => &[L, R, U, D],
+        (Axis::Both, true, false) => &[L, U],
+        (Axis::Both, false, true) => &[R, D],
+        _ => &[],
+    }
+}
+
 /// Text tabs over a 1px track rule, the selected one bold with an accent underline. A tab under
 /// the pointer, keyboard focus or `cursor` takes the hover fill and full foreground; the rest are
 /// dim. Left and Right walk the tabs (a focus group); Enter or a press chooses. For a small
@@ -328,6 +357,7 @@ impl Tabs {
         let hot = Look::new(tk.controls.hover.fill, BorderSpec::none());
         let selected_ink = color(tk.controls.selected.text);
         let mut tabs = row().gap(sp.xxs as f32).role("tablist").focus_group();
+        let n = self.labels.len();
         for (i, label) in self.labels.into_iter().enumerate() {
             let selected = i == self.current;
             let forced = self.cursor == Some(i);
@@ -359,11 +389,14 @@ impl Tabs {
                 kids.push(el().pin(Some(0.0), None, Some(0.0), Some(0.0)).h(sp.xxs as f32).fill(t.accent()));
             }
             let tab = chrome(t, base, kids, &rest, &hot, forced, t.radius_small());
+            let tab = t.key_map(tab, ends(i, n, Axis::Row));
             tabs = tabs.child(match &self.choose {
                 Some(attach) => attach(tab, i),
                 None => tab,
             });
         }
+        // As Qt's Tabs: h and l walk too, Up and Down don't, and the ends don't wrap (above).
+        let tabs = t.key_map(tabs, &[("h", Some(Key::Left)), ("l", Some(Key::Right)), ("Up", None), ("Down", None)]);
         el().w_full().child(el().pin(Some(0.0), None, Some(0.0), Some(0.0)).h(1.0).fill(t.track())).child(tabs)
     }
 }
@@ -428,6 +461,7 @@ impl IconRail {
                 .focusable(true)
                 .focus_selected(selected);
             let item = chrome(t, base, vec![mark], &rest, &hot, forced, t.radius());
+            let item = t.key_map(item, ends(i, n, Axis::Column));
             list = list.child(match &self.choose {
                 Some(attach) => attach(item, i),
                 None => item,
@@ -437,7 +471,8 @@ impl IconRail {
         let mut rail = el()
             .size(size + pad * 2.0 + 1.0, height)
             .child(el().pin(None, Some(0.0), Some(0.0), Some(0.0)).w(1.0).fill(t.track()))
-            .child(list.absolute(pad, pad));
+            // As Qt's IconRail: k and j walk too, Left and Right don't, and the ends don't wrap.
+            .child(t.key_map(list, &[("k", Some(Key::Up)), ("j", Some(Key::Down)), ("Left", None), ("Right", None)]).absolute(pad, pad));
         if self.current < n {
             let bar = glyph_size as f32;
             let y = pad + self.current as f32 * (size + gap) + ((size - bar) / 2.0).round();

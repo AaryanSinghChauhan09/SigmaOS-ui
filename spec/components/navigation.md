@@ -50,7 +50,7 @@ Qt `Menu` with `MenuItem`, `MenuSeparator`, `MenuSection`; Rune `Menu` with `Men
   - `.min_width(w)` (default `space(160)`), `.key(k)`, `.submenu(bool)`.
   - Placement: `.anchor(key)` (below a keyed trigger, `xs` away; push into the root overlay layer) or `.at(x, y)`. With neither, it draws in place, held open.
   - `.on_close(f)`: Escape, a press outside (modal while anchored or at a point), and Left/h in a submenu.
-  - Keys: Up/Down/Home/End are the menu's focus group; j/k/l map to Down/Up/Right with or without `on_close` (through `Theme::key_aliases`, typed for the app's state by `Theme::apply`).
+  - Keys: Up/Down/Home/End are the menu's focus group; j/k/l map to Down/Up/Right with or without `on_close` (through `Theme::key_map`, typed for the app's state by `Theme::apply`).
   - `.build(&theme)`.
 - `MenuItem::new(label)`
   - Content: `.icon(glyph)`, `.shortcut(hint)`, `.check(bool)`, `.radio(bool)`, `.submenu(bool)`.

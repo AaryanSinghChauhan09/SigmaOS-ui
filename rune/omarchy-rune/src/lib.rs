@@ -55,18 +55,39 @@ pub struct Theme {
     inbox: Arc<Mutex<Option<Tokens>>>,
     watch: Option<omarchy_theme::Watch>,
     icons: Arc<Icons>,
-    /// Key aliases typed for the app's state, from [`Theme::apply`] (see [`Theme::key_aliases`]).
+    /// The key map typed for the app's state, from [`Theme::apply`] (see [`Theme::key_map`]).
     aliases: Arc<Mutex<Option<Aliases>>>,
 }
 
-/// Attaches an `on_key` that re-sends each listed text key as another key.
-type Aliases = fn(El, &'static [(&'static str, rune::Key)]) -> El;
+/// Attaches an `on_key` that re-sends or swallows the keys a [`KeyMap`] names.
+type Aliases = fn(El, KeyMap) -> El;
 
-fn aliases<S: 'static>(e: El, map: &'static [(&'static str, rune::Key)]) -> El {
+/// Keys a primitive takes itself, by name (`"j"`, `"Right"`, see [`key_name`]): re-sent as
+/// another key (`Some`), or swallowed (`None`), as Qt's components take them.
+pub type KeyMap = &'static [(&'static str, Option<rune::Key>)];
+
+/// A key's name in a [`KeyMap`]: the typed text, or the arrow, Home or End key's name.
+pub fn key_name(k: &rune::Key) -> Option<&str> {
+    use rune::Key;
+    Some(match k {
+        Key::Text(t) => t.as_str(),
+        Key::Left => "Left",
+        Key::Right => "Right",
+        Key::Up => "Up",
+        Key::Down => "Down",
+        Key::Home => "Home",
+        Key::End => "End",
+        _ => return None,
+    })
+}
+
+fn aliases<S: 'static>(e: El, map: KeyMap) -> El {
     e.on_key(move |_: &mut S, k: &rune::KeyEvent, tx: &mut rune::Tx| {
-        let rune::Key::Text(typed) = &k.key else { return false };
-        let Some((_, to)) = map.iter().find(|(from, _)| from == typed) else { return false };
-        tx.send_key(rune::KeyEvent { key: to.clone(), mods: k.mods });
+        let Some(name) = key_name(&k.key) else { return false };
+        let Some((_, to)) = map.iter().find(|(from, _)| *from == name) else { return false };
+        if let Some(to) = to {
+            tx.send_key(rune::KeyEvent { key: to.clone(), mods: k.mods });
+        }
         true
     })
 }
@@ -130,11 +151,13 @@ impl Theme {
         *self.aliases.lock().unwrap_or_else(|e| e.into_inner()) = Some(aliases::<S>);
     }
 
-    /// `e` with each `(text, key)` in `map` re-sent as `key` while it or something in it has
-    /// focus: `[("j", Key::Down), ("k", Key::Up)]` walks a focus group the vim way. Primitives use
-    /// it for keys that need no app state; it needs a [`Theme::apply`] first (to learn the
-    /// state's type) and is a no-op before one.
-    pub fn key_aliases(&self, e: El, map: &'static [(&'static str, rune::Key)]) -> El {
+    /// `e` taking the keys `map` names while it or something in it has focus: each re-sent as
+    /// its key, or swallowed. `[("j", Some(Key::Down)), ("k", Some(Key::Up))]` walks a focus
+    /// group the vim way; `[("Right", None)]` on a group's last item keeps it from wrapping. An
+    /// element has one key handler, so this is for elements without their own. Needs a
+    /// [`Theme::apply`] first (to learn the state's type); a no-op before one. A re-sent key
+    /// lands on the next frame.
+    pub fn key_map(&self, e: El, map: KeyMap) -> El {
         match *self.aliases.lock().unwrap_or_else(|e| e.into_inner()) {
             Some(attach) => attach(e, map),
             None => e,
