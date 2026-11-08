@@ -14,6 +14,7 @@ namespace {
 QString home() { return QDir::homePath(); }
 QString currentDir() { return home() + QStringLiteral("/.local/state/omarchy/current"); }
 QString userShellPath() { return home() + QStringLiteral("/.config/omarchy/shell.toml"); }
+QString languagePath() { return home() + QStringLiteral("/.config/omarchy/language"); }
 
 QString readText(const QString &path) {
   QFile f(path);
@@ -79,7 +80,7 @@ ThemeSource::ThemeSource(QObject *parent) : QObject(parent) {
   readFiles();
   readHyprland();
   readFont();
-  m_language = readText(home() + QStringLiteral("/.config/omarchy/language")).trimmed();
+  m_language = readText(languagePath()).trimmed();
   armWatcher();
   if (!m_pinned) connectEvents();
 }
@@ -105,7 +106,7 @@ void ThemeSource::reload() {
     emit hyprlandChanged();
 
   const QString language = m_language;
-  m_language = readText(home() + QStringLiteral("/.config/omarchy/language")).trimmed();
+  m_language = readText(languagePath()).trimmed();
   if (language != m_language) emit languageChanged();
 
   const QString font = m_resolvedFontFamily;
@@ -149,10 +150,18 @@ void ThemeSource::armWatcher() {
     m_watcher.removePath(m_themeDir);
     if (QFileInfo::exists(m_themeDir)) m_watcher.addPath(m_themeDir);
   }
-  // A directory watch misses a file rewritten in place, so icons.theme is watched as a file too.
-  const QString icons = m_themeDir + QStringLiteral("/icons.theme");
-  m_watcher.removePath(icons);
-  if (QFileInfo::exists(icons)) m_watcher.addPath(icons);
+  // A directory watch sees files appear, vanish and be renamed over, but not a file rewritten in
+  // place (an editor that saves without a rename, `>` in a shell), so the files read are watched
+  // as files too. A save by rename leaves the watch on the old file, so every re-read re-arms
+  // them; one that doesn't exist yet is picked up by its directory's watch once it appears.
+  QStringList files{m_themeDir + QStringLiteral("/colors.toml"), m_themeDir + QStringLiteral("/shell.toml"),
+                    m_themeDir + QStringLiteral("/icons.theme")};
+  if (!m_pinned)
+    files << userShellPath() << languagePath() << home() + QStringLiteral("/.config/fontconfig/fonts.conf");
+  for (const QString &f : files) {
+    m_watcher.removePath(f);
+    if (QFileInfo::exists(f)) m_watcher.addPath(f);
+  }
 }
 
 QString ThemeSource::hyprDir() const {

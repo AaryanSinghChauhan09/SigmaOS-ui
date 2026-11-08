@@ -14,8 +14,9 @@ class QJSEngine;
 //
 // - colors.toml and shell.toml from the current theme. A theme switch swaps
 //   ~/.local/state/omarchy/current/theme as a whole directory and then rewrites theme.name, so
-//   the watch is on current/, not on the files.
-// - ~/.config/omarchy/shell.toml, the user's override (`omarchy display text size`).
+//   current/ is watched; the files are watched too, for edits made in place.
+// - ~/.config/omarchy/shell.toml, the user's override (`omarchy display text size`, or edited by
+//   hand), watched through its directory and as a file.
 // - Hyprland's decoration:rounding, general:gaps_out, animations:enabled and general:border_size,
 //   asked over the instance socket and re-asked on `configreloaded` from socket2.
 // - The family fontconfig's `monospace` alias resolves to (`omarchy font set`).
