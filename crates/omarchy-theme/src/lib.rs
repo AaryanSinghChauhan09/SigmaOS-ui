@@ -11,6 +11,7 @@
 
 pub mod color;
 pub mod fontmetrics;
+pub mod icons;
 pub mod parse;
 pub mod resolve;
 pub mod source;
