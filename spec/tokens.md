@@ -13,8 +13,9 @@ The rules are lifted from the Omarchy shell (`shell/Commons/Color.qml`, `Style.q
 | User shell overrides | `~/.config/omarchy/shell.toml` | Same keys as above; user keys win over the theme's (this is where `omarchy display text size` writes `[font] base-size`) |
 | Hyprland | `j/getoption` on the instance socket | `decoration:rounding` → `radius`, `general:gaps_out` → `gapsOut` (halved), `animations:enabled` → `reduceMotion`, `general:border_size` → `windowBorder` |
 | Fontconfig | `fc-match monospace` | The concrete family (and file) the `monospace` alias resolves to |
+| Icon theme | `~/.local/state/omarchy/current/theme/icons.theme` | The freedesktop icon theme Avatar's icons by name come from: its first non-empty line, else `Yaru-blue` (as `omarchy-theme-set-gnome` applies it). Rust `Tokens::icon_theme`, Qt `ThemeSource.iconTheme`; not in the canonical JSON. Lookup rules: `components/lists.md`, Avatar |
 
-A theme switch replaces the whole `current/theme` directory and rewrites `current/theme.name`, so bindings watch the `current/` directory, not files inside the theme. Hyprland announces `configreloaded` on `.socket2.sock` once new rounding and gaps are in effect. When `HYPRLAND_INSTANCE_SIGNATURE` is unset, bindings use the most recently modified instance under `$XDG_RUNTIME_DIR/hypr/`.
+A theme switch replaces the whole `current/theme` directory and rewrites `current/theme.name`, so bindings watch the `current/` directory, not files inside the theme. They also watch the theme directory itself, re-armed after every change (a swap leaves a watch on the old directory), so an edit inside it, such as to `icons.theme`, is followed too. Hyprland announces `configreloaded` on `.socket2.sock` once new rounding and gaps are in effect. When `HYPRLAND_INSTANCE_SIGNATURE` is unset, bindings use the most recently modified instance under `$XDG_RUNTIME_DIR/hypr/`.
 
 ### Overrides for review and tests
 
@@ -27,6 +28,8 @@ Every binding honors these, so a gallery can render any fixture without touching
 | `OMARCHY_UI_GAPS_OUT` | Use this instead of `general:gaps_out` (raw Hyprland value; still halved). |
 | `OMARCHY_UI_REDUCE_MOTION` | `1` forces reduced motion, `0` forces motion on. |
 | `OMARCHY_UI_FONT_FAMILY` | Use this family instead of resolving `monospace`. |
+| `OMARCHY_UI_ICON_THEME` | Use this icon theme instead of the one `icons.theme` names. |
+| `OMARCHY_UI_ICON_DIRS` | Search these roots for icons (colon-separated) instead of the XDG icon directories, `~/.icons` and `/usr/share/pixmaps`. `bin/review` points both at `fixtures/icons/`, so icons by name render the same on every machine. |
 
 ## Palette
 

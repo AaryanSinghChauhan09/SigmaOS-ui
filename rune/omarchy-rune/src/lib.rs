@@ -28,10 +28,13 @@
 
 pub mod ui;
 
-use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::{Arc, Mutex, OnceLock};
 
+use omarchy_theme::icons::{IconLookup, search_dirs};
 use omarchy_theme::{BorderSpec, Rgba, Tokens};
-use rune::{Color, Cx, El, Family, TextStyle, Waker};
+use rune::{Color, Cx, El, Family, Image, ImageCache, TextStyle, Waker};
 use rune_kit::{Kit, PaletteSeed};
 
 pub use omarchy_theme;
@@ -51,6 +54,7 @@ pub struct Theme {
     family: Family,
     inbox: Arc<Mutex<Option<Tokens>>>,
     watch: Option<omarchy_theme::Watch>,
+    icons: Arc<Icons>,
 }
 
 impl Theme {
@@ -62,13 +66,14 @@ impl Theme {
     pub fn from_tokens(tokens: Tokens) -> Theme {
         let family = family_for(&tokens);
         let kit = build_kit(&tokens, family);
-        Theme { tokens, kit, family, inbox: Arc::default(), watch: None }
+        Theme { tokens, kit, family, inbox: Arc::default(), watch: None, icons: Arc::default() }
     }
 
     /// Start following the desktop: theme switches, `omarchy font set`, `omarchy display text
     /// size`, and Hyprland reloads (rounding, gaps, the animations toggle).
     pub fn follow(&mut self, wake: Waker) {
         let inbox = self.inbox.clone();
+        *self.icons.wake.lock().unwrap() = Some(wake.clone());
         self.watch = Some(omarchy_theme::watch(self.tokens.clone(), move |fresh| {
             *inbox.lock().unwrap() = Some(fresh);
             wake();
@@ -78,7 +83,8 @@ impl Theme {
     /// Take a change delivered since the last frame; true when there was one.
     pub fn poll(&mut self) -> bool {
         let Some(fresh) = self.inbox.lock().unwrap().take() else { return false };
-        *self = Theme { inbox: self.inbox.clone(), watch: self.watch.take(), ..Theme::from_tokens(fresh) };
+        // The icon store carries over: it re-resolves by itself when the icon theme changed.
+        *self = Theme { inbox: self.inbox.clone(), watch: self.watch.take(), icons: self.icons.clone(), ..Theme::from_tokens(fresh) };
         true
     }
 
@@ -100,6 +106,18 @@ impl Theme {
         if self.tokens.reduce_motion {
             cx.reduced_motion(true);
         }
+        self.icons.scale.store(cx.env().scale.to_bits(), Ordering::Relaxed);
+    }
+
+    /// The icon named `name` (`firefox`, `org.gnome.Nautilus`) in the theme's icon theme
+    /// (`omarchy_theme::icons`), decoded to fit `size` points square at the window's scale (as of
+    /// the last [`Theme::apply`]; SVGs rasterize at that size). `None` when no icon theme has it.
+    /// The image decodes off the view thread: until [`Image::is_ready`], draw a fallback; the
+    /// waker from [`Theme::follow`] re-renders once it is. [`Avatar::icon`](ui::Avatar::icon)
+    /// does all of this.
+    pub fn icon(&self, name: &str, size: f32) -> Option<Image> {
+        let scale = f32::from_bits(self.icons.scale.load(Ordering::Relaxed));
+        self.icons.image(&self.tokens.icon_theme, name, size, scale)
     }
 
     /// `AppSpec::families`, so rune-kit's sans and mono slots both use the Omarchy font.
@@ -173,6 +191,59 @@ impl Theme {
     }
     pub fn text_style_bold(&self, size: i64) -> TextStyle {
         TextStyle::new(size as f32, 700.0).family(self.family).lh(self.tokens.font.line_px(size) as f32)
+    }
+}
+
+/// Icons looked up by name, decoded and kept alive while the icon theme stays the same.
+struct Icons {
+    /// The app's waker, once [`Theme::follow`] has one: a decoded icon re-renders through it.
+    wake: Arc<Mutex<Option<Waker>>>,
+    /// Device pixels per point, from the last [`Theme::apply`].
+    scale: AtomicU32,
+    cache: OnceLock<ImageCache>,
+    state: Mutex<IconState>,
+}
+
+#[derive(Default)]
+struct IconState {
+    lookup: Option<IconLookup>,
+    held: HashMap<(String, u32), Option<Image>>,
+}
+
+impl Default for Icons {
+    fn default() -> Self {
+        Icons { wake: Arc::default(), scale: AtomicU32::new(2.0f32.to_bits()), cache: OnceLock::new(), state: Mutex::default() }
+    }
+}
+
+impl Icons {
+    fn image(&self, theme: &str, name: &str, size: f32, scale: f32) -> Option<Image> {
+        let mut st = self.state.lock().unwrap();
+        if st.lookup.as_ref().is_none_or(|l| l.theme() != theme) {
+            st.lookup = Some(IconLookup::new(theme, search_dirs()));
+            st.held.clear();
+        }
+        let px = (size * scale).ceil().max(1.0) as u32;
+        let key = (name.to_string(), px);
+        if let Some(hit) = st.held.get(&key) {
+            return hit.clone();
+        }
+        let path = st.lookup.as_ref().and_then(|l| l.find(name, px));
+        let image = path.map(|p| self.cache().file(p, size, scale));
+        st.held.insert(key, image.clone());
+        image
+    }
+
+    fn cache(&self) -> &ImageCache {
+        self.cache.get_or_init(|| {
+            let wake = self.wake.clone();
+            ImageCache::new(Arc::new(move || {
+                let w = wake.lock().unwrap().clone();
+                if let Some(w) = w {
+                    w();
+                }
+            }))
+        })
     }
 }
 

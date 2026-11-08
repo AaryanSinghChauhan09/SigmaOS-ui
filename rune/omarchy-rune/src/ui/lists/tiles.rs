@@ -117,13 +117,15 @@ impl AvatarSize {
     }
 }
 
-/// A person's or an app's picture with fallbacks, tried in order: a decoded image, a glyph, then
-/// the first letter of `name` on a foreground-glass tile. Corners follow `radius` (square at
-/// Hyprland's default 0); `round` makes it a disc, for people. A docked [`StatusDot`] sits on the
-/// bottom-right corner.
+/// A person's or an app's picture with fallbacks, tried in order: a decoded image, an icon from
+/// the icon theme, a glyph, then the first letter of `name` on a foreground-glass tile. Corners
+/// follow `radius` (square at Hyprland's default 0); `round` makes it a disc, for people. An icon
+/// is drawn whole, fitted to the square, with no tile and no clipping: its artwork has its own
+/// shape. A docked [`StatusDot`] sits on the bottom-right corner.
 pub struct Avatar {
     name: String,
     image: Option<Image>,
+    icon: String,
     glyph: String,
     size: f32,
     preset: Option<AvatarSize>,
@@ -134,14 +136,22 @@ pub struct Avatar {
 
 impl Avatar {
     pub fn new(name: impl Into<String>) -> Avatar {
-        Avatar { name: name.into(), image: None, glyph: String::new(), size: 0.0, preset: Some(AvatarSize::Medium), round: false, status: None, ground: None }
+        Avatar { name: name.into(), image: None, icon: String::new(), glyph: String::new(), size: 0.0, preset: Some(AvatarSize::Medium), round: false, status: None, ground: None }
     }
     /// The picture, from an `ImageCache`. Until it decodes, or if it fails, the fallbacks draw.
     pub fn image(mut self, image: Option<&Image>) -> Self {
         self.image = image.cloned();
         self
     }
-    /// A Nerd Font glyph, when there's no picture.
+    /// A freedesktop icon name (`firefox`, `org.gnome.Nautilus`), looked up in the theme's icon
+    /// theme ([`Theme::icon`]) when there's no picture. A found icon holds its square while it
+    /// decodes (and draws as soon as it has, without the view re-running); when no theme has it,
+    /// or it fails to decode, the glyph or initial draws.
+    pub fn icon(mut self, name: impl Into<String>) -> Self {
+        self.icon = name.into();
+        self
+    }
+    /// A Nerd Font glyph, when there's no picture or icon.
     pub fn glyph(mut self, g: impl Into<String>) -> Self {
         self.glyph = g.into();
         self
@@ -180,8 +190,12 @@ impl Avatar {
         let size = self.preset.map_or(self.size, |p| p.px(t));
         let radius = if self.round { size / 2.0 } else { t.radius().min(size / 2.0) };
         let pictured = self.image.as_ref().is_some_and(|i| i.is_ready() && i.error().is_none());
+        let icon = if pictured || self.icon.is_empty() { None } else { t.icon(&self.icon, size) };
+        let icon = icon.filter(|i| i.error().is_none());
         let face = if pictured {
             el().size(size, size).radius(radius).pixels_fit(self.image.as_ref().unwrap().pixels(), SurfaceFit::Fill)
+        } else if let Some(icon) = icon {
+            el().size(size, size).pixels_fit(icon.pixels(), SurfaceFit::Fit)
         } else {
             let tile = row().size(size, size).center().radius(radius).fill(color(tk.controls.selected.fill));
             let mark_size = (size * 0.5).round() as i64;

@@ -1,13 +1,20 @@
 import QtQuick
 import Omarchy.Theme
 import Omarchy.Theme as Commons
+import Omarchy.Theme.Native
 
 // A person's or an app's picture with fallbacks, tried in order: `source` (an image URL or
-// path), then `glyph` (a Nerd Font icon), then the first letter of `name`, each on a
-// foreground-glass tile. A source that fails to load gives way to the next.
+// path), then `iconName` (a freedesktop icon name, looked up in the Omarchy theme's icon theme
+// by IconLookup), then `glyph` (a Nerd Font icon), then the first letter of `name`, the last two
+// on a foreground-glass tile. A source that fails to load gives way to the next.
 //
 //   Avatar { name: "Ryan"; source: "file:///…/ryan.png"; round: true; status: "success" }
+//   Avatar { name: "Files"; iconName: "org.gnome.Nautilus"; glyph: "" }
 //   Avatar { name: "Terminal"; glyph: ""; size: "small" }
+//
+// An icon is drawn whole, fitted to the square, with no tile and no clipping (its artwork has
+// its own shape), rasterized at the device size so SVGs stay crisp. It re-resolves when the
+// theme switches to another icon theme.
 //
 // Corners follow Hyprland's rounding (square at Omarchy's default 0), as Toast's thumbnails do;
 // `round` makes a disc, for people, as elsewhen's avatars are. `size` is "small" (iconLarge,
@@ -18,6 +25,7 @@ Item {
 
   property string name: ""
   property url source: ""
+  property string iconName: ""
   property string glyph: ""
   property string size: "medium"
   property real pixelSize: size === "small" ? Style.font.iconLarge
@@ -29,6 +37,12 @@ Item {
 
   readonly property real cornerRadius: round ? pixelSize / 2 : Math.min(Style.cornerRadius, pixelSize / 2)
   readonly property bool pictured: String(source) !== "" && probe.status === Image.Ready
+  readonly property int iconPixels: Math.ceil(pixelSize * Screen.devicePixelRatio)
+  readonly property url iconSource: {
+    void IconLookup.theme  // re-resolve on an icon theme switch
+    return iconName === "" ? "" : IconLookup.url(iconName, iconPixels)
+  }
+  readonly property bool iconed: !pictured && String(iconSource) !== "" && iconImage.status === Image.Ready
   readonly property string initial: {
     var text = String(name || "").trim()
     if (text === "") return ""
@@ -87,9 +101,20 @@ Item {
     }
   }
 
+  Image {
+    id: iconImage
+    anchors.fill: parent
+    visible: root.iconed
+    source: root.iconSource
+    sourceSize.width: root.iconPixels
+    sourceSize.height: root.iconPixels
+    fillMode: Image.PreserveAspectFit
+    smooth: true
+  }
+
   Rectangle {
     anchors.fill: parent
-    visible: !root.pictured
+    visible: !root.pictured && !root.iconed
     radius: root.cornerRadius
     color: Style.selectedFill
 

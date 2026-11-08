@@ -128,13 +128,21 @@ A dot ringed in the surface color. Always a circle.
 
 Qt `Avatar` · Rune `Avatar`
 
-A person's or an app's picture with fallbacks, tried in order: the image, a glyph, the first letter of the name. A source that fails to load gives way to the next.
+A person's or an app's picture with fallbacks, tried in order: the image, an icon from the icon theme by name, a glyph, the first letter of the name. A source that fails to load gives way to the next.
 
-**API.** Qt: `name`, `source` (URL), `glyph`, `size` (`"small"`, `"medium"`, `"large"`) or `pixelSize`, `round`, `status` (docks a StatusDot), `ground`. Rune: `new(name)`, `.image(Option<&rune::Image>)` (from an `ImageCache`; undecoded or failed draws the fallback), `.glyph(g)`, `.size(AvatarSize)` or `.size_px(px)`, `.round(b)`, `.status(tone)`, `.ground(c)`, `Avatar::initial(name)`.
+**API.** Qt: `name`, `source` (URL), `iconName`, `glyph`, `size` (`"small"`, `"medium"`, `"large"`) or `pixelSize`, `round`, `status` (docks a StatusDot), `ground`. Rune: `new(name)`, `.image(Option<&rune::Image>)` (from an `ImageCache`; undecoded or failed draws the fallback), `.icon(name)`, `.glyph(g)`, `.size(AvatarSize)` or `.size_px(px)`, `.round(b)`, `.status(tone)`, `.ground(c)`, `Avatar::initial(name)`.
 
-**Metrics.** Small `font.iconLarge` (fills a ListRow's leading slot), medium `font.displayLarge`, large `font.display × 2`. Corners `min(radius, size / 2)`, square at Omarchy's default 0, as Toast's thumbnails; `round` makes a disc, for people, as elsewhen's avatars. The image covers the square (cropping its long side), clipped to the corners (Qt draws it on a Canvas so it renders without shader effects). Fallback tile `controls.selected.fill`, mark `round(size × 0.5)` in the foreground: the initial bold, a glyph regular.
+**Metrics.** Small `font.iconLarge` (fills a ListRow's leading slot), medium `font.displayLarge`, large `font.display × 2`. Corners `min(radius, size / 2)`, square at Omarchy's default 0, as Toast's thumbnails; `round` makes a disc, for people, as elsewhen's avatars. The image covers the square (cropping its long side), clipped to the corners (Qt draws it on a Canvas so it renders without shader effects). Fallback tile `controls.selected.fill`, mark `round(size × 0.5)` in the foreground: the initial bold, a glyph regular. An icon is drawn whole instead, fitted into the square (its aspect kept), with no tile, no corners and no clipping: its artwork has its own shape.
 
-Not yet: icon-theme and desktop-entry lookup (the shell resolves them through Quickshell; plain Qt has no icon image provider). Pass a resolved file as the source.
+**Icons by name.** `iconName` / `.icon(name)` takes a freedesktop icon name (`firefox`, `org.gnome.Nautilus`; an absolute path to a file also works) and resolves it the same way in every binding: Rust `omarchy_theme::icons::IconLookup` (any Rust binding can use it; Rune through `Theme::icon(name, size)`), Qt the `IconLookup` singleton in `Omarchy.Theme.Native` (`IconLookup.path(name, size)`, `IconLookup.url(name, size)`, `IconLookup.theme`, `IconLookup.themes`). `bin/test` checks that both resolve every fixture icon to the same file.
+
+1. The icon theme is the one the Omarchy theme names in `current/theme/icons.theme` (its first non-empty line, such as `Yaru-magenta`), else `Yaru-blue`: what `omarchy-theme-set-gnome` hands to GNOME's `icon-theme`. `OMARCHY_UI_ICON_THEME` pins it.
+2. Search that theme, then its `index.theme` `Inherits` chain depth-first (themes that aren't installed are skipped, none twice), then `hicolor`. A theme's `index.theme` comes from the first root that has one; its directories are searched in every root.
+3. Roots, in order: `$XDG_DATA_HOME/icons` (`~/.local/share/icons`), each `$XDG_DATA_DIRS/*/icons` (`/usr/local/share:/usr/share`), `~/.icons`, `/usr/share/pixmaps`. `OMARCHY_UI_ICON_DIRS` (colon-separated) replaces them.
+4. Within a theme, an SVG wins, from a `Scalable` directory first; else the PNG from the smallest directory at or above the requested size (in device pixels; a directory's size is `Size × Scale`), else the largest; the first in the theme's `Directories` order on a tie. The first theme in the chain that has the icon at any size answers.
+5. No theme has it: `<root>/<name>.svg` or `.png` in a root (pixmaps). Nothing: the glyph or the initial.
+
+The request is the avatar's size in device pixels, and the file is rasterized at that size (Qt `sourceSize`, Rune `ImageCache::file(path, size, scale)`), so SVGs stay crisp. Answers are cached per icon theme. A theme switch that names another icon theme (or an edit to `icons.theme`) re-resolves: Rust carries the name in `Tokens::icon_theme` (not in the canonical JSON), so `omarchy_theme::watch` delivers it; Qt's `ThemeSource.iconTheme` notifies `IconLookup`. Both also watch the theme directory itself, re-armed after a switch. In Rune, a found icon decodes off the view thread and holds its square (blank) until it has; with `Theme::follow` the app re-renders when it has.
 
 ## TileGrid
 
@@ -172,6 +180,7 @@ A grid of tiles, each a glyph or an Avatar above a label of up to two lines: the
 1. Badges, `controlGap` apart: "New" (neutral), "3" accent filled, "12" urgent filled, "Online" success, "Low" warning, "Offline" urgent.
 2. A row `xxl` apart: StatusDots success, warning, urgent, muted, accent; then medium Avatars with docked dots on the window background: "Ryan" round (success), the sample picture (warning), glyph U+F048B (urgent).
 3. Avatars `xxl` apart: "ada" small, "Basecamp" medium, "Omarchy" large round, glyph U+F06A9 medium, the picture small, medium round, large, and a missing file falling back to "M".
-4. A TileGrid of 4 columns: Terminal U+F120, Files U+F07B, Browser U+F0AC (under the cursor), Music U+F001, Settings U+F013, Calendar U+F073, Screen Recorder U+F03D (two lines), Photos (the picture as an Avatar).
+4. Avatars by icon name, `xxl` apart, medium unless noted: Files `org.gnome.Nautilus`, Terminal `utilities-terminal`, Firefox `firefox`, Chromium `chromium` small, Steam `steam` large, Btop `btop` small, and Nothing `no-such-app` with glyph U+F120 (no icon anywhere: the glyph). Under `bin/review` they come from the fixture icon tree, so the row shows each step of the lookup: an SVG beside a nearer PNG, the nearest PNG size, an inherited theme, hicolor, pixmaps, an icon of the theme from a second root.
+5. A TileGrid of 4 columns: Terminal U+F120, Files U+F07B, Browser U+F0AC (under the cursor), Music U+F001, Settings U+F013, Calendar U+F073, Screen Recorder U+F03D (two lines), Photos (the picture as an Avatar).
 
-The sample picture is `qt/gallery/assets/avatar.png`, the same 96×96 file as `rune/gallery/assets/avatar.png`.
+The sample picture is `qt/gallery/assets/avatar.png`, the same 96×96 file as `rune/gallery/assets/avatar.png`. The fixture icon tree is `fixtures/icons/`: `system/` holds `Fixture-Accent` (Inherits `Fixture-Base`, which inherits a missing theme and `hicolor`) and `hicolor`, `local/` one more `Fixture-Accent` icon, `pixmaps/` a loose icon; `bin/review` sets `OMARCHY_UI_ICON_DIRS` to those three and `OMARCHY_UI_ICON_THEME=Fixture-Accent`.
