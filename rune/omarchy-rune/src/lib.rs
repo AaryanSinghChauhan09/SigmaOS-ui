@@ -38,6 +38,10 @@ use rune::{Color, Cx, El, Family, Image, ImageCache, TextStyle, Waker};
 use rune_kit::{Kit, PaletteSeed};
 
 pub use omarchy_theme;
+// The Rune this kit is built against (the rev pinned in the workspace Cargo.toml), so an app can
+// use `omarchy_rune::rune` and `omarchy_rune::rune_kit` instead of pinning the same rev itself.
+pub use rune;
+pub use rune_kit;
 
 /// A Rune color from a token color. Rune blends in sRGB by default, as Qt does, so translucent
 /// tokens land on the same pixels.
