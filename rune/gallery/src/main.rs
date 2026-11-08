@@ -36,6 +36,8 @@ pub(crate) struct State {
     pub stepped: f32,
     pub align: String,
     pub network: String,
+    pub forms: sections::forms::Forms,
+    pub pickers: sections::pickers::Pickers,
 }
 
 pub(crate) fn init() -> State {
@@ -55,6 +57,8 @@ pub(crate) fn init() -> State {
         stepped: 0.75,
         align: "center".into(),
         network: "basecamp".into(),
+        forms: sections::forms::init(),
+        pickers: sections::pickers::init(),
     }
 }
 
@@ -84,6 +88,8 @@ gallery! {
     inputs: "Inputs",
     slider: "Slider",
     surfaces: "Surfaces",
+    forms: "Forms",
+    pickers: "Pickers",
     tokens: "Tokens",
 }
 
@@ -168,5 +174,43 @@ mod tests {
         rt.pointer_up(x, y);
         rt.frame(1.0 / 60.0);
         assert_ne!(before, rt.state.switches[0]);
+    }
+
+    fn press(rt: &mut Runtime<State>, key: &str) {
+        let (x, y) = rt.find(key).unwrap_or_else(|| panic!("no element keyed {key}"));
+        rt.pointer_down(x, y);
+        rt.pointer_up(x, y);
+        rt.frame(1.0 / 60.0);
+    }
+
+    fn runtime(section: &'static str) -> Runtime<State> {
+        let mut s = init();
+        s.theme = fixture("tokyo-night");
+        s.section = Some(section);
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        rt
+    }
+
+    /// A checkbox flips, a disabled one doesn't, and a radio takes the group's value.
+    #[test]
+    fn forms_check_and_choose() {
+        let mut rt = runtime("forms");
+        press(&mut rt, "check-0");
+        assert!(rt.state.forms.checks[0]);
+        press(&mut rt, "check-3");
+        assert!(!rt.state.forms.checks[3]);
+        press(&mut rt, "radio-hidden");
+        assert_eq!(rt.state.forms.position, "hidden");
+    }
+
+    /// A MultiSelect row adds or removes its value.
+    #[test]
+    fn multiselect_toggles_values() {
+        let mut rt = runtime("pickers");
+        press(&mut rt, "ms-notify-Calendar");
+        assert!(rt.state.pickers.notify.iter().any(|v| v == "Calendar"));
+        press(&mut rt, "ms-notify-Mail");
+        assert!(!rt.state.pickers.notify.iter().any(|v| v == "Mail"));
     }
 }

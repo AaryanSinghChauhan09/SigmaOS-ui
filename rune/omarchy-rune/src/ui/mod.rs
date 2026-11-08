@@ -6,13 +6,19 @@
 //! as the shell's `hasCursor` does for keyboard-driven panels.
 
 mod button;
+mod dialog;
 mod field;
+mod forms;
+mod pickers;
 mod slider;
 mod surface;
 mod toggle;
 
 pub use button::{Button, ButtonGroup, IconButton};
+pub use dialog::Dialog;
 pub use field::{Dropdown, NumberField, TextField};
+pub use forms::{Checkbox, PasswordField, Radio, RadioGroup, SettingRow, TextArea};
+pub use pickers::{ColorWell, MultiSelect, SwatchStrip};
 pub use slider::Slider;
 pub use surface::{Card, ConfirmDialog, MenuRow, Tooltip, section_header, separator};
 pub use toggle::{Toggle, ToggleSwitch};
