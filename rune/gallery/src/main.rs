@@ -484,6 +484,48 @@ mod tests {
         assert_eq!(rt.state.data.node, "spec/tokens");
     }
 
+    /// Keys on the table and the tree, as `qt/tests/tst_data.qml` drives Qt's: Up/Down/Home/End
+    /// walk the rows and stop at the ends, Return and Space choose; in the tree Left folds an
+    /// open branch and Right unfolds a folded one.
+    #[test]
+    fn data_keys_as_in_qt() {
+        use rune::{Key, KeyEvent};
+        fn walk(rt: &mut Runtime<State>, keys: &[Key], at: &mut f64) {
+            for k in keys {
+                rt.key(KeyEvent { key: k.clone(), mods: Default::default() });
+                for _ in 0..2 {
+                    *at += 1.0 / 60.0;
+                    rt.frame(*at);
+                }
+            }
+        }
+        let mut at = 1.0 / 60.0;
+        let mut rt = pressed("data", "files-0");
+        assert_eq!(rt.state.data.row, 0);
+        walk(&mut rt, &[Key::Down, Key::Enter], &mut at);
+        assert_eq!(rt.state.data.row, 1);
+        walk(&mut rt, &[Key::End, Key::Down, Key::Text(" ".into())], &mut at);
+        let last = rt.state.data.row;
+        assert!(last > 1, "End then Space chooses the last row");
+        walk(&mut rt, &[Key::Home, Key::Up, Key::Enter], &mut at);
+        assert_eq!(rt.state.data.row, 0, "Up stops at the first row");
+
+        let mut rt = pressed("data", "tree-qt");
+        assert_eq!(rt.state.data.node, "qt");
+        let open = |rt: &Runtime<State>, id: &str| rt.state.data.expanded.iter().any(|e| e == id);
+        assert!(open(&rt, "qt"));
+        walk(&mut rt, &[Key::Left], &mut at);
+        assert!(!open(&rt, "qt"), "Left folds an open branch");
+        walk(&mut rt, &[Key::Left], &mut at);
+        assert!(!open(&rt, "qt"), "and leaves a folded one");
+        walk(&mut rt, &[Key::Right], &mut at);
+        assert!(open(&rt, "qt"), "Right unfolds it");
+        walk(&mut rt, &[Key::Right], &mut at);
+        assert!(open(&rt, "qt"), "and leaves an open one");
+        walk(&mut rt, &[Key::Down, Key::Enter], &mut at);
+        assert_ne!(rt.state.data.node, "qt", "Down then Return chooses the next row");
+    }
+
     /// The sidebar picks, the split handle drags, the calendar picks a day and steps months.
     #[test]
     fn layout_picks_drags_and_steps() {

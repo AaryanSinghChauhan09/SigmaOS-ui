@@ -56,7 +56,7 @@ The Qt body is a `ListView`: give the Table a height and the rows scroll under a
 | Selected | `selectedId: string` | `.selected(Option<&str>)` |
 | Cursor | `cursorId: string`, `hasCursor` | `.cursor(Option<&str>)` |
 | Width | the item's | `.width(w)` (else the parent's) |
-| Fold asked | `toggled(string id)` (chevron click, double click, Right on a closed branch, Left on an open one) | `.on_toggle(\|s, id\|)` (chevron press) |
+| Fold asked | `toggled(string id)` (chevron click, double click, Right on a closed branch, Left on an open one) | `.on_toggle(\|s, id\|)` (the same: chevron press, double press, Right and Left on a focused branch row) |
 | Choose | `activated(string id)` (click, Return/Space) | `.on_select(\|s, id\|)` |
 | Keys | Up/Down move `cursorId` | `.key(p)`: rows `p-<id>`, chevrons `p-<id>-toggle` |
 

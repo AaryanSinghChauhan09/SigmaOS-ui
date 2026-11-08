@@ -1,7 +1,7 @@
 //! Tree: FileTree-style rows, each level indented by `huge`, a chevron on branches, an optional
 //! glyph, then the label.
 
-use rune::{El, col, el, row, text};
+use rune::{El, Key, KeyEvent, Tx, col, el, row, text};
 
 use super::{centered_glyph, row_chrome};
 use crate::ui::glyph;
@@ -31,6 +31,8 @@ impl TreeNode {
 }
 
 type Pick = Box<dyn Fn(El, String) -> El>;
+/// A branch row's Left (fold, when open) and Right (unfold, when folded), as Qt's Tree takes them.
+type Fold = Box<dyn Fn(El, String, bool) -> El>;
 
 /// A tree. The app owns which ids are `expanded`, the `selected` id and the `cursor` id; the
 /// tree asks with `on_toggle` (the chevron) and `on_select` (the row).
@@ -42,6 +44,7 @@ pub struct Tree {
     cursor: Option<String>,
     width: Option<f32>,
     toggle: Option<Pick>,
+    fold: Option<Fold>,
     select: Option<Pick>,
 }
 
@@ -53,7 +56,17 @@ struct Visible<'a> {
 
 impl Tree {
     pub fn new(nodes: impl IntoIterator<Item = TreeNode>) -> Tree {
-        Tree { nodes: nodes.into_iter().collect(), expanded: Vec::new(), selected: None, cursor: None, width: None, toggle: None, select: None, key: None }
+        Tree {
+            nodes: nodes.into_iter().collect(),
+            expanded: Vec::new(),
+            selected: None,
+            cursor: None,
+            width: None,
+            toggle: None,
+            fold: None,
+            select: None,
+            key: None,
+        }
     }
     pub fn expanded<S: AsRef<str>>(mut self, ids: impl IntoIterator<Item = S>) -> Self {
         self.expanded = ids.into_iter().map(|s| s.as_ref().to_string()).collect();
@@ -72,11 +85,24 @@ impl Tree {
         self.width = Some(w);
         self
     }
-    /// Called with a branch's id when its chevron is pressed.
+    /// Called with a branch's id when its chevron is pressed or its row double-pressed, and when
+    /// its row has focus and Left folds it (open) or Right unfolds it (folded), as in Qt's Tree.
     pub fn on_toggle<S: 'static>(mut self, f: impl Fn(&mut S, &str) + Clone + 'static) -> Self {
+        let g = f.clone();
         self.toggle = Some(Box::new(move |e: El, id: String| {
             let f = f.clone();
             e.on_press(move |s: &mut S| f(s, &id))
+        }));
+        self.fold = Some(Box::new(move |e: El, id: String, open: bool| {
+            let (f, twice) = (g.clone(), g.clone());
+            let again = id.clone();
+            e.on_double_press(move |s: &mut S| twice(s, &again)).on_key(move |s: &mut S, k: &KeyEvent, _: &mut Tx| {
+                let fold = matches!((&k.key, open), (Key::Left, true) | (Key::Right, false));
+                if fold {
+                    f(s, &id);
+                }
+                fold
+            })
         }));
         self
     }
@@ -148,6 +174,9 @@ impl Tree {
             }
             if let Some(attach) = &self.select {
                 e = attach(e, n.id.clone());
+            }
+            if branch && let Some(attach) = &self.fold {
+                e = attach(e, n.id.clone(), v.open);
             }
             list = list.child(e);
         }
