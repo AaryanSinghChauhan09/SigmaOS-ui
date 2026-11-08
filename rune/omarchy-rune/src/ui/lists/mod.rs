@@ -67,6 +67,7 @@ pub struct ListRow {
     tone: Tone,
     value: String,
     trailing: Option<El>,
+    expansion: Option<El>,
     action: String,
     action_urgent: bool,
     action_cursor: bool,
@@ -92,6 +93,7 @@ impl ListRow {
             tone: Tone::Neutral,
             value: String::new(),
             trailing: None,
+            expansion: None,
             action: String::new(),
             action_urgent: false,
             action_cursor: false,
@@ -140,6 +142,12 @@ impl ListRow {
     /// Any trailing element instead of a value: a [`Badge`], a non-interactive ToggleSwitch.
     pub fn trailing(mut self, e: El) -> Self {
         self.trailing = Some(e);
+        self
+    }
+    /// Opens the row: any element across it under the main line, inside the row's fill (the
+    /// network panel's password field and Connect button), `space(4)` below.
+    pub fn expansion(mut self, e: El) -> Self {
+        self.expansion = Some(e);
         self
     }
     /// An action glyph on the trailing edge, shown while the row has the cursor (or the action
@@ -275,7 +283,10 @@ impl ListRow {
             .label(self.title)
             .disabled(self.disabled)
             .hover_group()
-            .child(body);
+            .child(match self.expansion {
+                Some(x) => col().w_full().gap(t.space(4.0)).child(body).child(x),
+                None => body,
+            });
         e = border(e, &edge);
         e = match self.width {
             Some(w) => e.w(w),
