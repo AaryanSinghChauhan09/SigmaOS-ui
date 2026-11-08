@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Rust tests, the Qt Quick tests, then Qt/Rune token parity for every fixture theme at radius 0
-# and 8, and icon lookup parity on the fixture icon tree. Renders are bin/review's job; this
-# stays fast enough to run on every change.
+# and 8, icon lookup parity on the fixture icon tree, and the example apps (bin/test-examples).
+# Renders are bin/review's job; this stays fast enough to run on every change.
 
 set -euo pipefail
 
@@ -42,6 +42,9 @@ for name in utilities-terminal org.gnome.Nautilus firefox chromium btop steam zo
     fi
   done
 done
+
+# Each way of using the kit from an app (examples/), built and rendered once.
+"$ROOT/bin/test-examples" || fail=1
 
 if (( fail )); then
   exit 1

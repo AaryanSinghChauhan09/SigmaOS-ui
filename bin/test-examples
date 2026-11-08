@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Build each way of using the kit from an app (examples/) and render it once, offscreen, in a
+# fixture theme, to build/examples/<route>.png:
+#
+#   qt-vendored   qmake + include(qt/omarchy-ui.pri)
+#   qt-installed  qt/module installed into build/stage (make install INSTALL_ROOT=...), then a
+#                 pure-QML file run with Qt 6's qml tool against it (QML_IMPORT_PATH)
+#   rune          a crate outside the workspace with a path dependency on omarchy-rune
+#
+# The two Qt routes run the same QML on the same kit, so their PNGs must match byte for byte.
+# A route whose tool is missing is skipped. bin/test runs this.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="$ROOT/build/examples"
+STAGE="$ROOT/build/stage"
+mkdir -p "$OUT"
+
+export OMARCHY_UI_THEME_DIR="$ROOT/fixtures/themes/tokyo-night"
+export OMARCHY_UI_ROUNDING=0
+export QT_FORCE_STDERR_LOGGING=1
+
+fail=0
+ok() { echo "examples: $1 rendered to ${2#"$ROOT"/}"; }
+bad() { echo "examples: $1 failed${2:+: $2}"; fail=1; }
+skip() { echo "examples: $1 skipped ($2)"; }
+rendered() { [[ -s $1 ]] && file -b "$1" | grep -q "^PNG image"; }
+
+if command -v qmake6 >/dev/null; then
+  # The installed modules, staged as a package would install them.
+  mkdir -p "$ROOT/build/qt-module"
+  (cd "$ROOT/build/qt-module" && qmake6 "$ROOT/qt/module/module.pro" >/dev/null && make -s -j"$(nproc)" >/dev/null 2>&1 &&
+    rm -rf "$STAGE" && make -s install INSTALL_ROOT="$STAGE" >/dev/null) || bad "qt module" "build or staged install"
+  qml_dir="$STAGE$(qmake6 -query QT_INSTALL_QML)"
+
+  png="$OUT/qt-vendored.png"
+  rm -f "$png"
+  mkdir -p "$OUT/qt-vendored"
+  if (cd "$OUT/qt-vendored" && qmake6 "$ROOT/examples/qt-vendored/qt-vendored.pro" >/dev/null && make -s -j"$(nproc)" >/dev/null 2>&1) &&
+    timeout 30 "$OUT/qt-vendored/omarchy-ui-example-vendored" --snap "$png" && rendered "$png"; then
+    ok qt-vendored "$png"
+  else
+    bad qt-vendored
+  fi
+
+  # Qt 6's qml tool: on Arch, /usr/bin/qml can be Qt 5's (qt5-declarative).
+  qml="$(qmake6 -query QT_INSTALL_BINS)/qml"
+  [[ -x $qml ]] || qml="$(command -v qml6 || true)"
+  png="$OUT/qt-installed.png"
+  rm -f "$png"
+  if [[ -z $qml || ! -x $qml ]]; then
+    skip qt-installed "no Qt 6 qml tool"
+  elif QML_IMPORT_PATH="$qml_dir" QT_QPA_PLATFORM=offscreen QT_QUICK_CONTROLS_STYLE=Basic QT_SCALE_FACTOR=2 \
+    timeout 30 "$qml" "$ROOT/examples/qt-installed/snap.qml" -- "$ROOT/examples/qt-installed/main.qml" "$png" && rendered "$png"; then
+    ok qt-installed "$png"
+    if [[ -s $OUT/qt-vendored.png ]] && ! cmp -s "$png" "$OUT/qt-vendored.png"; then
+      bad qt-installed "differs from qt-vendored"
+    fi
+  else
+    bad qt-installed
+  fi
+else
+  skip qt-vendored "no qmake6"
+  skip qt-installed "no qmake6"
+fi
+
+if command -v cargo >/dev/null; then
+  # The workspace's target dir, so the example reuses the kit's build (same lock, same profile).
+  png="$OUT/rune.png"
+  rm -f "$png"
+  if CARGO_TARGET_DIR="$ROOT/target" cargo build -q --release --manifest-path "$ROOT/examples/rune/Cargo.toml" &&
+    timeout 60 "$ROOT/target/release/omarchy-ui-example-rune" --snap "$png" >"$OUT/rune.log" 2>&1 && rendered "$png"; then
+    ok rune "$png"
+  else
+    bad rune "build/examples/rune.log has Rune's output"
+  fi
+else
+  skip rune "no cargo"
+fi
+
+exit "$fail"
