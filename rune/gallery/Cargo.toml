@@ -1,0 +1,16 @@
+[package]
+name = "omarchy-rune-gallery"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "omarchy-rune-gallery"
+path = "src/main.rs"
+
+[dependencies]
+omarchy-theme.workspace = true
+omarchy-rune = { path = "../omarchy-rune" }
+rune.workspace = true
+rune-kit.workspace = true

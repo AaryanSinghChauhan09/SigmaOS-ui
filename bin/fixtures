@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Render every Omarchy theme's colors.toml + shell.toml into fixtures/themes/<name>,
+# the way omarchy-theme-set would, without touching the live theme. The template
+# renderer only writes under $HOME/.local/state/omarchy/current/next-theme, so it
+# runs against a throwaway HOME.
+#
+#   bin/fixtures                 # all themes from $OMARCHY_SRC (default ~/omarchy)
+#   bin/fixtures tokyo-night     # just one
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OMARCHY_SRC="${OMARCHY_SRC:-$HOME/omarchy}"
+OUT="$ROOT/fixtures/themes"
+
+if [[ ! -x $OMARCHY_SRC/bin/omarchy-theme-set-templates ]]; then
+  echo "No Omarchy checkout at $OMARCHY_SRC (set OMARCHY_SRC)" >&2
+  exit 1
+fi
+
+if (( $# > 0 )); then
+  themes=("$@")
+else
+  themes=()
+  for dir in "$OMARCHY_SRC"/themes/*/; do
+    themes+=("$(basename "$dir")")
+  done
+fi
+
+scratch="$(mktemp -d)"
+trap 'rm -rf "$scratch"' EXIT
+
+for theme in "${themes[@]}"; do
+  src="$OMARCHY_SRC/themes/$theme"
+  if [[ ! -f $src/colors.toml ]]; then
+    echo "skip $theme (no colors.toml)" >&2
+    continue
+  fi
+
+  fake_home="$scratch/$theme"
+  next="$fake_home/.local/state/omarchy/current/next-theme"
+  mkdir -p "$next"
+  cp -r "$src"/. "$next"/
+  rm -rf "$next/backgrounds"
+
+  HOME="$fake_home" OMARCHY_PATH="$OMARCHY_SRC" "$OMARCHY_SRC/bin/omarchy-theme-set-templates" >/dev/null
+
+  mkdir -p "$OUT/$theme"
+  for file in colors.toml shell.toml hyprland.lua; do
+    [[ -f $next/$file ]] && cp "$next/$file" "$OUT/$theme/$file"
+  done
+  [[ -f $src/light.mode ]] && touch "$OUT/$theme/light.mode"
+  echo "$theme"
+done
+
+git -C "$OMARCHY_SRC" rev-parse HEAD >"$OUT/.omarchy-rev"

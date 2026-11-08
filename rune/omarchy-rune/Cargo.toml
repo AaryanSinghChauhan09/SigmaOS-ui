@@ -1,0 +1,11 @@
+[package]
+name = "omarchy-rune"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Omarchy's look for Rune: a rune-kit Kit built from the live Omarchy theme, plus Omarchy primitives."
+
+[dependencies]
+omarchy-theme.workspace = true
+rune.workspace = true
+rune-kit.workspace = true
