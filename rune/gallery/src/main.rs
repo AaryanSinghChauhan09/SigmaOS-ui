@@ -288,6 +288,21 @@ mod tests {
         assert_eq!(pressed("menus", "menu-new").state.menus.ran, Some("New"));
     }
 
+    /// A Pane's header actions are live controls at the end of its Heading: the Night light
+    /// switch sits at the bordered pane's right edge and flips its setting.
+    #[test]
+    fn pane_actions_run() {
+        let mut rt = runtime("surfaces");
+        let (x, _) = rt.find("night-light").expect("the pane's header switch");
+        let sp = &rt.state.theme.tokens().spacing;
+        // The page padding, the 240-wide Layers pane and the gap, then the 240-wide bordered pane.
+        let right = sp.panel_padding as f32 + 240.0 + sp.huge as f32 + 240.0 - sp.panel_padding as f32;
+        assert!(x > right - 40.0 && x < right, "the action ends the header, not the title ({x} vs {right})");
+        assert!(rt.state.night_light);
+        press(&mut rt, "night-light");
+        assert!(!rt.state.night_light);
+    }
+
     /// Pressing a tab or a rail item chooses it.
     #[test]
     fn tabs_and_rail_choose() {

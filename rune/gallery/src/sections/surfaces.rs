@@ -51,7 +51,7 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
         .title("Night light")
         .subtitle("Sunset to sunrise")
         .bordered(true)
-        .actions([ToggleSwitch::new(s.night_light).on_toggle(|s: &mut State| s.night_light ^= true).build(t)])
+        .actions([ToggleSwitch::new(s.night_light).key("night-light").on_toggle(|s: &mut State| s.night_light ^= true).build(t)])
         .width(240.0)
         .child(SettingRow::new("Strength").control(Slider::new(s.night_strength).width(100.0).on_change(|s: &mut State, v| s.night_strength = v).build(t)).build(t))
         .build(t);
