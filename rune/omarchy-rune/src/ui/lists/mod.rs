@@ -310,9 +310,11 @@ impl ListRow {
 
 /// A vertical scroll viewport capped at `max_height`, with Omarchy's thin scrollbar beside it: a
 /// `track`-colored groove `scrollbarThickness` wide and a foreground-glass thumb, both
-/// `radius_small`. The bar shows only while the content overflows; its gutter is always
-/// reserved, so the content never reflows when it appears. The thumb drags. Scrolling stops at
-/// the ends. Reveal a row with `Tx::scroll_into_view(row_key)` (see [`ScrollArea::ensure_visible`]).
+/// `radius_small`. The bar shows only while the content overflows and overlays the content's
+/// right edge instead of reserving a gutter (as the shell's AsNeeded bars do), so a short list is
+/// as wide as its siblings and nothing reflows when the bar appears; rows keep clear of it with
+/// their own padding. The thumb drags. Scrolling stops at the ends. Reveal a row with
+/// `Tx::scroll_into_view(row_key)` (see [`ScrollArea::ensure_visible`]).
 pub struct ScrollArea {
     key: String,
     max_height: Option<f32>,
@@ -353,11 +355,6 @@ impl ScrollArea {
         tx.scroll_into_view(row);
     }
 
-    /// The gutter the bar takes beside the content: its thickness plus a `space(4)` gap.
-    pub fn gutter(t: &Theme) -> f32 {
-        t.tokens().spacing.scrollbar_thickness as f32 + t.space(4.0)
-    }
-
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
         let thick = tk.spacing.scrollbar_thickness as f32;
@@ -370,8 +367,7 @@ impl ScrollArea {
         let (thumb_w, shown_w, pos_w) = (thumb.clone(), shown.clone(), pos.clone());
         let mut viewport = col()
             .key(self.key.clone())
-            .grow(1.0)
-            .min_w(0.0)
+            .w_full()
             .gap(self.gap)
             .children(self.children)
             .scroll(ScrollSpec { stick_bottom: false })
@@ -413,17 +409,17 @@ impl ScrollArea {
                 let run = (track - h).max(1.0);
                 tx.scroll_to_y(key.clone(), d.data + d.dy * at.max[1] / run);
             });
-        let gutter = el()
+        // Over the content's right edge, the full height of the viewport.
+        let bar = el()
+            .pin(None, Some(0.0), Some(0.0), Some(0.0))
             .w(thick)
-            .ml(t.space(4.0))
-            .self_stretch()
             .radius(rs)
             .fill(t.track())
             .live_opacity(&shown)
             .a11y_hidden()
             .child(thumb_el);
 
-        let mut e = row().items_start().child(viewport).child(gutter);
+        let mut e = col().child(viewport).child(bar);
         e = match self.width {
             Some(w) => e.w(w),
             None => e.w_full(),

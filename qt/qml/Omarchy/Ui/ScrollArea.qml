@@ -5,8 +5,10 @@ import Omarchy.Theme as Commons
 
 // A vertical scroll view capped at `maxHeight`, with Omarchy's thin scrollbar beside it: a
 // `track` groove `scrollbarThickness` wide and a foreground-glass thumb, corners min(4, radius).
-// The bar shows only while the content overflows, but its gutter is always reserved, so rows
-// never reflow when it appears. Scrolling stops at the ends; the thumb drags.
+// The bar shows only while the content overflows, and overlays the content's right edge rather
+// than reserving a gutter (as the shell's AsNeeded bars do): a short list is as wide as its
+// siblings, and nothing reflows when the bar appears. Rows keep their content clear of it with
+// their own padding (ListRow's controlPaddingX). Scrolling stops at the ends; the thumb drags.
 //
 //   ScrollArea {
 //     maxHeight: 240
@@ -14,7 +16,7 @@ import Omarchy.Theme as Commons
 //     ListRow { ... }
 //   }
 //
-// Children stack in a column `spacing` apart, as wide as the area less the gutter.
+// Children stack in a column `spacing` apart, as wide as the area.
 // ensureVisible(item) scrolls just far enough to show a child (the cursor's row after a key).
 Item {
   id: root
@@ -25,7 +27,6 @@ Item {
   readonly property alias flickable: flick
   readonly property alias contentColumn: column
   readonly property int thickness: Style.spacing.scrollbarThickness
-  readonly property real gutter: thickness + Style.space(4)
   readonly property bool overflowing: column.implicitHeight > flick.height + 0.5
 
   function ensureVisibleRange(y, h) {
@@ -42,12 +43,12 @@ Item {
     ensureVisibleRange(p.y, item.height)
   }
 
-  implicitWidth: column.implicitWidth + gutter
+  implicitWidth: column.implicitWidth
   implicitHeight: Math.min(column.implicitHeight, maxHeight)
 
   Flickable {
     id: flick
-    width: root.width - root.gutter
+    width: root.width
     height: root.height
     contentWidth: width
     contentHeight: column.implicitHeight
