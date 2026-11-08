@@ -197,9 +197,9 @@ impl ProgressBar {
     }
 }
 
-/// Busy: a Nerd Font glyph, or with `pulse` a glyph breathing between full and half opacity.
-/// Still under reduced motion (a pulse rests at half). Qt turns the glyph every 900 ms; Rune
-/// can't turn text on its render clock, so a turning spinner breathes at that period instead.
+/// Busy: a Nerd Font glyph turning once every 900 ms about its ink's middle, or with `pulse` a
+/// glyph breathing between half and full opacity, 420 ms each way. Still under reduced motion
+/// (a pulse rests at half), as Qt's `Spinner.qml`.
 pub struct Spinner {
     glyph: String,
     size: Option<i64>,
@@ -229,6 +229,10 @@ impl Spinner {
         self
     }
 
+    /// The turn's period in seconds, and the pulse's (one breath in and out: 420 ms each way).
+    pub const TURN: f64 = 0.9;
+    pub const PULSE: f64 = 0.84;
+
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
         let size = self.size.unwrap_or(tk.font.icon);
@@ -238,22 +242,34 @@ impl Spinner {
         let style = t.text_style(size);
         let (_, h) = rune::text::measure(&self.glyph, &[], style, None);
         let side = h.round();
-        let left = match rune::text::ink(&self.glyph, style).map(|i| i.bounds) {
+        let bounds = rune::text::ink(&self.glyph, style).map(|i| i.bounds);
+        let left = match bounds {
             Some([x, _, w, _]) => ((side - w) / 2.0 - x).round(),
             None => ((side - rune::text::advance(&self.glyph, style)) / 2.0).round(),
         };
         let top = ((side - h) / 2.0).round();
-        let mark = el()
-            .size(side, side)
-            .role("progressbar")
-            .label("Busy")
-            .child(text(self.glyph).font(style).color(ink).single_line().absolute(left, top));
+        let mark = el().size(side, side).role("progressbar").label("Busy");
+        let still = tk.reduce_motion;
         if self.pulse {
-            mark.looping(LoopSpec::opacity(0.84, 0.0, 0.5, 1.0))
-        } else if tk.reduce_motion {
-            mark
-        } else {
-            mark.looping(LoopSpec::opacity(0.9, 0.0, 1.0, 0.5))
+            let text = text(self.glyph).font(style).color(ink).single_line().absolute(left, top);
+            // Rises from half to full and back, as Qt's SequentialAnimation does from its 0.5.
+            return if still {
+                mark.child(text.opacity(0.5))
+            } else {
+                mark.child(text).looping(LoopSpec::opacity(Self::PULSE, 0.0, 0.5, 1.0))
+            };
+        }
+        // Rune repeats a turn only for an icon, so the glyph turns as its own outline, its ink
+        // where the text would draw it. Still, or without an outline, it is the text itself.
+        let outline = bounds.filter(|_| !still).and_then(|[x, y, w, h]| {
+            let centre = [left + x + w / 2.0, top + y + h / 2.0];
+            super::turn::glyph_icon(&self.glyph, &tk.font.family, size as f32, side, centre)
+        });
+        match outline {
+            Some(glyph) => mark.child(
+                rune::icon(glyph, side).absolute(0.0, 0.0).color(ink).looping(LoopSpec::rotation(Self::TURN)),
+            ),
+            None => mark.child(text(self.glyph).font(style).color(ink).single_line().absolute(left, top)),
         }
     }
 }

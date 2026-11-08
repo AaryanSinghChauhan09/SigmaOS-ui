@@ -9,3 +9,5 @@ description = "Omarchy's look for Rune: a rune-kit Kit built from the live Omarc
 omarchy-theme.workspace = true
 rune.workspace = true
 rune-kit.workspace = true
+# Glyph outlines for the turning Spinner (the version Rune draws text with).
+swash = "0.2.10"

@@ -20,6 +20,7 @@ mod search;
 mod slider;
 mod surface;
 mod toggle;
+mod turn;
 
 pub use button::{Button, ButtonGroup, IconButton};
 pub use feedback::{Banner, EmptyState, Meter, ProgressBar, Spinner, Toast};

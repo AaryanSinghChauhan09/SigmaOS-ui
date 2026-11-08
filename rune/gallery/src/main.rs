@@ -369,6 +369,42 @@ mod tests {
         assert_eq!(rt.state.layout.month, (2026, 12));
     }
 
+    /// The progress section's Spinners, stepped on the render clock: a turning one turns its
+    /// glyph's outline once every 900 ms about its square's middle, a pulse breathes once every
+    /// 840 ms (420 ms each way), and under reduced motion both stand still as text.
+    #[test]
+    fn spinners_turn_and_pulse_on_the_clock() {
+        use omarchy_rune::ui::Spinner;
+        let mut rt = runtime("progress");
+        rt.frame(0.225);
+        let els = rt.elements();
+        let spinners: Vec<_> = els.iter().filter(|e| e.label.as_deref() == Some("Busy")).collect();
+        assert_eq!(spinners.len(), 4, "the section's four spinners");
+        let (turning, pulsing) = spinners.split_at(2);
+        for s in turning {
+            let glyph = els.iter().find(|e| e.role == "icon" && e.parent.is_some_and(|p| std::ptr::eq(&els[p], *s)))
+                .expect("a turning spinner draws its glyph as an icon");
+            assert_eq!(glyph.rect, s.rect, "the glyph turns about the spinner square's middle");
+            let phase = glyph.loop_phase.expect("the glyph runs a loop");
+            assert!((phase - 0.225 / Spinner::TURN).abs() < 1e-6, "a quarter turn at 225 ms, not {phase}");
+            assert_eq!(s.rect[2], s.rect[3], "a square");
+        }
+        for s in pulsing {
+            let phase = s.loop_phase.expect("a pulse runs a loop");
+            assert!((phase - 0.225 / Spinner::PULSE).abs() < 1e-6, "{phase}");
+        }
+
+        let mut s = init();
+        s.theme = Theme::from_tokens(omarchy_theme::Tokens { reduce_motion: true, ..fixture("tokyo-night").tokens().clone() });
+        s.section = Some("progress");
+        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        rt.frame(0.0);
+        rt.frame(0.3);
+        let els = rt.elements();
+        assert!(!els.iter().any(|e| e.role == "icon"), "still spinners are text");
+        assert!(els.iter().all(|e| e.loop_phase.is_none_or(|p| p == 0.0)), "nothing loops");
+    }
+
     /// Pressing a clip selects it; pressing a swatch picks its color.
     #[test]
     fn editing_selects_and_picks() {

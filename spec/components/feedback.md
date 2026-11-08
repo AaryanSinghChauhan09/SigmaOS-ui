@@ -78,7 +78,9 @@ Qt `Spinner`, Rune `Spinner`. Busy: a Nerd Font glyph turning once every 900 ms 
 | `color: color` | `.color(Color)` | `foreground` by default |
 | `running: bool` | | Qt only: stop the animation without hiding |
 
-**States.** Turning; pulsing; still. Under reduced motion the glyph stands upright at full opacity, and a pulse rests at 0.5 opacity. Rune can't turn text on its render clock, so with motion on its turning spinner breathes (1 → 0.5, 900 ms) instead; the still is identical.
+**States.** Turning; pulsing; still. A turn is linear, clockwise, about the box's middle. A pulse starts at 0.5, rises to 1 and falls back, 420 ms each way, eased in and out. Under reduced motion the glyph stands upright at full opacity, and a pulse rests at 0.5 opacity.
+
+Qt turns the `Text` (a `RotationAnimator`). Rune repeats a turn (`LoopSpec::rotation`) only for an element's icon, so its turning spinner draws the glyph's own outline (read with swash from the font fontconfig picks for it) as an icon, its ink where the text would put it, and turns that; still, or when no font has an outline for the glyph, it is the text. `Spinner::TURN` (0.9 s) and `Spinner::PULSE` (0.84 s) are the periods.
 
 **Metrics.** Glyph at `size`; box `lineHeight(size)` square.
 
