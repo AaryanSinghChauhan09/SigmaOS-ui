@@ -2,6 +2,7 @@
 
 pub mod buttons;
 pub mod color;
+pub mod composed;
 pub mod data;
 pub mod forms;
 pub mod inputs;

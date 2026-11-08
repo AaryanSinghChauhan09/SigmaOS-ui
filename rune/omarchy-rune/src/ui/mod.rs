@@ -16,6 +16,7 @@ mod navigation;
 mod dialog;
 mod forms;
 mod pickers;
+mod search;
 mod slider;
 mod surface;
 mod toggle;
@@ -34,6 +35,7 @@ pub use navigation::{IconRail, KeyCombo, Keycap, ShortcutSheet, Tabs, Toolbar, k
 pub use dialog::Dialog;
 pub use forms::{Checkbox, PasswordField, Radio, RadioGroup, SettingRow, TextArea};
 pub use pickers::{ColorWell, MultiSelect, SwatchStrip};
+pub use search::{SEARCH_SECTION, SearchItem, SearchList};
 pub use slider::Slider;
 pub use surface::{Card, ConfirmDialog, MenuRow, Tooltip, section_header, separator};
 pub use toggle::{Toggle, ToggleSwitch};

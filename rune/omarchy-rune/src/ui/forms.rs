@@ -423,7 +423,10 @@ impl PasswordField {
 
         let mut edit = self.edit.clone();
         edit.set_secure(true);
-        let mut input = bare_input(t, &edit, self.placeholder).revealed(self.revealed);
+        // The placeholder in textFaint, as TextArea's: TextField's `darker(1.6)` would be
+        // stronger than the text in a light theme.
+        let placeholder = self.placeholder.clone();
+        let mut input = bare_input(t, &edit, self.placeholder).placeholder(placeholder, t.faint()).revealed(self.revealed);
         if let Some(access) = self.access {
             input = access(input);
         }

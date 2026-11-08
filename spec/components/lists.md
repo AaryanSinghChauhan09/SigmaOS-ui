@@ -23,6 +23,7 @@ One row of a keyboard-and-mouse list: what the network, bluetooth, tailscale and
 | `value` | `.value(v)` | Dim trailing text |
 | `trailing: Component` | `.trailing(El)` | Any trailing item instead |
 | `actionGlyph`, `actionUrgent`, `actionTip` | `.action(g, urgent)` | The revealed action (forget) |
+| `expansion: Component` | `.expansion(El)` | Opens the row: any item across it under the main line (a password field and Connect) |
 | `actionCursor` | `.action_cursor(bool)` | The cursor is on the action, not the row |
 | `hasCursor`, `current`, `disabled` | `.cursor(b)`, `.current(b)`, `.disabled(b)` | |
 | `clicked()`, `actionClicked()` | `.on_press(f)`, `.on_action(f)` | |
@@ -40,7 +41,7 @@ One row of a keyboard-and-mouse list: what the network, bluetooth, tailscale and
 
 The action glyph shows while the row has the cursor or the pointer, or when `actionCursor` is set; then its slot takes the cursor look in its own ink (urgent when `actionUrgent`): the ink at the hover fill alpha, a border at the hover border alpha and width.
 
-**Metrics.** Radius `radius`. Padding `controlPaddingX` across, `rowPaddingX / 2` down (height = content + `rowPaddingX`). Leading slot `font.iconLarge` wide, glyph centered in it by its box, then `space(10)`. Title `body` bold; subtitle and status `caption`; lines `space(1)` apart; all elide. Trailing items `space(8)` from the info and from each other; value `bodySmall`. Action slot `space(22)` square, glyph `subtitle`, foreground darker 1.4 (or `urgent`); the slot is reserved while hidden, so revealing it never reflows the row.
+**Metrics.** Radius `radius`. Padding `controlPaddingX` across, `rowPaddingX / 2` down (height = content + `rowPaddingX`). Leading slot `font.iconLarge` wide, glyph centered in it by its box, then `space(10)`. Title `body` bold; subtitle and status `caption`; lines `space(1)` apart; all elide. Trailing items `space(8)` from the info and from each other; value `bodySmall`. Action slot `space(22)` square, glyph `subtitle`, foreground darker 1.4 (or `urgent`); the slot is reserved while hidden, so revealing it never reflows the row. An expansion sits `space(4)` under the main line, inset `controlPaddingX` each side, inside the row's fill; the main line then sits at the top padding instead of centering.
 
 ## CursorModel
 

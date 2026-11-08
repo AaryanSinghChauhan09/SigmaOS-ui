@@ -79,10 +79,11 @@ DropIndicator 1.0 DropIndicator.qml
 Scrubber 1.0 Scrubber.qml
 Timeline 1.0 Timeline.qml
 TrimHandle 1.0 TrimHandle.qml
+SearchList 1.0 SearchList.qml
 
 # The cross-framework names (spec/components.md), where they don't shadow a Qt Quick Controls type.
 IconButton 1.0 PanelActionButton.qml
 MenuRow 1.0 PopupMenuRow.qml
 SectionHeader 1.0 PanelSectionHeader.qml
 Separator 1.0 PanelSeparator.qml
-ValueSlider 1.0 PanelSlider.qml
+ValueSlider 1.0 ValueSlider.qml

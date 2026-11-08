@@ -23,6 +23,9 @@ import Omarchy.Theme as Commons
 // highlight, and pointer movement reaches the app through `pointerMoved` so it can move the
 // cursor there. The action glyph shows while the row has the cursor or the pointer, or when the
 // action itself has the cursor (`actionCursor`), which tints it urgent if `actionUrgent`.
+//
+// `expansion` opens the row: any item (the network panel's password field and Connect button)
+// across the row under its main line, inside the row's fill.
 CursorSurface {
   id: root
 
@@ -46,6 +49,7 @@ CursorSurface {
   property string actionTip: ""
 
   property bool disabled: false
+  property Component expansion: null
 
   signal clicked()
   signal actionClicked()
@@ -74,6 +78,7 @@ CursorSurface {
   width: parent ? parent.width : implicitWidth
   implicitWidth: body.implicitWidth + Style.spacing.controlPaddingX * 2
   implicitHeight: body.implicitHeight + Style.spacing.rowPaddingX
+                  + (expansionLoader.item ? expansionLoader.height + Style.space(4) : 0)
 
   MouseArea {
     id: rowMouse
@@ -90,9 +95,10 @@ CursorSurface {
     id: body
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.verticalCenter: parent.verticalCenter
     anchors.leftMargin: Style.spacing.controlPaddingX
     anchors.rightMargin: Style.spacing.controlPaddingX
+    // Centered, or at the top padding when an expansion hangs under it.
+    y: expansionLoader.item ? Style.spacing.rowPaddingX / 2 : Math.round((root.height - height) / 2)
     implicitWidth: lead.width + info.implicitWidth + trailBox.width
     implicitHeight: Math.max(lead.implicitHeight, info.implicitHeight, trailBox.implicitHeight)
 
@@ -237,5 +243,14 @@ CursorSurface {
         font.pixelSize: Style.font.bodySmall
       }
     }
+  }
+
+  Loader {
+    id: expansionLoader
+    active: root.expansion !== null
+    sourceComponent: root.expansion
+    x: Style.spacing.controlPaddingX
+    y: body.y + body.height + Style.space(4)
+    width: root.width - Style.spacing.controlPaddingX * 2
   }
 }
