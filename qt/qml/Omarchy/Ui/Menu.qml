@@ -103,8 +103,13 @@ BorderSurface {
   function closeAll() {
     var m = root
     while (m.parentMenu) m = m.parentMenu
-    if (!m.held) m.close()
-    else m.closeSubmenus()
+    if (!m.held) {
+      m.close()
+    } else {
+      // A held menu stays: the keys come back to it from the submenu that just closed.
+      m.closeSubmenus()
+      m.forceActiveFocus()
+    }
   }
 
   function move(step) {
