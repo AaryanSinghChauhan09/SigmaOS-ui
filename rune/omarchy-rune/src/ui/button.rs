@@ -4,7 +4,7 @@
 use omarchy_theme::{BorderSpec, Rgba};
 use rune::{El, row, text};
 
-use super::{Attach, Look, chrome, reserve};
+use super::{Attach, Look, chrome, glyph, reserve};
 use crate::{Theme, color};
 
 /// The button. Borderless at rest unless `bordered`; the hover-cursor border under the pointer,
@@ -73,8 +73,8 @@ impl Button {
         let ink = if self.selected { color(c.selected.text) } else { t.fg() };
         let style = if self.selected { t.text_style_bold(tk.font.body) } else { t.text_style(tk.font.body) };
         let mut kids = Vec::new();
-        if let Some(glyph) = &self.icon {
-            kids.push(text(glyph.clone()).font(t.text_style(tk.font.icon)).color(ink));
+        if let Some(icon) = &self.icon {
+            kids.push(glyph(t, icon, tk.font.icon, ink));
         }
         if !self.label.is_empty() {
             kids.push(text(self.label.clone()).font(style).color(ink).single_line());
@@ -149,8 +149,8 @@ impl IconButton {
             .label(self.label.clone())
             .focusable(true)
             .press_scale(0.97);
-        let glyph = text(self.glyph).font(t.text_style(icon)).color(t.fg());
-        let e = chrome(t, base, vec![glyph], &rest, &hot, self.cursor, t.radius());
+        let mark = glyph(t, &self.glyph, icon, t.fg());
+        let e = chrome(t, base, vec![mark], &rest, &hot, self.cursor, t.radius());
         match self.press {
             Some(attach) => attach(e),
             None => e,

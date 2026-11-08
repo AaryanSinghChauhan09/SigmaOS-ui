@@ -226,7 +226,7 @@ impl Dropdown {
         let current = self.options.iter().find(|(v, _)| *v == self.value).map(|(_, l)| l.clone()).unwrap_or_default();
 
         let words = text(current).font(t.text_style(tk.font.body)).color(t.fg()).single_line().truncate().grow(1.0).min_w(0.0);
-        let chevron = text("\u{f0140}").font(t.text_style(tk.font.body)).color(t.fg_darker(1.2));
+        let chevron = super::glyph(t, "\u{f0140}", tk.font.body, t.fg_darker(1.2));
         let base = row()
             .key(self.key.clone())
             .w(width)

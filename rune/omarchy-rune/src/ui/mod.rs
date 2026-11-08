@@ -18,7 +18,7 @@ pub use surface::{Card, ConfirmDialog, MenuRow, Tooltip, section_header, separat
 pub use toggle::{Toggle, ToggleSwitch};
 
 use omarchy_theme::{BorderSpec, Rgba};
-use rune::{El, el};
+use rune::{El, el, text};
 
 use crate::{Theme, border, color};
 
@@ -72,4 +72,22 @@ pub(crate) fn chrome(t: &Theme, base: El, children: Vec<El>, rest: &Look, hot: &
         base.child(layer(rest).group_opacity(1.0, 0.0)).child(layer(hot).group_opacity(0.0, 1.0))
     };
     base.children(children)
+}
+
+/// A glyph boxed the way Qt's `Text` boxes one: the advance, widened by any ink that overhangs
+/// it, in whole pixels as Qt's hinted bearings are. Nerd Font icons in the non-Mono Nerd Fonts
+/// overhang their cell to the right, so centering the bare advance (as Rune lays text out) leaves
+/// the icon right of center.
+pub(crate) fn glyph(t: &Theme, s: &str, size: i64, ink: rune::Color) -> El {
+    let style = t.text_style(size);
+    let e = text(s.to_string()).font(style).color(ink).single_line();
+    let Some([x, _, w, _]) = rune::text::ink(s, style).map(|i| i.bounds) else { return e };
+    let advance = rune::text::advance(s, style);
+    let left = (-x).max(0.0).ceil();
+    let right = if x + w > advance { ((x + w).ceil() - advance).ceil() } else { 0.0 };
+    if left == 0.0 && right == 0.0 {
+        return e;
+    }
+    let (_, h) = rune::text::measure(s, &[], style, None);
+    el().w(advance + left + right).h(h).child(e.offset(left, 0.0))
 }

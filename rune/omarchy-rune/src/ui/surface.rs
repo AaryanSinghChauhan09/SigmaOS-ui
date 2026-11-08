@@ -124,7 +124,7 @@ impl MenuRow {
             .label(self.label.clone())
             .child(text(self.label).font(t.text_style(tk.font.body)).color(color(tk.surfaces.popups.text)).single_line());
         if self.checked {
-            r = r.checked(true).child(text("\u{2713}").font(t.text_style(tk.font.body)).color(t.accent()));
+            r = r.checked(true).child(super::glyph(t, "\u{2713}", tk.font.body, t.accent()));
         }
         match self.press {
             Some(attach) => attach(r),
