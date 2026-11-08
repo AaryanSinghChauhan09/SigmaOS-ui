@@ -56,4 +56,4 @@ fn view(s: &App, cx: &mut Cx<App>) -> El {
 // AppSpec { setup: Some(|s, wake| s.theme.follow(wake)), poll: Some(|s, _, _| s.theme.poll()), .. }
 ```
 
-[`AGENTS.md`](AGENTS.md) has the rules that make an app read as Omarchy, and how to work on the kit.
+[`spec/roadmap.md`](spec/roadmap.md) ranks the primitives still to build. [`AGENTS.md`](AGENTS.md) has the rules that make an app read as Omarchy, and how to work on the kit.
