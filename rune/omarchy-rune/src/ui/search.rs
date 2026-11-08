@@ -152,14 +152,14 @@ pub struct SearchList {
     key: String,
     query: TextEdit,
     cursor: Option<usize>,
-    placeholder: String,
+    placeholder: Option<String>,
     items: Vec<SearchItem>,
     detail: bool,
     detail_el: Option<El>,
     detail_width: Option<f32>,
     empty_glyph: String,
     empty_text: String,
-    no_matches: String,
+    no_matches: Option<String>,
     size: Option<(f32, f32)>,
     wire: Option<Box<dyn Wire>>,
     cb: Callbacks,
@@ -173,14 +173,14 @@ impl SearchList {
             key: key.into(),
             query: query.clone(),
             cursor: cursor.active.then(|| cursor.index()),
-            placeholder: "Search...".into(),
+            placeholder: None,
             items: Vec::new(),
             detail: false,
             detail_el: None,
             detail_width: None,
             empty_glyph: "\u{F0349}".into(),
             empty_text: String::new(),
-            no_matches: "No matches for “{}”".into(),
+            no_matches: None,
             size: None,
             wire: None,
             cb: Callbacks::default(),
@@ -197,8 +197,10 @@ impl SearchList {
     pub fn matches(text: &str, query: &str) -> bool {
         text.to_lowercase().contains(&query.to_lowercase())
     }
+    /// The filter line's text while the query is empty (default `common.search`, "Search...",
+    /// in the display language).
     pub fn placeholder(mut self, p: impl Into<String>) -> Self {
-        self.placeholder = p.into();
+        self.placeholder = Some(p.into());
         self
     }
     /// The results to show, already filtered by the query.
@@ -228,9 +230,10 @@ impl SearchList {
         self.empty_text = text.into();
         self
     }
-    /// The no-matches text; `{}` is the query.
+    /// The no-matches text; `{}` is the query (default `common.noMatchesFor`, "No matches for
+    /// “{}”", in the display language).
     pub fn no_matches(mut self, t: impl Into<String>) -> Self {
-        self.no_matches = t.into();
+        self.no_matches = Some(t.into());
         self
     }
     /// The overlay's outer size (default `space(480)` × `space(360)`).
@@ -279,7 +282,7 @@ impl SearchList {
             .grow(1.0)
             .min_w(0.0)
             .color(color(menu.text))
-            .placeholder(self.placeholder, t.faint())
+            .placeholder(self.placeholder.unwrap_or_else(|| tk.string("common.search", "Search...")), t.faint())
             .caret(rune::Color::TRANSPARENT, color(tk.controls.selection.fill));
         if let Some(wire) = &self.wire {
             input = wire.input(input, &self.key, n, self.cb.clone());
@@ -287,7 +290,13 @@ impl SearchList {
         let header = row().w_full().h(header_h).items_center().child(input);
 
         let body = if n == 0 {
-            let title = if self.query.text.is_empty() { self.empty_text } else { self.no_matches.replace("{}", &self.query.text) };
+            let title = if self.query.text.is_empty() {
+                self.empty_text
+            } else {
+                // The catalog's line takes the query as `%1`, as Qt's `arg` does; a caller's as `{}`.
+                let line = self.no_matches.unwrap_or_else(|| tk.string("common.noMatchesFor", "No matches for “%1”"));
+                line.replace("{}", &self.query.text).replace("%1", &self.query.text)
+            };
             el().w_full().h(body_h).center().child(EmptyState::new(title).glyph(self.empty_glyph).overlay(true).build(t))
         } else {
             let gap = sp.xxl as f32;

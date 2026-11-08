@@ -300,6 +300,27 @@ mod tests {
         assert_eq!(rt.state.composed.closes, 1, "Escape on an empty query asks to close");
     }
 
+    /// The empty SearchList reads the catalog's no-matches line (the one Qt's I18n reads, from
+    /// the harvested Strings.js) in the display language, with the query in it.
+    #[test]
+    fn search_list_says_no_matches_in_the_display_language() {
+        for (language, line) in [("en", "No matches for “zzz”"), ("de", "")] {
+            let mut s = init();
+            let mut tokens = fixture("tokyo-night").tokens().clone();
+            tokens.language = language.into();
+            s.theme = Theme::from_tokens(tokens);
+            s.section = Some("composed");
+            let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+            rt.frame(0.0);
+            let want = omarchy_theme::strings::lookup(language, "common.noMatchesFor").unwrap().replace("%1", "zzz");
+            if !line.is_empty() {
+                assert_eq!(want, line);
+            }
+            assert!(want.contains("zzz"));
+            assert!(rt.elements().iter().any(|e| e.text.as_deref() == Some(want.as_str())), "{language}: no {want:?} on screen");
+        }
+    }
+
     /// A gallery section, laid out once, in tokyo-night.
     fn runtime(section: &'static str) -> Runtime<State> {
         let mut s = init();

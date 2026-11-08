@@ -37,9 +37,9 @@ A new query puts the cursor back on the first match. The pointer moves the curso
 |---|---|---|
 | `query` | `new(key, &query_edit, &cursor)` | The query text; Rune keeps it in a `TextEdit` |
 | `items: [{ title, subtitle, glyph, value, detail }]` | `.items([SearchItem::new(t).subtitle(s).glyph(g).value(v).detail(d)])` | Already filtered |
-| `placeholderText` (default `common.search`) | `.placeholder(p)` | |
+| `placeholderText` (default `common.search`) | `.placeholder(p)` (the same default) | Both from the harvested catalog, in the display language |
 | `showDetail`, `detail: Component`, `detailWidth` | `.detail(b)`, `.detail_el(El)`, `.detail_width(w)` | Pane default 45% of the body |
-| `emptyGlyph`, `emptyText`, `noMatchesText` (`%1` is the query) | `.empty(glyph, text)`, `.no_matches(t)` (`{}` is the query) | |
+| `emptyGlyph`, `emptyText`, `noMatchesText` (`%1` is the query) | `.empty(glyph, text)`, `.no_matches(t)` (`{}` is the query) | No-matches default `common.noMatchesFor` in both |
 | `cursor` (its CursorModel), `cursorIndex`, `currentItem`, `filterInput` | `SearchList::cursor()` makes the model (one section, `SEARCH_SECTION`, showing) | Rune keeps the model in app state |
 | `matches(text, query)` | `SearchList::matches(text, query)` | |
 | width, height (implicit `space(480)` × `space(360)`) | `.size(w, h)` (same default) | |
@@ -94,6 +94,6 @@ Fixed in the primitives while building it (both bindings):
 - **ScrollArea's reserved gutter** made a short list `scrollbarThickness + space(4)` narrower than its siblings (the Hero, the Separator), so row fills stopped short of the panel's content edge. The bar now overlays the content's right edge, as the shell's `AsNeeded` bars do: nothing is reserved and nothing reflows when it appears.
 - **App icons by name.** Avatar took an image file only. Added `iconName` / `.icon(name)`: a freedesktop icon name resolved through the theme's icon theme (`icons.theme`, its Inherits chain, hicolor, pixmaps) by the same lookup in both bindings, following theme switches ([`lists.md`](lists.md), Avatar).
 
-Still missing:
+- **"No matches for “query”" in the display language.** The shell already has `common.noMatchesFor` (the clipboard's and the menu's empty line), and `bin/harvest-qt` carries every key a Ui/ file asks for, kit-owned ones included, so Qt's SearchList reads it from `Strings.js` in every Omarchy language. Rune had English only: `omarchy_theme::strings` now reads the same harvested catalog, and `Tokens::language` the same `~/.config/omarchy/language`, so the Rune SearchList's no-matches line and placeholder follow `omarchy language` too.
 
-- **`common.noMatchesFor`** is not in the harvested strings (`bin/harvest-qt` carries `common.noMatches` only), so Qt falls back to the English "No matches for “%1”".
+Still missing: nothing the composition needed.
