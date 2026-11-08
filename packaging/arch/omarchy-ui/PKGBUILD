@@ -6,8 +6,12 @@
 #
 # The Rust crates aren't packaged: Rust apps depend on them through Cargo (docs/using-rust.md).
 
+_root="$startdir/../../.."
+
 pkgname=omarchy-ui
-pkgver=0.1.0
+# 0.1.0.r<commits>.g<hash>, so an installed build names the commit it came from. Worked out here
+# rather than in pkgver(), which would rewrite this line in the checkout on every build.
+pkgver=0.1.0.r$(git -C "$_root" rev-list --count HEAD).g$(git -C "$_root" rev-parse --short=7 HEAD)
 pkgrel=1
 pkgdesc='Omarchy UI kit: Qt Quick modules that follow the live Omarchy theme, and the omarchy-theme token CLI'
 arch=('x86_64' 'aarch64')
@@ -15,17 +19,9 @@ license=('MIT')
 # The plugin is built against the installed Qt and loads into that version or a newer 6.x:
 # rebuild it when Qt updates, like any package with a QML plugin.
 depends=('qt6-base' 'qt6-declarative')
-makedepends=('gcc' 'make' 'cargo')
+makedepends=('gcc' 'make' 'cargo' 'git')
 source=()
 sha256sums=()
-
-_root="$startdir/../../.."
-
-# 0.1.0.r<commits>.g<hash>, so an installed build names the commit it came from.
-pkgver() {
-  cd "$_root"
-  printf '0.1.0.r%s.g%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
-}
 
 build() {
   mkdir -p "$srcdir/qt-module"
