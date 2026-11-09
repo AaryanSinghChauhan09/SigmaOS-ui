@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import unittest
 
-from support import gallery, posted
+from support import fixture, gallery, posted
 
+from omarchy_textual import cells as C
+from omarchy_textual.cells.buffer import BOLD
 from omarchy_textual.widgets.editing import ColorPicker, Scrubber, Timeline
 
 
@@ -59,6 +61,15 @@ class Editing(unittest.IsolatedAsyncioTestCase):
             red = app._omarchy_kit.theme.shown.palette.named["red"]
             self.assertEqual(picker.color.rgba().hex()[:7], red.hex()[:7])
             self.assertTrue(posted(app, ColorPicker.Changed))
+
+
+    def test_scrubber_knob_is_never_bold(self):
+        """The Scrubber's knob is the Slider's: foreground, never bold, under the cursor too."""
+        t = fixture("tokyo-night")
+        buf = C.Buffer(C.Rect(0, 0, 45, 1))
+        C.Scrubber(42.0, 130.0, width=45, cursor=True).draw(t, buf.area, buf)
+        knob = next(c for c in buf.row(0) if c.sym == "●")
+        self.assertFalse(knob.mod & BOLD)
 
 
 if __name__ == "__main__":

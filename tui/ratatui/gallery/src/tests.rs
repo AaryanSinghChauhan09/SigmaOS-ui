@@ -459,3 +459,17 @@ fn dialog_body_sits_a_row_under_the_message() {
     let at = |s: &str| rows.iter().position(|r| r.contains(s)).unwrap();
     assert_eq!((at("Body"), at("Confirm"), rows.len()), (2, 4, 7), "{rows:#?}");
 }
+
+/// The Scrubber's knob is the Slider's: foreground, never bold, under the cursor too.
+#[test]
+fn scrubber_knob_is_never_bold() {
+    use omarchy_ratatui::ratatui::style::Modifier;
+    use omarchy_ratatui::ui::Scrubber;
+    let t = fixture("tokyo-night");
+    let s = Scrubber::new(42.0, 130.0).width(45).cursor(true);
+    let area = Rect::new(0, 0, 45, 1);
+    let mut buf = Buffer::empty(area);
+    s.draw(&t, area, &mut buf);
+    let knob = (0..45).map(|x| &buf[(x, 0)]).find(|c| c.symbol() == "●").expect("a knob");
+    assert!(!knob.modifier.contains(Modifier::BOLD));
+}

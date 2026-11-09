@@ -203,20 +203,23 @@ func (l Timeline) Draw(t *Theme, area Rect, buf *Buffer) {
 // ---------------------------------------------------------------------------------------------
 // Scrubber
 
-// Scrubber is `0:42 ━━━━━━●────── 2:10`: the times in textDim, a Slider-like bar a column from
-// each (keyed "scrubber").
+// Scrubber is `0:42 ━━━━━━●────── 2:10`: the times in textDim, the Slider's track (no edges) a
+// column from each (keyed "scrubber"). The knob is never bold: the cursor has no cell form (the
+// GUI knob's 1.15 scale).
 type Scrubber struct {
 	position, duration float64
 	width              int
-	cursor             bool
 }
 
 func NewScrubber(position, duration float64) Scrubber {
 	return Scrubber{position: position, duration: math.Max(duration, 0.001), width: 45}
 }
 
-func (s Scrubber) Width(w int) Scrubber    { s.width = w; return s }
-func (s Scrubber) Cursor(on bool) Scrubber { s.cursor = on; return s }
+func (s Scrubber) Width(w int) Scrubber { s.width = w; return s }
+
+// Cursor is taken for the GUI bindings' API; it draws nothing (the hot knob's scale has no cell
+// form).
+func (s Scrubber) Cursor(bool) Scrubber { return s }
 
 // HandleScrubberKey: Left/Right ±5 s (Shift ±30 s), Home/End. True when handled.
 func HandleScrubberKey(position *float64, duration float64, msg tea.KeyPressMsg) bool {
@@ -261,7 +264,7 @@ func (s Scrubber) Draw(t *Theme, area Rect, buf *Buffer) {
 			omarchy.Put(t, buf, bar.X+i, bar.Y, "─", t.Track())
 		}
 	}
-	omarchy.Put(t, buf, bar.X+k, bar.Y, "●", bold(t.Fg(), s.cursor))
+	omarchy.Put(t, buf, bar.X+k, bar.Y, "●", t.Fg())
 	t.Hit("scrubber", bar)
 }
 

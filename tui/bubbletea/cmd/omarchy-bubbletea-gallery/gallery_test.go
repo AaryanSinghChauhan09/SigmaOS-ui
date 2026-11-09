@@ -711,3 +711,14 @@ func TestDialogBodySitsARowUnderTheMessage(t *testing.T) {
 	check(ui.NewDialog("").Body(ui.SectionHeader("Body")).Width(30).Scrim(false),
 		map[string]int{"Body": 2, "Confirm": 4}, 7)
 }
+
+// The Scrubber's knob is the Slider's: foreground, never bold, under the cursor too.
+func TestScrubberKnobIsNeverBold(t *testing.T) {
+	th := fixture(t, "tokyo-night", "0")
+	buf := o.NewBuffer(o.R(0, 0, 45, 1))
+	ui.NewScrubber(42, 130).Width(45).Cursor(true).Draw(th, buf.Area, buf)
+	i := slices.IndexFunc(buf.Cells, func(c o.Cell) bool { return c.Symbol == "●" })
+	if i < 0 || buf.Cells[i].Attrs&o.Bold != 0 {
+		t.Errorf("knob at %d is bold or missing", i)
+	}
+}

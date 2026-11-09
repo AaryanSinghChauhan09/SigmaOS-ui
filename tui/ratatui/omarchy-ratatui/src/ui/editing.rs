@@ -189,24 +189,24 @@ impl Draw for Timeline {
 // ---------------------------------------------------------------------------------------------
 // Scrubber
 
-/// `0:42 ━━━━━━●────── 2:10`: the times in `textDim`, a Slider-like bar a column from each.
+/// `0:42 ━━━━━━●────── 2:10`: the times in `textDim`, the Slider's track (no edges) a column from
+/// each. The knob is never bold: the cursor has no cell form (the GUI knob's 1.15 scale).
 pub struct Scrubber {
     position: f64,
     duration: f64,
     width: u16,
-    cursor: bool,
 }
 
 impl Scrubber {
     pub fn new(position: f64, duration: f64) -> Self {
-        Scrubber { position, duration: duration.max(0.001), width: 45, cursor: false }
+        Scrubber { position, duration: duration.max(0.001), width: 45 }
     }
     pub fn width(mut self, w: u16) -> Self {
         self.width = w;
         self
     }
-    pub fn cursor(mut self, on: bool) -> Self {
-        self.cursor = on;
+    /// Taken for the GUI bindings' API; draws nothing (the hot knob's scale has no cell form).
+    pub fn cursor(self, _on: bool) -> Self {
         self
     }
     /// Left/Right ±5 s (Shift ±30 s), Home/End; true when handled.
@@ -247,7 +247,7 @@ impl Draw for Scrubber {
                 put(t, buf, bar.x + i, bar.y, "─", t.track());
             }
         }
-        put(t, buf, bar.x + k, bar.y, "●", Ink::new(t.fg()).bold(self.cursor));
+        put(t, buf, bar.x + k, bar.y, "●", t.fg());
         t.hit("scrubber", bar);
     }
 }

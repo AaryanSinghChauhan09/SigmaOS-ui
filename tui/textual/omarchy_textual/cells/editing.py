@@ -174,8 +174,9 @@ class Timeline(Draw):
 
 
 class Scrubber(Draw):
-    """`0:42 ━━━━━━●────── 2:10`: the times in `textDim`, a Slider-like bar a column from each.
-    The bar keyed `(key, "bar")`."""
+    """`0:42 ━━━━━━●────── 2:10`: the times in `textDim`, the Slider's track (no edges) a column
+    from each. The knob is never bold: `cursor` is taken for the GUI bindings' API and draws nothing
+    (the hot knob's scale has no cell form). The bar keyed `(key, "bar")`."""
 
     def __init__(self, position: float, duration: float, width: int = 45, cursor: bool = False, key: object = None):
         self.position, self.duration = position, max(duration, 0.001)
@@ -218,7 +219,7 @@ class Scrubber(Draw):
                 put(t, buf, bar.x + i, bar.y, "━", t.fg())
             elif i > k:
                 put(t, buf, bar.x + i, bar.y, "─", t.track())
-        put(t, buf, bar.x + k, bar.y, "●", Ink(t.fg(), bold=self.cursor))
+        put(t, buf, bar.x + k, bar.y, "●", t.fg())
         if self.key is not None:
             t.hit((self.key, "bar"), bar)
 
