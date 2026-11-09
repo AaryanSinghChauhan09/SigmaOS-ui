@@ -1,0 +1,50 @@
+# Omarchy UI for GTK 4: libomarchy-gtk-1 (`pkg-config omarchy-gtk-1`, <omarchy-gtk.h>), the one
+# call that restyles GTK and libadwaita from the live Omarchy theme, and the component kit as
+# GObject widgets; Omarchy-1.gir/.typelib for Python, GJS, Vala and Rust apps when
+# gobject-introspection is installed at build time; the gallery and the headless runner. Built
+# from this checkout, like the omarchy-ui package (source=(), $startdir):
+#
+#   cd packaging/arch/omarchy-ui && makepkg -fsi          # libomarchy-theme first
+#   cd ../omarchy-ui-gtk && makepkg -fsi
+#
+# The Rust crate (gtk/rust/omarchy-gtk) isn't packaged: gtk4-rs apps depend on it through Cargo
+# (docs/using-gtk.md); it links the library this package installs.
+
+_root="$startdir/../../.."
+
+pkgname=omarchy-ui-gtk
+pkgver=0.1.0.r$(git -C "$_root" rev-list --count HEAD).g$(git -C "$_root" rev-parse --short=7 HEAD)
+pkgrel=1
+pkgdesc='Omarchy UI for GTK 4: one call to follow the live Omarchy theme, and the component kit (C, Python, GJS, Vala, Rust)'
+arch=('x86_64' 'aarch64')
+license=('MIT')
+depends=('omarchy-ui' 'gtk4' 'libadwaita' 'json-glib')
+makedepends=('meson' 'ninja' 'gcc' 'git' 'gobject-introspection' 'vala')
+optdepends=('python-gobject: Python apps (from gi.repository import Omarchy)'
+            'gjs: GJS apps (import Omarchy from "gi://Omarchy")')
+provides=('libomarchy-gtk-1.so')
+source=()
+sha256sums=()
+
+build() {
+  arch-meson "$_root/gtk" "$srcdir/build" -Dintrospection=auto
+  meson compile -C "$srcdir/build"
+}
+
+check() {
+  # The behavior tests run on a private broadway display; no window shows.
+  cd "$_root"
+  OMARCHY_UI_THEME_DIR="$_root/fixtures/themes/tokyo-night" "$srcdir/build/omarchy-gtk-tests"
+}
+
+package() {
+  # The library, headers, omarchy-gtk-1.pc, Omarchy-1.gir/.typelib and the vapi (when built),
+  # omarchy-gtk-gallery and omarchy-gtk-headless.
+  meson install -C "$srcdir/build" --destdir "$pkgdir" --no-rebuild
+  cd "$_root"
+  install -Dm644 docs/using-gtk.md "$pkgdir/usr/share/doc/omarchy-ui-gtk/using-gtk.md"
+  install -d "$pkgdir/usr/share/doc/omarchy-ui-gtk/examples"
+  for ex in examples/gtk-*/; do
+    cp -r --no-preserve=ownership "$ex" "$pkgdir/usr/share/doc/omarchy-ui-gtk/examples/"
+  done
+}
