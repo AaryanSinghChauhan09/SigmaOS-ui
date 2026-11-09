@@ -38,6 +38,7 @@ Section {
       // A tooltip as it draws, held open (the real one shows on hover).
       BorderSurface {
         color: Commons.Color.tooltip.background
+        radius: Style.cornerRadius
         borderSpec: Border.surfaceSpec("tooltip", "border", Commons.Color.tooltip.border, Math.max(1, Style.normalBorderWidth))
         implicitWidth: tip.implicitWidth + contentLeftInset + contentRightInset
         implicitHeight: tip.implicitHeight + contentTopInset + contentBottomInset

@@ -17,7 +17,7 @@ Qt `Menu` with `MenuItem`, `MenuSeparator`, `MenuSection`; Rune `Menu` with `Men
   - Mark: in an `icon`-wide box `controlGap` after the hint, centered by ink. A check `✓` (`body`, accent) when checked, a radio dot `●` (`caption`, accent) when checked and exclusive, or a chevron U+F054 (`iconSmall`, `textDim`) for a submenu row.
   - When any row in the menu has a glyph, every row reserves the glyph column; likewise for the mark column. Labels and hints line up.
 - **MenuSeparator**: 1px `track`, `sm` above and below, full content width.
-- **MenuSection**: the section header (caption, bold, foreground darker 1.4, its 15% top pad), inset `controlPaddingX`, `sm` above, `xxs` below.
+- **MenuSection**: the section header (caption, bold, `textDim`, its 15% top pad), inset `controlPaddingX`, `sm` above, `xxs` below.
 
 **States** (rows):
 

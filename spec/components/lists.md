@@ -2,7 +2,7 @@
 
 Rows, the keyboard cursor that walks them, the scroll view they sit in, and the small pieces rows and grids are made of. Every shell panel builds these by hand today (roadmap Tier 1 #1, #2, #3, #7, #8, #10, #11, #12). Token names refer to `spec/tokens.md`; `space(n)` is `Style.space(n)` / `Theme::space(n)`.
 
-Tones, wherever a component takes one: neutral (the component's own ink), `accent`, `success`, `warning`, `urgent`, `muted`. Qt takes them as strings (`""` for neutral), Rune as `Tone::{Neutral, Accent, Success, Warning, Urgent, Muted}`.
+Tones, wherever a component takes one: neutral (the component's own ink), `accent`, `success`, `warning`, `urgent`, `muted`. Qt takes them as strings (`""` for neutral), Rune as `Tone::{Neutral, Accent, Success, Warning, Urgent, Muted}`. The feedback components ([`feedback.md`](feedback.md)) name the same colors by what they mean instead: `info` is `accent` and `error` is `urgent`. A binding with one tone type accepts both spellings.
 
 ## ListRow
 
@@ -100,7 +100,7 @@ The head of a panel: a big glyph, a bold title, a dim status line and a trailing
 
 **API.** Qt: `glyph`, `title`, `status`, `error`, `glyphOpacity`, `trailing: Component`. Rune: `new(glyph, title)`, `.status(s)`, `.error(b)`, `.glyph_opacity(o)`, `.trailing(El)`.
 
-**Metrics.** Glyph `display`, then `space(14)`. Title `title` bold; status `caption` bold, uppercased, letter spacing 1.2, foreground darker 1.4 (`urgent` with `error`); `space(2)` apart; both elide. The trailing control sits `space(12)` after the labels, centered against them. Height is the tallest of the three.
+**Metrics.** Glyph `display`, then `space(14)`. Title `title` bold; status `caption` bold, uppercased, letter spacing 1.2, `textDim` (`urgent` with `error`); `space(2)` apart; both elide. The trailing control sits `space(12)` after the labels, centered against them. Height is the tallest of the three.
 
 ## Badge
 

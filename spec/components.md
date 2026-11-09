@@ -14,7 +14,7 @@ The primitives every binding provides, under the same names, with the same state
 | Dropdown | `Dropdown` | `Dropdown` | Labeled single choice; the list opens below the trigger on the popups surface. |
 | Slider | `ValueSlider` (`PanelSlider`) | `Slider` | Thin track, foreground fill, knob ringed in the surface color, optional notches. |
 | Card | `Card` | `Card` | The raised surface panels, popups and flyouts are drawn on. |
-| SectionHeader | `SectionHeader` (`PanelSectionHeader`) | `section_header` | Caption, bold, foreground darker 1.4. |
+| SectionHeader | `SectionHeader` (`PanelSectionHeader`) | `section_header` | Caption, bold, `textDim`. |
 | Separator | `Separator` (`PanelSeparator`) | `separator` | 1px foreground at 12%. |
 | MenuRow | `MenuRow` (`PopupMenuRow`) | `MenuRow` | List/menu row: label, accent check when `checked`, hover fill when `highlighted`. |
 | Tooltip | `PanelToolTip` | `Tooltip` | Tooltip surface, `bodySmall` text. |
@@ -56,10 +56,10 @@ Each group has its own file with every component's anatomy, API in both bindings
 | IconButton | `max(space(22), icon + sm × 2) | 1` square, glyph `icon` |
 | ButtonGroup gap | `md` 6 |
 | ToggleSwitch | track `max(22, round(controlHeight × 0.55))` tall, × 1.9 wide; knob `round(track × 0.72)`; cursor ring `space(6)` outside; knob off = foreground darker 1.25, on = selected text |
-| Toggle | min height 54, padding `rowPaddingX` 12, title `subtitle` bold, description `caption` foreground darker 1.5 |
-| TextField | padding `controlPaddingX` × `inputPaddingY` 7, text `body`, placeholder darker 1.6 |
-| NumberField | `numberFieldWidth` 120 × `controlHeight` 28, label `bodySmall` darker 1.4, `md` above |
-| Dropdown | `dropdownWidth` 240 × `controlHeight`, label `bodySmall` bold darker 1.4, chevron darker 1.2 |
+| Toggle | min height 54, padding `rowPaddingX` 12, title `subtitle` bold, description `caption` `textDim` |
+| TextField | padding `controlPaddingX` × `inputPaddingY` 7, text `body`, placeholder `textFaint` |
+| NumberField | `numberFieldWidth` 120 × `controlHeight` 28, label `bodySmall` `textDim`, `md` above |
+| Dropdown | `dropdownWidth` 240 × `controlHeight`, label `bodySmall` bold `textDim`, chevron foreground darker 1.2 |
 | Slider | track `max(4, round(controlHeight × 0.11))`, knob `max(14, round(controlHeight × 0.38))` with a `space(2)` ring in the surface color, notches `space(2)` wide |
 | Card | `panelPadding` 18, children `panelGap` 14 apart, popups border at `max(1, space(2))` |
 | MenuRow | `popupRowHeight` 28, text inset `controlPaddingX` |

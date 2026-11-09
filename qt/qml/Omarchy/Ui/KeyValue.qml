@@ -12,7 +12,7 @@ import Omarchy.Theme as Commons
 //             { label: "Packet loss", value: "4%", tone: "urgent" }]
 //   }
 //
-// A pair's `tone` ("accent", "success", "warning", "urgent") tints its value.
+// A pair's `tone` ("accent", "success", "warning", "urgent", "muted") tints its value.
 Grid {
   id: root
 
@@ -26,6 +26,7 @@ Grid {
     case "success": return Commons.Color.success
     case "warning": return Commons.Color.warning
     case "urgent": return Commons.Color.urgent
+    case "muted": return Commons.Color.muted
     }
     return root.foreground
   }

@@ -79,7 +79,7 @@ Qt: `handleThickness` (= `md`).
 
 ## Sidebar
 
-**Anatomy.** A column padded `sm`; sections `md` apart. A section: a SectionHeader (`caption` bold, foreground darker 1.4), inset `controlPaddingX` with `xxs` below it, then its rows. A row, `popupRowHeight` tall, inset `controlPaddingX` both sides: the glyph at `icon` size in `textDim` (selected text color when selected), then the label `icon + controlGap` from the glyph's start, in `body`, cut with "…".
+**Anatomy.** A column padded `sm`; sections `md` apart. A section: a SectionHeader (`caption` bold, `textDim`), inset `controlPaddingX` with `xxs` below it, then its rows. A row, `popupRowHeight` tall, inset `controlPaddingX` both sides: the glyph at `icon` size in `textDim` (selected text color when selected), then the label `icon + controlGap` from the glyph's start, in `body`, cut with "…".
 
 **Collapsed.** Headers and labels hide; the bar is `sm × 2 + controlPaddingX × 2 + icon` wide (Qt `railWidth`, Rune `Sidebar::rail_width(t)`), a rail of glyph rows.
 
@@ -99,11 +99,11 @@ Qt: `handleThickness` (= `md`).
 
 **Anatomy.** A column `sm` gap, as wide as the grid:
 
-1. Header, as tall as an IconButton: previous (`󰅁`) at the left, next (`󰅂`) at the right (IconButtons), and between them the month and year in capitals, `body`, foreground darker 1.4, centered across the grid.
+1. Header, as tall as an IconButton: previous (`󰅁`) at the left, next (`󰅂`) at the right (IconButtons), and between them the month and year in capitals, `body`, `textDim`, centered across the grid.
 2. Weekday row, `space(16)` tall: `MO TU WE TH FR SA SU` in `caption` bold `textDim`, centered per column. Weeks start on Monday.
 3. Six week rows (always six, so the height never changes), from the Monday on or before the 1st. A day cell is `space(36)` × `controlHeight`, cells `xxs` apart in both directions, `radius`-rounded; the number in `body`, centered.
 
-**States (day).** In month: foreground; weekend columns foreground darker 1.45 (as the shell's clock). Outside the month: `textFaint`. Today: a `hairline` ring in the accent, bold. Selected: the selected fill, bold, selected text color. Cursor: the hover fill (keeps today's ring).
+**States (day).** In month: foreground; weekend columns `textDim` (the shell's clock uses darker 1.45, which a light theme would make stronger). Outside the month: `textFaint`. Today: a `hairline` ring in the accent, bold. Selected: the selected fill, bold, selected text color. Cursor: the hover fill (keeps today's ring).
 
 | | Qt | Rune |
 |---|---|---|

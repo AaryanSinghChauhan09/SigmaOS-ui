@@ -8,7 +8,7 @@ import Omarchy.Theme as Commons
 //   Badge { text: "Offline"; tone: "urgent" }
 //
 // `tone` is "" (neutral glass: the normal control fill and border), "accent", "success",
-// "warning" or "urgent" (the tone at the selected fill's alpha, text in the tone). `filled` paints
+// "warning", "urgent" or "muted" (the tone at the selected fill's alpha, text in the tone). `filled` paints
 // the tone solid with the background as text, for counts that must stand out. Never narrower
 // than tall, so a one-digit count is square (round only when Hyprland rounds, up to 4).
 BorderSurface {
@@ -24,6 +24,7 @@ BorderSurface {
     case "success": return Commons.Color.success
     case "warning": return Commons.Color.warning
     case "urgent": return Commons.Color.urgent
+    case "muted": return Commons.Color.muted
     }
     return Commons.Color.foreground
   }
