@@ -73,7 +73,7 @@ Bindings may lead text by half the duration, as Rune does, so text never dips th
 
 Every binding has an automated test that switches the theme the way Omarchy does and checks the result, run by `bin/test`. The shared steps:
 
-1. **A home of its own.** `HOME` is a fresh temp directory, `OMARCHY_UI_THEME_DIR` is unset, `HYPRLAND_INSTANCE_SIGNATURE` is unset and `XDG_RUNTIME_DIR` points at an empty temp directory, so no running Hyprland is found (the fallback would otherwise pick the desktop's). `OMARCHY_UI_ROUNDING=0` pins the rounding.
+1. **A home of its own.** `HOME` is a fresh temp directory, `OMARCHY_UI_THEME_DIR` is unset, `HYPRLAND_INSTANCE_SIGNATURE` is unset and `XDG_RUNTIME_DIR` points at an empty temp directory, so no running Hyprland is found (the fallback would otherwise pick the desktop's). `OMARCHY_UI_ROUNDING=0` pins the rounding. `tools/live/run CMD` sets all of this up (and steps 2's starting theme), runs `CMD` with `OMARCHY_UI_LIVE_HOME` and `OMARCHY_UI_LIVE_SWITCH` naming the HOME and the switch script, and cleans up; a test that can't take a wrapper (a Rust integration test) does the same in-process, as `crates/omarchy-theme/tests/live_switch.rs` does.
 2. **A starting theme.** `tools/live/theme-set "$HOME" tokyo-night` copies the fixture into `~/.local/state/omarchy/current/theme` and writes `current/theme.name`.
 3. **The app starts** and follows (its one call, or none).
 4. **The switch.** `tools/live/theme-set "$HOME" catppuccin-latte` does what `omarchy-theme-set` does: fills `current/next-theme`, `rm -rf current/theme`, `mv current/next-theme current/theme`, writes `theme.generation`, then rewrites `theme.name`.
@@ -82,6 +82,8 @@ Every binding has an automated test that switches the theme the way Omarchy does
    - the changed hook fired **once**, with the new tokens (`palette.background` is `#eff1f5ff`), and still once after another 600 ms;
    - the revision is 1.
 6. **Where it fades**, also: a fade ran (a color between the two was on screen, or the binding says it is fading) and landed exactly; under `OMARCHY_UI_REDUCE_MOTION=1` no fade ran.
+
+The tests today: `crates/omarchy-theme/tests/live_switch.rs` (the Rust watch), `crates/omarchy-theme-ffi/tests/live.c` (the C library, both watch forms), `rune/omarchy-rune/tests/live_switch.rs` (Rune, with the transition and reduced motion), `qt/tests-live/tst_follow.qml` (Qt, run with and without `OMARCHY_UI_REDUCE_MOTION=1`).
 
 `tools/live/theme-set` is the one simulation every test uses, so they all exercise the same sequence. A binding's registry entry (`tools/bindings.d/<name>.json`) lists its live test with its other tests.
 
@@ -92,5 +94,5 @@ Every binding has an automated test that switches the theme the way Omarchy does
 | Rust core (`omarchy-theme`) | `watch(initial, f)` | `f(tokens)` on a background thread | the app counts | none (no UI) |
 | C library (`libomarchy-theme`) | `omarchy_theme_watch_new` + `_fd` + `_take`, or `omarchy_theme_watch_callback` | each `take` that returns JSON / each callback | `omarchy_theme_watch_revision` | none (no UI) |
 | CLI | `omarchy-theme --watch [--state]` | each line after the first | the line count | none |
-| Rune (`omarchy-rune`) | `omarchy_rune::run` / `app`, or `Theme::follow` + `Theme::poll` | `Themed::theme_changed(&mut self, &Tokens)` | `Theme::revision()` | Rune's color spring, layout instant |
+| Rune (`omarchy-rune`) | `omarchy_rune::run` / `app`, or `Theme::follow` + `Theme::poll_tx` | `Themed::theme_changed(&mut self, &Tokens)` | `Theme::revision()` | Rune's color spring, layout instant |
 | Qt Quick (`Omarchy.Theme`) | built in (`ThemeSource`) | `Tokens.changed(tokens)` in QML, `OmarchyUi::Theme::changed(QJsonObject)` in C++ | `Tokens.revision`, `OmarchyUi::Theme::revision()` | `Color.qml`, 280 ms `ease` |
