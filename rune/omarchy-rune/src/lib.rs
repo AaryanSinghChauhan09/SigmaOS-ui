@@ -9,22 +9,31 @@
 //!   the way the Omarchy shell draws them, so a Rune app and a Qt app look the same.
 //!
 //! ```ignore
-//! struct App { theme: omarchy_rune::Theme, wifi: bool }
+//! use omarchy_rune::{Theme, Themed, rune::{AppSpec, Cx, El}};
+//!
+//! struct App { theme: Theme, wifi: bool }
+//!
+//! impl Themed for App {
+//!     fn theme(&self) -> &Theme { &self.theme }
+//!     fn theme_mut(&mut self) -> &mut Theme { &mut self.theme }
+//! }
 //!
 //! fn view(s: &App, cx: &mut Cx<App>) -> El {
 //!     let t = &s.theme;
-//!     t.apply(cx);
 //!     omarchy_rune::ui::Card::new().title("Network")
 //!         .child(Toggle::new("Wi-Fi").checked(s.wifi).on_toggle(|s: &mut App| s.wifi ^= true).build(t))
 //!         .build(t)
 //! }
 //!
-//! rune::run(AppSpec {
-//!     setup: Some(|s, wake| s.theme.follow(wake)),
-//!     poll: Some(|s, _, _| s.theme.poll()),
-//!     ..AppSpec::new("App", (480.0, 360.0), || App { theme: Theme::load(), wifi: true }, view)
-//! });
+//! fn main() {
+//!     // rune::run, with the theme followed, its font handed to Rune and applied every frame.
+//!     omarchy_rune::run(AppSpec::new("App", (480.0, 360.0), || App { theme: Theme::load(), wifi: true }, view));
+//! }
 //! ```
+//!
+//! Following the theme is `spec/following.md`: [`run`] (or [`app`]) wires it, [`Themed::theme_changed`]
+//! is the changed hook, [`Theme::revision`] counts changes, and [`Theme::follow`] / [`Theme::poll_tx`]
+//! are the pieces underneath for an app that wires `AppSpec` itself.
 
 pub mod ui;
 
@@ -36,6 +45,9 @@ use omarchy_theme::icons::{IconLookup, search_dirs};
 use omarchy_theme::{BorderSpec, Rgba, Tokens};
 use rune::{Color, Cx, El, Family, Image, ImageCache, TextStyle, Waker};
 use rune_kit::{Kit, PaletteSeed};
+
+mod follow;
+pub use follow::{THEME_SPRING, Themed, app, run};
 
 pub use omarchy_theme;
 // The Rune this kit is built against (the rev pinned in the workspace Cargo.toml), so an app can
@@ -49,11 +61,15 @@ pub fn color(c: Rgba) -> Color {
     rune::color::hex(&c.hex()).unwrap_or(Color::TRANSPARENT)
 }
 
-/// The live Omarchy theme. Keep one in the app state, call [`Theme::follow`] from
-/// `AppSpec::setup` and [`Theme::poll`] from `AppSpec::poll`, and every view that reads it
-/// re-renders (with Rune's color springs) when the theme, rounding or font changes.
+/// The live Omarchy theme. Keep one in the app state, implement [`Themed`] and start the app
+/// with [`run`]: every view that reads it re-renders when the theme, rounding or font changes,
+/// colors easing on Rune's springs ([`THEME_SPRING`]) and everything else switching at once.
+/// Without [`run`], call [`Theme::follow`] from `AppSpec::setup`, [`Theme::poll_tx`] from
+/// `AppSpec::poll` and [`Theme::apply`] at the top of the view.
 pub struct Theme {
     tokens: Tokens,
+    /// 0 for the tokens loaded first, plus one for each change [`Theme::poll`] took.
+    revision: u64,
     kit: Kit,
     family: Family,
     inbox: Arc<Mutex<Option<Tokens>>>,
@@ -105,7 +121,7 @@ impl Theme {
     pub fn from_tokens(tokens: Tokens) -> Theme {
         let family = family_for(&tokens);
         let kit = build_kit(&tokens, family);
-        Theme { tokens, kit, family, inbox: Arc::default(), watch: None, icons: Arc::default(), aliases: Arc::default() }
+        Theme { tokens, revision: 0, kit, family, inbox: Arc::default(), watch: None, icons: Arc::default(), aliases: Arc::default() }
     }
 
     /// Start following the desktop: theme switches, `omarchy font set`, `omarchy display text
@@ -119,11 +135,14 @@ impl Theme {
         }));
     }
 
-    /// Take a change delivered since the last frame; true when there was one.
+    /// Take a change delivered since the last frame; true when there was one. The new tokens are
+    /// in effect when it returns, and [`Theme::revision`] has gone up by one. This changes the
+    /// theme only: [`Theme::poll_tx`] also tells Rune how to animate the change.
     pub fn poll(&mut self) -> bool {
         let Some(fresh) = self.inbox.lock().unwrap().take() else { return false };
         // The icon store carries over: it re-resolves by itself when the icon theme changed.
         *self = Theme {
+            revision: self.revision + 1,
             inbox: self.inbox.clone(),
             watch: self.watch.take(),
             icons: self.icons.clone(),
@@ -131,6 +150,34 @@ impl Theme {
             ..Theme::from_tokens(fresh)
         };
         true
+    }
+
+    /// [`Theme::poll`], then the theme-switch transition on `tx` when there was a change
+    /// (`spec/following.md`): colors ease on [`THEME_SPRING`], layout, rounding and sizes land
+    /// at once, and under reduced motion everything does. A new font family is handed to Rune's
+    /// sans and mono slots. For `AppSpec::poll`: `poll: Some(|s: &mut App, _, tx| s.theme.poll_tx(tx))`.
+    pub fn poll_tx(&mut self, tx: &mut rune::Tx) -> bool {
+        let family = self.tokens.font.resolved_family.clone();
+        if !self.poll() {
+            return false;
+        }
+        if self.tokens.reduce_motion {
+            tx.instant();
+        } else {
+            tx.color_motion(THEME_SPRING);
+            tx.motion_curve(rune::Anim::INSTANT);
+        }
+        if self.tokens.font.resolved_family != family {
+            let (sans, mono) = self.families();
+            tx.set_font_families(sans, mono);
+        }
+        true
+    }
+
+    /// 0 for the theme loaded first, plus one for every change taken since: a cache key for
+    /// anything built from the tokens.
+    pub fn revision(&self) -> u64 {
+        self.revision
     }
 
     pub fn tokens(&self) -> &Tokens {
