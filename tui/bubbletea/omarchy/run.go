@@ -113,8 +113,6 @@ func (f Followed) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case watchErrMsg:
 		f.err = msg.err
 		return f, nil
-	case tea.QuitMsg:
-		f.theme.Stop()
 	}
 	var cmd tea.Cmd
 	f.model, cmd = f.model.Update(msg)
@@ -131,7 +129,8 @@ func (f Followed) View() tea.View {
 	return v
 }
 
-// Stop ends following (the core's watch process exits).
+// Stop ends following: the core's watch process exits ([Run] calls it; with [Wrap], call it after
+// your program returns. The watch also ends with this process).
 func (t *Theme) Stop() {
 	if t.watch != nil {
 		t.watch.stop()

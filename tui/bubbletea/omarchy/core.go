@@ -64,6 +64,7 @@ func startWatch() (*watcher, error) {
 	}
 	cmd := exec.Command(bin, "--watch", "--state")
 	cmd.Stderr = nil
+	dieWithParent(cmd)
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err

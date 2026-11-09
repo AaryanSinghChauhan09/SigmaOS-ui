@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# The Bubble Tea gallery in a real pty (a private, detached tmux server: nothing shows on the
+# desktop): it starts in the alternate screen, draws the header and the first section, changes
+# section on `]`, flips a switch from the keyboard, quits on `q`; in truecolor it writes 24-bit
+# SGR, at 16 colors (OMARCHY_UI_COLORS=16) only ANSI indices.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+BIN="$ROOT/build/bubbletea/omarchy-bubbletea-gallery"
+command -v tmux >/dev/null || { echo "skipped (no tmux)"; exit 0; }
+[[ -x $BIN ]] || { echo "not built: $BIN" >&2; exit 1; }
+
+sock="omarchy-ui-bt-pty-$$"
+t() { tmux -L "$sock" -f /dev/null "$@"; }
+trap 't kill-server 2>/dev/null || true' EXIT
+
+# Wait (up to 5 s) until the pane shows $1.
+wait_for() {
+  for _ in $(seq 50); do
+    if t capture-pane -p -t g 2>/dev/null | grep -qF "$1"; then return 0; fi
+    sleep 0.1
+  done
+  echo "pty: never saw \"$1\"; the pane:" >&2
+  t capture-pane -p -t g >&2 || true
+  exit 1
+}
+
+start() {
+  t kill-server 2>/dev/null || true
+  t new-session -d -s g -x 100 -y 40 \
+    "env OMARCHY_UI_THEME_DIR='$ROOT/fixtures/themes/tokyo-night' OMARCHY_UI_ROUNDING=0 OMARCHY_UI_REDUCE_MOTION=1 TERM=xterm-256color $* '$BIN'; sleep 30"
+  t set-option -t g -g default-terminal xterm-256color >/dev/null
+}
+
+start COLORTERM=truecolor
+wait_for "Omarchy UI · Bubble Tea"
+wait_for "Buttons  1/19"
+t send-keys -t g "]"
+wait_for "Toggles  2/19"
+# Tab to the first switch and flip it: the off switch's knob moves right (its cells change).
+before="$(t capture-pane -e -p -t g)"
+t send-keys -t g Tab Space
+for _ in $(seq 50); do
+  after="$(t capture-pane -e -p -t g)"
+  [[ $after != "$before" ]] && break
+  sleep 0.1
+done
+[[ $after != "$before" ]] || { echo "pty: Space on the focused switch changed nothing" >&2; exit 1; }
+grep -q $'\e\\[[0-9;]*38;2;' <<<"$after" || { echo "pty: no 24-bit color in truecolor" >&2; exit 1; }
+t send-keys -t g q
+wait_for_gone() {
+  for _ in $(seq 50); do
+    t capture-pane -p -t g | grep -qF "Omarchy UI · Bubble Tea" || return 0
+    sleep 0.1
+  done
+  echo "pty: q didn't quit" >&2
+  exit 1
+}
+wait_for_gone
+
+start OMARCHY_UI_COLORS=16
+wait_for "Buttons  1/19"
+t send-keys -t g "]" "]" "]" "]" "]"
+wait_for "Lists  6/19"
+shot="$(t capture-pane -e -p -t g)"
+# tmux writes the 16 ANSI colors back as 38;5;0-15: anything 24-bit or past 15 is wrong.
+if grep -qE '(^| )[34]8 2 ' <<<"$(grep -o $'\e\\[[0-9;]*m' <<<"$shot" | sed 's/[^0-9;]//g; s/;/ /g')"; then
+  echo "pty: 16 colors wrote 24-bit SGR" >&2
+  exit 1
+fi
+if grep -o $'\e\\[[0-9;]*m' <<<"$shot" | grep -qE '[34]8;5;(1[6-9]|[2-9][0-9]|[12][0-9][0-9])(;|m)'; then
+  echo "pty: 16 colors wrote 256-color SGR" >&2
+  exit 1
+fi
+grep -o $'\e\\[[0-9;]*m' <<<"$shot" | grep -qE '(3|9)[0-7]m|[34]8;5;([0-9]|1[0-5])m' || { echo "pty: no ANSI colors at 16 colors" >&2; exit 1; }
+t send-keys -t g q
+wait_for_gone
+echo "pty: draws, changes section, flips a switch and quits; 24-bit SGR in truecolor, ANSI indices at 16 colors"

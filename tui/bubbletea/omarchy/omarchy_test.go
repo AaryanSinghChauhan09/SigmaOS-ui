@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 func repo() string {
@@ -148,5 +150,51 @@ func TestSnapshotIsCanonical(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "x.ans")
 	if err := os.WriteFile(out, []byte(s), 0o644); err != nil {
 		t.Fatal(err)
+	}
+}
+
+type recorder struct {
+	theme *Theme
+	hooks []ThemeChangedMsg
+	early bool
+}
+
+func (r *recorder) Init() tea.Cmd { return nil }
+func (r *recorder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m, ok := msg.(ThemeChangedMsg); ok {
+		// The hook runs after the new tokens are in effect.
+		r.early = r.early || r.theme.Tokens().Palette.Background != m.Tokens.Palette.Background
+		r.hooks = append(r.hooks, m)
+	}
+	return r, nil
+}
+func (r *recorder) View() tea.View { return tea.NewView("") }
+
+// Wrap applies a change, then delivers the hook once with the new tokens and revision; the same
+// tokens again (the watch's first line) are no change; a fade asks for frames until it lands.
+func TestWrapDeliversTheHookOnceAfterTheChange(t *testing.T) {
+	th := fixture(t, "tokyo-night", "0")
+	rec := &recorder{theme: th}
+	var m tea.Model = Wrap(th, rec)
+	m, _ = m.Update(themeLineMsg{th.Tokens(), true})
+	if len(rec.hooks) != 0 || th.Revision() != 0 {
+		t.Fatal("the initial state is no change")
+	}
+	next := th.Tokens()
+	next.Palette.Background = RGB(0xef, 0xf1, 0xf5)
+	next.ReduceMotion = false
+	m, cmd := m.Update(themeLineMsg{next, true})
+	if len(rec.hooks) != 1 || rec.early || rec.hooks[0].Revision != 1 || rec.hooks[0].Tokens.Palette.Background != next.Palette.Background {
+		t.Fatalf("hooks %d early %v", len(rec.hooks), rec.early)
+	}
+	if cmd == nil || !th.Fading() {
+		t.Fatal("a fade asks for frames")
+	}
+	time.Sleep(time.Duration(next.Motion.Theme+20) * time.Millisecond)
+	if _, cmd = m.Update(fadeFrameMsg{}); cmd != nil || th.Fading() || th.Shown().Palette.Background != next.Palette.Background {
+		t.Fatal("the fade lands exactly and stops asking")
+	}
+	if len(rec.hooks) != 1 {
+		t.Fatal("fade frames are not changes")
 	}
 }
