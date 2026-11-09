@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>tauri bridge</title>
+<script>
+  // Before any module, before the kit: what the Tauri plugin's initialization script installed.
+  window.__early = {
+    hasApi: typeof window.omarchy === "object" && window.omarchy !== null,
+    background: window.omarchy && window.omarchy.tokens ? window.omarchy.tokens.palette.background : null,
+    revision: window.omarchy ? window.omarchy.revision : null,
+    strings: window.omarchy ? Object.keys(window.omarchy.strings).length : 0,
+    colors: window.omarchy ? Object.keys(window.omarchy.colors).length : 0,
+  };
+</script>
+<style>body { margin: 0; background: var(--omarchy-background); }</style>
+<script type="module" src="./tauri.js"></script>
+</head>
+<body>
+<omarchy-button bordered text="Probe"></omarchy-button>
+</body>
+</html>

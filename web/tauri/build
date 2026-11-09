@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Build the Tauri binding (tools/bindings.d/tauri.json; bin/build tauri runs it): the plugin and
+# the gallery app that runs web/gallery on WebKitGTK, into web/tauri/target/release. Plain cargo,
+# no Tauri CLI: the gallery's pages come from web/ at run time. Tauri's tree lives in web/tauri's
+# own workspace.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cargo build -q --release --manifest-path "$ROOT/web/tauri/Cargo.toml" -p omarchy-tauri-gallery
+echo "web/tauri/target/release/omarchy-tauri-gallery"

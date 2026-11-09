@@ -2,9 +2,10 @@
 //
 //   import "@omarchy/ui";                         // or: import { omarchy } from "@omarchy/ui";
 //
-// On import it connects to whatever delivers the core's state (the Electron preload; a harness's
-// window.omarchyBridge; a <script type="application/json" id="omarchy-state"> snapshot; or the dev
-// helper's events, <meta name="omarchy-events" content="/omarchy/events">), puts the tokens on :root
+// On import it connects to whatever delivers the core's state (the Electron preload, or Tauri's
+// tauri-plugin-omarchy; a harness's window.omarchyBridge; a <script type="application/json"
+// id="omarchy-state"> snapshot; or the dev helper's events, <meta name="omarchy-events"
+// content="/omarchy/events">), puts the tokens on :root
 // as --omarchy-* custom properties, restyles plain HTML controls (src/restyle.css) and defines every
 // <omarchy-*> element. A theme switch fades the colors and then runs omarchy.onChange hooks.
 

@@ -10,6 +10,7 @@ Omarchy UI is meant to be used from your own app, not copied into it. Pick your 
 | Rune | [using-rust.md](using-rust.md) | `omarchy-rune` as a Cargo path or git dependency, one `omarchy_rune::run(spec)` |
 | GPUI, with or without gpui-component | [using-gpui.md](using-gpui.md) | `omarchy-gpui` as a Cargo path dependency, one `omarchy_gpui::init(cx)` |
 | Electron, or a web UI in any Chromium shell | [using-web.md](using-web.md) | `@omarchy/ui` (by path; not on npm), `followOmarchy()` in main plus the preload; `<omarchy-*>` elements for React, Vue, Svelte or plain HTML |
+| Tauri v2 (WebKitGTK on Linux) | [using-tauri.md](using-tauri.md) | `tauri-plugin-omarchy` as a Cargo path or git dependency, one `.plugin(tauri_plugin_omarchy::init())`; `import "@omarchy/ui"` in the page |
 | Ratatui, or any terminal UI | [using-ratatui.md](using-ratatui.md), [using-terminal.md](using-terminal.md) | `omarchy-ratatui` as a Cargo path dependency, one `omarchy_ratatui::run(app)`; the cell-grid contract every terminal binding follows |
 | Any other Rust UI (iced, egui) | [using-rust.md](using-rust.md#any-other-rust-framework-omarchy-theme) | `omarchy-theme`: tokens, live watch, icons, strings |
 | C, C++, anything with a C FFI | [using-c.md](using-c.md) | `libomarchy-theme` (`pkg-config omarchy-theme`): tokens, a main-loop watch, icons, strings |
@@ -25,6 +26,7 @@ Each route has a working example under [`examples/`](../examples), which `bin/te
 - [`examples/gpui`](../examples/gpui): a GPUI app with a path dependency on `omarchy-gpui`.
 - [`examples/ratatui`](../examples/ratatui): a Ratatui app with a path dependency on `omarchy-ratatui`, snapshotted as ANSI text.
 - [`examples/web-electron`](../examples/web-electron), [`web-plain`](../examples/web-plain): an Electron app and a plain HTML page on `@omarchy/ui`.
+- [`examples/tauri`](../examples/tauri): a Tauri v2 app on `tauri-plugin-omarchy` and `@omarchy/ui`.
 
 What the kit contains, and the numbers behind it:
 

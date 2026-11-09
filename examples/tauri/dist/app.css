@@ -1,0 +1,4 @@
+/* Layout only: every color, size and font is a token. */
+body { padding: var(--omarchy-space-panel-padding); }
+#panel { width: calc(400px - 2 * var(--omarchy-space-panel-padding)); }
+#wifi { width: auto; }

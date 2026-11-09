@@ -1,0 +1,29 @@
+[package]
+name = "tauri-plugin-omarchy"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Omarchy's look and live theme following for Tauri apps: the state @omarchy/ui reads, before first paint."
+
+[features]
+# --snap for apps, the gallery and the tests: a private broadway display and WebKit snapshots
+# (src/snap). Linux only.
+snap = ["dep:webkit2gtk", "dep:webkit2gtk-sys", "dep:gobject-sys", "dep:gtk", "dep:glib", "dep:gio", "dep:cairo-rs", "dep:javascriptcore-rs", "dep:libc"]
+
+[dependencies]
+tauri = { workspace = true }
+omarchy-theme = { workspace = true }
+serde_json = "1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Tauri's own WebKitGTK and GTK 3 bindings (the versions wry pins), for --snap.
+webkit2gtk = { version = "=2.0.2", features = ["v2_40"], optional = true }
+webkit2gtk-sys = { version = "=2.0.2", optional = true }
+gobject-sys = { version = "=0.18.0", optional = true }
+gtk = { version = "=0.18.2", optional = true }
+glib = { version = "=0.18.5", optional = true }
+gio = { version = "=0.18.4", optional = true }
+cairo-rs = { version = "=0.18.5", features = ["png"], optional = true }
+javascriptcore-rs = { version = "=1.1.2", optional = true }
+libc = { version = "0.2", optional = true }
+

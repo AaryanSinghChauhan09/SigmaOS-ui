@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Build examples/tauri (a Tauri v2 app outside every workspace, with a path dependency on
+# tauri-plugin-omarchy) and render it once, offscreen, in a fixture theme, to
+# web/tauri/target/examples/tauri.png. It shares the binding's target directory, so Tauri
+# compiles once.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+OUT="$ROOT/web/tauri/target/examples"
+mkdir -p "$OUT"
+export CARGO_TARGET_DIR="$ROOT/web/tauri/target"
+cargo build -q --release --manifest-path "$ROOT/examples/tauri/Cargo.toml" --features snap
+png="$OUT/tauri.png"
+rm -f "$png"
+OMARCHY_UI_THEME_DIR="$ROOT/fixtures/themes/tokyo-night" OMARCHY_UI_ROUNDING=0 \
+  timeout 60 "$CARGO_TARGET_DIR/release/omarchy-ui-example-tauri" --snap "$png"
+[[ -s $png ]] && file -b "$png" | grep -q "^PNG image"
+echo "example: examples/tauri rendered to ${png#"$ROOT"/}"

@@ -15,6 +15,7 @@ A cross-framework UI kit for apps that look and feel like Omarchy, in any toolki
 | GPUI | [`gpui/`](gpui) | `omarchy-gpui`: one `omarchy_gpui::init(cx)`, the full kit as GPUI elements, and gpui-component's theme mapped from the tokens. |
 | Ratatui (terminal) | [`tui/ratatui/`](tui/ratatui) | `omarchy-ratatui`: one `omarchy_ratatui::run(app)`, the full kit on the terminal's cell grid ([`spec/terminal.md`](spec/terminal.md)), the reference for the terminal bindings. |
 | Electron / web | [`web/`](web) | `@omarchy/ui`: CSS custom properties, a restyle for plain HTML controls, the full kit as Web Components, and `followOmarchy()` for Electron. |
+| Tauri | [`web/tauri/`](web/tauri) | `tauri-plugin-omarchy`: one `.plugin(tauri_plugin_omarchy::init())` gives every webview the theme before first paint and every change, for `@omarchy/ui` in the page; checked on WebKitGTK. |
 | Rust, any framework | [`crates/omarchy-theme`](crates/omarchy-theme) | The resolver and watcher, with no UI dependency. Start an iced or egui binding here. |
 | C, any language | [`crates/omarchy-theme-ffi`](crates/omarchy-theme-ffi) | `libomarchy-theme`: the same resolver and a main-loop watch as a C library (`omarchy-theme.h`, `pkg-config omarchy-theme`), and the `omarchy-theme` CLI's line-per-change stream. Start a binding for any other toolkit here ([`docs/using-c.md`](docs/using-c.md)). |
 
@@ -42,6 +43,7 @@ It's a library: apps depend on it rather than copying it. [`docs/`](docs/README.
 - **GPUI** ([`docs/using-gpui.md`](docs/using-gpui.md)): one path dependency on `omarchy-gpui` and one `omarchy_gpui::init(cx)`.
 - **Ratatui** ([`docs/using-ratatui.md`](docs/using-ratatui.md)): one path dependency on `omarchy-ratatui` and one `omarchy_ratatui::run(app)`; any other terminal toolkit follows [`spec/terminal.md`](spec/terminal.md) ([`docs/using-terminal.md`](docs/using-terminal.md)).
 - **Electron / web** ([`docs/using-web.md`](docs/using-web.md)): `followOmarchy()` in main, the preload, and `import "@omarchy/ui"` in the renderer.
+- **Tauri** ([`docs/using-tauri.md`](docs/using-tauri.md)): one path or git dependency on `tauri-plugin-omarchy`, one `.plugin(tauri_plugin_omarchy::init())`, and `import "@omarchy/ui"` in the page.
 - **iced, egui, any other Rust UI** ([`docs/using-rust.md`](docs/using-rust.md#any-other-rust-framework-omarchy-theme)): `omarchy-theme` gives tokens, a live watch, icons and strings.
 - **Anything else** ([`docs/using-c.md`](docs/using-c.md)): `libomarchy-theme` from C or any FFI, or `omarchy-theme --watch --state` from a spawned process.
 

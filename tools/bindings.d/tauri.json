@@ -1,0 +1,22 @@
+{
+  "name": "tauri",
+  "title": "Tauri / WebKitGTK",
+  "order": 70,
+  "docs": "docs/using-tauri.md",
+  "available": { "commands": ["cargo", "node", "broadwayd"], "check": "pkg-config --exists webkit2gtk-4.1 gtk+-3.0 libsoup-3.0 javascriptcoregtk-4.1", "reason": "no webkit2gtk-4.1 development files" },
+  "build": "web/tauri/build",
+  "gallery": {
+    "sections": "web/tauri/target/release/omarchy-tauri-gallery --list-sections",
+    "snap": "web/tauri/target/release/omarchy-tauri-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
+    "window": "web/tauri/target/release/omarchy-tauri-gallery"
+  },
+  "tokens": "core",
+  "icons": "core",
+  "tests": [
+    { "name": "plugin", "run": "cargo test -q --release --manifest-path web/tauri/Cargo.toml -p tauri-plugin-omarchy" },
+    { "name": "bridge", "run": "node web/test/tauri.mjs" },
+    { "name": "live switch", "run": "tools/live/run node web/test/tauri-live.mjs" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run node web/test/tauri-live.mjs", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } },
+    { "name": "example", "run": "web/tauri/test-example" }
+  ]
+}
