@@ -345,9 +345,9 @@ func (tt Tooltip) Draw(t *Theme, area Rect, buf *Buffer) {
 	}
 }
 
-// Dialog is a modal card on the scrim: title (bold), message, body, then the buttons at the
-// bottom right (secondary, primary), the selected one in the menu's selected look (urgent when
-// destructive). Buttons are keyed `<key>-cancel` and `<key>-accept`.
+// Dialog is a modal card on the scrim: title (bold), message, body (those present a blank row
+// apart), then a blank row and the buttons at the bottom right (secondary, primary), the selected
+// one in the menu's selected look (urgent when destructive). Buttons are keyed `<key>-cancel` and `<key>-accept`.
 type Dialog struct {
 	title, message, secondary, primary string
 	body                               Component
@@ -411,7 +411,10 @@ func (d Dialog) cardSize(t *Theme) (int, int) {
 	}
 	if d.body != nil {
 		_, bh := d.body.Size(t)
-		h += bh + 1
+		if h > 0 {
+			h++
+		}
+		h += bh
 	}
 	// A blank row, the buttons, the padding and the border.
 	return d.width, h + 2 + 4
@@ -465,7 +468,9 @@ func (d Dialog) Draw(t *Theme, area Rect, buf *Buffer) {
 	}
 	if d.body != nil {
 		bw, bh := d.body.Size(t)
-		y++
+		if y > inner.Y {
+			y++
+		}
 		d.body.Draw(t, rect(inner.X, y, min(bw, inner.W), bh), buf)
 	}
 	secondary, primary := d.secondary, d.primary

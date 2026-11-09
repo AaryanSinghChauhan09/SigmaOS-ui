@@ -672,3 +672,42 @@ func TestWindowKeysWalkFocusAndSections(t *testing.T) {
 		t.Error("q quits")
 	}
 }
+
+// rowsOf is the text of each row of a component drawn alone at its size.
+func rowsOf(t *o.Theme, c o.Component) []string {
+	w, h := c.Size(t)
+	buf := o.NewBuffer(o.R(0, 0, w, h))
+	c.Draw(t, buf.Area, buf)
+	rows := make([]string, h)
+	for y := range h {
+		var b strings.Builder
+		for x := range w {
+			b.WriteString(buf.At(x, y).Symbol)
+		}
+		rows[y] = b.String()
+	}
+	return rows
+}
+
+// A Dialog's title, message and body are a blank row apart (the body has no specimen in the
+// gallery); with only a body it starts at the padding.
+func TestDialogBodySitsARowUnderTheMessage(t *testing.T) {
+	th := fixture(t, "tokyo-night", "0")
+	check := func(d ui.Dialog, want map[string]int, h int) {
+		t.Helper()
+		rows := rowsOf(th, d)
+		if len(rows) != h {
+			t.Errorf("%d rows, want %d:\n%s", len(rows), h, strings.Join(rows, "\n"))
+		}
+		for s, y := range want {
+			got := slices.IndexFunc(rows, func(r string) bool { return strings.Contains(r, s) })
+			if got != y {
+				t.Errorf("%s on row %d, want %d:\n%s", s, got, y, strings.Join(rows, "\n"))
+			}
+		}
+	}
+	check(ui.NewDialog("Title").Message("Message").Body(ui.SectionHeader("Body")).Width(30).Scrim(false),
+		map[string]int{"Title": 2, "Message": 4, "Body": 6, "Confirm": 8}, 11)
+	check(ui.NewDialog("").Body(ui.SectionHeader("Body")).Width(30).Scrim(false),
+		map[string]int{"Body": 2, "Confirm": 4}, 7)
+}

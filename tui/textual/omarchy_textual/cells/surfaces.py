@@ -308,8 +308,9 @@ def _dialog_button(t, buf: Buffer, x: int, y: int, label: str, selected: bool, d
 
 
 class Dialog(Draw):
-    """A modal card on the scrim: title (bold), message, body, then the buttons at the bottom right
-    (secondary, primary), the selected one in the menu's selected look (urgent when destructive).
+    """A modal card on the scrim: title (bold), message, body (those present a blank row apart), then
+    a blank row and the buttons at the bottom right (secondary, primary), the selected one in the
+    menu's selected look (urgent when destructive).
     Buttons keyed `(key, "cancel")` and `(key, "accept")`."""
 
     def __init__(self, title: str = "", message: str = "", body: Draw | None = None, labels: tuple[str, str] = ("", ""),
@@ -339,7 +340,7 @@ class Dialog(Draw):
         if self.message:
             h += msg + (1 if h > 0 else 0)
         if self.body is not None:
-            h += self.body.size(t)[1] + 1
+            h += self.body.size(t)[1] + (1 if h > 0 else 0)
         return (self.width, h + 2 + 4)
 
     def size(self, t) -> tuple[int, int]:
@@ -371,7 +372,8 @@ class Dialog(Draw):
                 y += 1
         if self.body is not None:
             bw, bh = self.body.size(t)
-            y += 1
+            if y > inner.y:
+                y += 1
             self.body.draw(t, Rect(inner.x, y, min(bw, inner.width), bh), buf)
         secondary, primary = self.labels_shown(t)
         by = max(0, inner.bottom - 1)

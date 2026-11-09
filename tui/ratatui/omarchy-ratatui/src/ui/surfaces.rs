@@ -426,8 +426,9 @@ impl Draw for Tooltip {
     }
 }
 
-/// A modal card on the scrim: title (bold), message, body, then the buttons at the bottom right
-/// (secondary, primary), the selected one in the menu's selected look (urgent when destructive).
+/// A modal card on the scrim: title (bold), message, body (those present a blank row apart), then
+/// a blank row and the buttons at the bottom right (secondary, primary), the selected one in the
+/// menu's selected look (urgent when destructive).
 pub struct Dialog {
     title: String,
     message: String,
@@ -516,7 +517,7 @@ impl Dialog {
             h += msg + if h > 0 { 1 } else { 0 };
         }
         if let Some(b) = &self.body {
-            h += b.size(t).1 + 1;
+            h += b.size(t).1 + if h > 0 { 1 } else { 0 };
         }
         // A blank row, the buttons, the padding and the border.
         (self.width, h + 2 + 4)
@@ -572,7 +573,9 @@ impl Draw for Dialog {
         }
         if let Some(b) = &self.body {
             let (bw, bh) = b.size(t);
-            y += 1;
+            if y > inner.y {
+                y += 1;
+            }
             b.draw(t, Rect::new(inner.x, y, bw.min(inner.width), bh), buf);
         }
         let secondary = if self.secondary.is_empty() { t.string("common.cancel", "Cancel") } else { self.secondary.clone() };

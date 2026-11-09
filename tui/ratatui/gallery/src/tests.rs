@@ -4,7 +4,7 @@
 
 use super::*;
 use omarchy_ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use omarchy_ratatui::ui::{Date, Spinner};
+use omarchy_ratatui::ui::{Date, Dialog, SectionHeader, Spinner};
 
 fn fixture(name: &str) -> Theme {
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../fixtures/themes").join(name);
@@ -433,4 +433,29 @@ fn window_keys_walk_focus_and_sections() {
     key(&mut g, KeyCode::Char('['));
     assert_eq!(g.name(), "tokens");
     assert_eq!(g.event(&Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE))), Flow::Quit);
+}
+
+/// The text of each row of a component drawn alone at its size.
+fn rows_of(t: &Theme, d: &dyn Draw) -> Vec<String> {
+    let (w, h) = d.size(t);
+    let area = Rect::new(0, 0, w, h);
+    let mut buf = Buffer::empty(area);
+    d.draw(t, area, &mut buf);
+    (0..h).map(|y| (0..w).map(|x| buf[(x, y)].symbol()).collect::<String>()).collect()
+}
+
+/// A Dialog's title, message and body are a blank row apart (the body has no specimen in the
+/// gallery); with only a body it starts at the padding.
+#[test]
+fn dialog_body_sits_a_row_under_the_message() {
+    let t = fixture("tokyo-night");
+    let d = Dialog::new("Title").message("Message").body(SectionHeader("Body".into())).width(30).scrim(false);
+    let rows = rows_of(&t, &d);
+    let at = |s: &str| rows.iter().position(|r| r.contains(s)).unwrap_or_else(|| panic!("no {s} in {rows:#?}"));
+    assert_eq!((at("Title"), at("Message"), at("Body"), at("Confirm")), (2, 4, 6, 8), "{rows:#?}");
+    assert_eq!(rows.len(), 11);
+    let d = Dialog::new("").body(SectionHeader("Body".into())).width(30).scrim(false);
+    let rows = rows_of(&t, &d);
+    let at = |s: &str| rows.iter().position(|r| r.contains(s)).unwrap();
+    assert_eq!((at("Body"), at("Confirm"), rows.len()), (2, 4, 7), "{rows:#?}");
 }
