@@ -678,3 +678,221 @@ omarchy_tooltip_new (const char *text)
 }
 
 OMARCHY_STRING_ACCESSORS (OmarchyTooltip, tooltip, text, t_props, T_PROP_TEXT, TRUE)
+
+/* =============================================================================== Surface === */
+
+/**
+ * OmarchySurface:
+ *
+ * Qt's BorderSurface: a fill and a border spec from the tokens, named by their canonical JSON
+ * paths (`controls.hover.fill`, `surfaces.popups.border`), on Hyprland's rounding, around an
+ * optional child. For an app's own panels and chips; follows the theme and its fade.
+ */
+struct _OmarchySurface {
+  GtkWidget parent_instance;
+  GtkWidget *child;
+  char *fill, *border;
+  int border_width; /* -1: the spec's */
+  gboolean small;
+  int pad_x, pad_y;
+};
+
+static void surface_buildable_init (GtkBuildableIface *iface);
+G_DEFINE_FINAL_TYPE_WITH_CODE (OmarchySurface, omarchy_surface, GTK_TYPE_WIDGET,
+                               G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE, surface_buildable_init))
+
+static OmarchyBorder
+surface_border (OmarchySurface *self)
+{
+  const OmarchyBorder *b = self->border ? omarchy_tokens_border_at (omarchy_paint (), self->border) : NULL;
+  if (!b)
+    return omarchy_border_none ();
+  return self->border_width >= 0 ? omarchy_border_with_width (b, self->border_width) : *b;
+}
+
+static void
+surface_measure (GtkWidget *w, GtkOrientation o, int for_size, int *min, int *nat, int *mb, int *nb)
+{
+  OmarchySurface *self = OMARCHY_SURFACE (w);
+  OmarchyBorder b = surface_border (self);
+  int extra = o == GTK_ORIENTATION_HORIZONTAL ? (int) (b.widths[1] + b.widths[3]) + 2 * self->pad_x
+                                              : (int) (b.widths[0] + b.widths[2]) + 2 * self->pad_y;
+  *min = *nat = extra;
+  if (self->child) {
+    int cmin, cnat;
+    gtk_widget_measure (self->child, o, -1, &cmin, &cnat, NULL, NULL);
+    *min += cmin;
+    *nat += cnat;
+  }
+}
+
+static void
+surface_allocate (GtkWidget *w, int width, int height, int baseline)
+{
+  OmarchySurface *self = OMARCHY_SURFACE (w);
+  if (!self->child)
+    return;
+  OmarchyBorder b = surface_border (self);
+  GtkAllocation a = { (int) b.widths[3] + self->pad_x, (int) b.widths[0] + self->pad_y,
+                      MAX (0, width - (int) (b.widths[1] + b.widths[3]) - 2 * self->pad_x),
+                      MAX (0, height - (int) (b.widths[0] + b.widths[2]) - 2 * self->pad_y) };
+  gtk_widget_size_allocate (self->child, &a, -1);
+}
+
+static void
+surface_snapshot (GtkWidget *w, GtkSnapshot *s)
+{
+  OmarchySurface *self = OMARCHY_SURFACE (w);
+  const OmarchyTokens *p = omarchy_paint ();
+  const GdkRGBA *fill = self->fill ? omarchy_tokens_color_at (p, self->fill) : NULL;
+  OmarchyBorder b = surface_border (self);
+  omarchy_draw_surface (s, &GRAPHENE_RECT_INIT (0, 0, gtk_widget_get_width (w), gtk_widget_get_height (w)),
+                        self->small ? MIN (4, p->radius) : p->radius, fill, &b);
+  if (self->child)
+    gtk_widget_snapshot_child (w, self->child, s);
+}
+
+static void
+omarchy_surface_init (OmarchySurface *self)
+{
+  self->border_width = -1;
+  omarchy_widget_follow (GTK_WIDGET (self));
+}
+
+static void
+surface_dispose (GObject *o)
+{
+  OmarchySurface *self = OMARCHY_SURFACE (o);
+  g_clear_pointer (&self->child, gtk_widget_unparent);
+  G_OBJECT_CLASS (omarchy_surface_parent_class)->dispose (o);
+}
+
+static void
+surface_finalize (GObject *o)
+{
+  OmarchySurface *self = OMARCHY_SURFACE (o);
+  g_free (self->fill);
+  g_free (self->border);
+  G_OBJECT_CLASS (omarchy_surface_parent_class)->finalize (o);
+}
+
+static GtkBuildableIface *surface_parent_buildable;
+
+static void
+surface_add_child (GtkBuildable *b, GtkBuilder *builder, GObject *child, const char *type)
+{
+  if (GTK_IS_WIDGET (child))
+    omarchy_surface_set_child (OMARCHY_SURFACE (b), GTK_WIDGET (child));
+  else
+    surface_parent_buildable->add_child (b, builder, child, type);
+}
+
+static void
+surface_buildable_init (GtkBuildableIface *iface)
+{
+  surface_parent_buildable = g_type_interface_peek_parent (iface);
+  iface->add_child = surface_add_child;
+}
+
+static void
+omarchy_surface_class_init (OmarchySurfaceClass *klass)
+{
+  GObjectClass *oc = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *wc = GTK_WIDGET_CLASS (klass);
+  oc->dispose = surface_dispose;
+  oc->finalize = surface_finalize;
+  wc->measure = surface_measure;
+  wc->size_allocate = surface_allocate;
+  wc->snapshot = surface_snapshot;
+  gtk_widget_class_set_css_name (wc, "omarchy-surface");
+}
+
+/**
+ * omarchy_surface_new:
+ * @fill: (nullable): a color's path (`controls.normal.fill`, `surfaces.popups.background`)
+ * @border: (nullable): a border spec's path (`controls.normal.border`, `surfaces.popups.border`)
+ *
+ * Returns: (transfer floating): a surface
+ */
+GtkWidget *
+omarchy_surface_new (const char *fill, const char *border)
+{
+  OmarchySurface *self = g_object_new (OMARCHY_TYPE_SURFACE, NULL);
+  omarchy_surface_set_fill (self, fill);
+  omarchy_surface_set_border (self, border);
+  return GTK_WIDGET (self);
+}
+
+void
+omarchy_surface_set_fill (OmarchySurface *self, const char *fill)
+{
+  g_free (self->fill);
+  self->fill = g_strdup (fill);
+  gtk_widget_queue_draw (GTK_WIDGET (self));
+}
+
+void
+omarchy_surface_set_border (OmarchySurface *self, const char *border)
+{
+  g_free (self->border);
+  self->border = g_strdup (border);
+  gtk_widget_queue_resize (GTK_WIDGET (self));
+}
+
+/**
+ * omarchy_surface_set_border_width:
+ * @self: the surface
+ * @width: every side's width, or -1 for the spec's own
+ */
+void
+omarchy_surface_set_border_width (OmarchySurface *self, int width)
+{
+  self->border_width = width;
+  gtk_widget_queue_resize (GTK_WIDGET (self));
+}
+
+/**
+ * omarchy_surface_set_small:
+ * @self: the surface
+ * @small: corners `min(4, radius)`, for small parts
+ */
+void
+omarchy_surface_set_small (OmarchySurface *self, gboolean small)
+{
+  self->small = !!small;
+  gtk_widget_queue_draw (GTK_WIDGET (self));
+}
+
+void
+omarchy_surface_set_padding (OmarchySurface *self, int x, int y)
+{
+  self->pad_x = MAX (0, x);
+  self->pad_y = MAX (0, y);
+  gtk_widget_queue_resize (GTK_WIDGET (self));
+}
+
+/**
+ * omarchy_surface_set_child:
+ * @self: the surface
+ * @child: (nullable) (transfer floating): the content
+ */
+void
+omarchy_surface_set_child (OmarchySurface *self, GtkWidget *child)
+{
+  g_clear_pointer (&self->child, gtk_widget_unparent);
+  self->child = child;
+  if (child)
+    gtk_widget_set_parent (child, GTK_WIDGET (self));
+}
+
+/**
+ * omarchy_surface_get_child:
+ * @self: the surface
+ *
+ * Returns: (transfer none) (nullable): the content
+ */
+GtkWidget *
+omarchy_surface_get_child (OmarchySurface *self)
+{
+  return self->child;
+}

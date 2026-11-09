@@ -127,7 +127,7 @@ state (JsonNode *root, const char *name, OmarchyStateLook *out)
 }
 
 static void
-surface (JsonNode *root, const char *name, OmarchySurface *out)
+surface (JsonNode *root, const char *name, OmarchySurfaceLook *out)
 {
   char path[64];
   g_snprintf (path, sizeof path, "surfaces.%s.background", name);
@@ -312,6 +312,15 @@ omarchy_tokens_color_at (const OmarchyTokens *t, const char *path)
 {
 #define AT(p, field) if (g_strcmp0 (path, p) == 0) return &t->field;
   OMARCHY_TOKEN_COLORS (AT)
+#undef AT
+  return NULL;
+}
+
+const OmarchyBorder *
+omarchy_tokens_border_at (const OmarchyTokens *t, const char *path)
+{
+#define AT(p, field) if (g_strcmp0 (path, p) == 0) return &t->field;
+  OMARCHY_TOKEN_BORDERS (AT)
 #undef AT
   return NULL;
 }

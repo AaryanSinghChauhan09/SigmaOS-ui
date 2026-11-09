@@ -1,7 +1,9 @@
 /* omarchy-private.h: what the library's files share and apps don't see. */
 #pragma once
 
+#ifndef OMARCHY_GTK_COMPILATION
 #define OMARCHY_GTK_COMPILATION
+#endif
 #include "omarchy-gtk.h"
 #include "omarchy-tokens.h"
 
@@ -70,6 +72,11 @@ gboolean omarchy_key_is_activate (guint keyval);
 guint omarchy_reading_key (GtkWidget *w, guint keyval, gboolean vim);
 /* Children of a container widget (composite widgets with a GtkBox inside). */
 void omarchy_widget_dispose_children (GtkWidget *w);
+
+/* Popups (omarchy-field.c): a popover with no chrome of its own (the content draws the popups
+ * surface), opened below a rect of `anchor` `gap` pixels down. */
+GtkPopover *omarchy_popup_new (GtkWidget *anchor, GtkWidget *content);
+void omarchy_popup_show_below (GtkPopover *pop, GtkWidget *anchor, const graphene_rect_t *trigger, int gap);
 
 /* get_/set_ for a gboolean or string field backed by a property (relayout: queue a resize). */
 #define OMARCHY_BOOL_ACCESSORS(Type, type, field, PROPS, PROP, relayout)            \

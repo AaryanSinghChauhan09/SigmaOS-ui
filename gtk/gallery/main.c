@@ -88,6 +88,9 @@ snap (void)
   gtk_window_set_child (GTK_WINDOW (window), scroller);
   gtk_widget_add_css_class (window, "omarchy-snap");
   headless_present (GTK_WINDOW (window), w, h);
+  /* A still shows nothing focused (no caret, no focus look), as Qt's offscreen window. */
+  gtk_window_set_focus (GTK_WINDOW (window), NULL);
+  headless_wait (50);
   GdkTexture *texture = headless_render (window, opt_scale);
   if (!texture || !gdk_texture_save_to_png (texture, opt_snap)) {
     g_printerr ("could not write %s\n", opt_snap);

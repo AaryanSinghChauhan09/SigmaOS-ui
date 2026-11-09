@@ -1,6 +1,7 @@
 /* gallery.c: the helpers sections are built with. */
 #include "gallery.h"
 
+#include <adwaita.h>
 #include <string.h>
 
 static int
@@ -72,8 +73,18 @@ gallery_section (const char *title)
 GtkWidget *
 gallery_width (GtkWidget *w, int width)
 {
+  /* Exactly `width`, as Qt's preferredWidth: at least that (the size request), and at most
+   * that (a clamp, since GTK widgets keep their own natural width). */
   gtk_widget_set_size_request (w, width, -1);
-  return w;
+  int nat;
+  gtk_widget_measure (w, GTK_ORIENTATION_HORIZONTAL, -1, NULL, &nat, NULL, NULL);
+  if (nat <= width)
+    return w;
+  GtkWidget *clamp = adw_clamp_new ();
+  adw_clamp_set_maximum_size (ADW_CLAMP (clamp), width);
+  adw_clamp_set_tightening_threshold (ADW_CLAMP (clamp), width);
+  adw_clamp_set_child (ADW_CLAMP (clamp), w);
+  return clamp;
 }
 
 GtkWidget *

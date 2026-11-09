@@ -46,4 +46,15 @@ GtkWidget *omarchy_tooltip_new (const char *text);
 const char *omarchy_tooltip_get_text (OmarchyTooltip *self);
 void omarchy_tooltip_set_text (OmarchyTooltip *self, const char *text);
 
+#define OMARCHY_TYPE_SURFACE (omarchy_surface_get_type ())
+G_DECLARE_FINAL_TYPE (OmarchySurface, omarchy_surface, OMARCHY, SURFACE, GtkWidget)
+GtkWidget *omarchy_surface_new (const char *fill, const char *border);
+void omarchy_surface_set_fill (OmarchySurface *self, const char *fill);
+void omarchy_surface_set_border (OmarchySurface *self, const char *border);
+void omarchy_surface_set_border_width (OmarchySurface *self, int width);
+void omarchy_surface_set_small (OmarchySurface *self, gboolean small);
+void omarchy_surface_set_padding (OmarchySurface *self, int x, int y);
+void omarchy_surface_set_child (OmarchySurface *self, GtkWidget *child);
+GtkWidget *omarchy_surface_get_child (OmarchySurface *self);
+
 G_END_DECLS

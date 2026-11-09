@@ -28,7 +28,7 @@ typedef struct {
   GdkRGBA background;
   GdkRGBA text;
   OmarchyBorder border;
-} OmarchySurface;
+} OmarchySurfaceLook;
 
 typedef struct {
   gboolean dark;
@@ -52,7 +52,7 @@ typedef struct {
   OmarchyStateLook normal, hover, focus, selected;
   GdkRGBA pressed, selection;
 
-  OmarchySurface popups, tooltip, menu, notifications, polkit;
+  OmarchySurfaceLook popups, tooltip, menu, notifications, polkit;
   GdkRGBA menu_scrim, menu_selected_background, menu_selected_text;
   OmarchyBorder menu_selected_border;
   GdkRGBA notifications_countdown;
@@ -137,6 +137,8 @@ void omarchy_tokens_clear (OmarchyTokens *t);
 void omarchy_tokens_lerp (OmarchyTokens *dst, const OmarchyTokens *a, const OmarchyTokens *b, double f);
 /* The color at a canonical JSON path ("palette.background"), or NULL. */
 const GdkRGBA *omarchy_tokens_color_at (const OmarchyTokens *t, const char *path);
+/* The border spec at a canonical JSON path ("controls.hover.border"), or NULL. */
+const OmarchyBorder *omarchy_tokens_border_at (const OmarchyTokens *t, const char *path);
 /* TRUE when every color in a and b is the same. */
 gboolean omarchy_tokens_same_colors (const OmarchyTokens *a, const OmarchyTokens *b);
 
