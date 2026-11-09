@@ -10,9 +10,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [[ -e $ROOT/build/ffi/lib/pkgconfig/omarchy-theme.pc ]] || { echo "KDE: run bin/build core first (no build/ffi)" >&2; exit 1; }
 export PKG_CONFIG_PATH="$ROOT/build/ffi/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 
-if [[ ! -e $ROOT/build/kde/build.ninja ]]; then
-  cmake -S "$ROOT/kde" -B "$ROOT/build/kde" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    -DCMAKE_INSTALL_RPATH="$ROOT/build/ffi/lib" -DCMAKE_BUILD_RPATH="$ROOT/build/ffi/lib" >/dev/null
-fi
+# Configure every time (cheap): a new source file is picked up, moc included, in this build.
+cmake -S "$ROOT/kde" -B "$ROOT/build/kde" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_INSTALL_RPATH="$ROOT/build/ffi/lib" -DCMAKE_BUILD_RPATH="$ROOT/build/ffi/lib" >/dev/null
 ninja -C "$ROOT/build/kde" >/dev/null || ninja -C "$ROOT/build/kde"
 echo "build/kde/omarchy-widgets-gallery"
