@@ -9,7 +9,7 @@ from support import fixture
 
 from omarchy_textual import OmarchyApp
 from omarchy_textual.color import over
-from omarchy_textual.widgets import Button, DialogScreen
+from omarchy_textual.widgets import Button, Dialog, DialogScreen
 
 
 class Under(OmarchyApp):
@@ -50,7 +50,9 @@ class Modal(unittest.IsolatedAsyncioTestCase):
             want = over(scrim, fill)
             got = st1.bgcolor.triplet
             self.assertEqual((got.red, got.green, got.blue), (want.r, want.g, want.b))
-            await pilot.press("h", "enter")
+            await pilot.press("tab")
+            self.assertEqual(app.screen.query_one(Dialog).selected, 0, "Tab moves the modal's selection")
+            await pilot.press("tab", "h", "enter")
             await pilot.pause()
             self.assertEqual(choices, [0])
             self.assertEqual(cell(app, 3, 0)[1].bgcolor.triplet, st0.bgcolor.triplet, "the scrim is gone")

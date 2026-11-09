@@ -251,7 +251,9 @@ class ConfirmDialog(Dialog):
 
 
 class _ScreenDialog(Dialog):
-    """A Dialog over the whole screen, its scrim composited on the screen under it."""
+    """A Dialog over the whole screen, its scrim composited on the screen under it. Modal, it also
+    takes Tab and Shift+Tab to move the selection (a Dialog among other controls leaves them to
+    walk the focus)."""
 
     DEFAULT_CSS = """
     _ScreenDialog { width: 1fr; height: 1fr; }
@@ -269,13 +271,21 @@ class _ScreenDialog(Dialog):
     def get_content_width(self, container, viewport) -> int:
         return container.width
 
+    def on_key(self, event: events.Key) -> None:
+        if event.key in ("tab", "shift+tab"):
+            event.stop()
+            event.prevent_default()
+            self.selected = C.Dialog.handle_key(self.selected, event.key)
+        # Other keys reach Dialog.on_key: Textual calls each class's handler in turn.
+
     def get_content_height(self, container, viewport, width: int) -> int:
         return container.height
 
 
 class DialogScreen(ModalScreen[int]):
     """A Dialog as a Textual modal screen: the scrim over everything under it, the card centered;
-    Left/Right (h/l) move the selection, Enter chooses, Escape cancels, a click chooses a button.
+    Left/Right (h/l) and Tab move the selection, Enter chooses, Escape cancels, a click chooses a
+    button.
     Dismisses with the choice (0 the secondary, 1 the primary):
 
         self.push_screen(DialogScreen("Discard changes?", "Your edits will be lost.",
