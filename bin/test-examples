@@ -9,6 +9,8 @@
 #   rune          a crate outside the workspace with a path dependency on omarchy-rune
 #   ratatui       the same for omarchy-ratatui, snapshotted as ANSI text (spec/terminal.md) and
 #                 checked and rendered with omarchy-ansi
+#   bubbletea     a Go module outside tui/bubbletea with a replace on it, snapshotted and checked
+#                 the same way
 #
 # The two Qt routes run the same QML on the same kit, so their PNGs must match byte for byte.
 # A route whose tool is missing is skipped. bin/test runs this.
@@ -97,6 +99,23 @@ if command -v cargo >/dev/null; then
   fi
 else
   skip ratatui "no cargo"
+fi
+
+if command -v go >/dev/null; then
+  # A module of its own with a replace on tui/bubbletea, as an app outside the checkout has.
+  ans="$OUT/bubbletea.ans"
+  png="$OUT/bubbletea.png"
+  rm -f "$ans" "$png"
+  if go -C "$ROOT/examples/bubbletea" build -o "$OUT/bubbletea/omarchy-ui-example-bubbletea" . >"$OUT/bubbletea.log" 2>&1 &&
+    timeout 30 "$OUT/bubbletea/omarchy-ui-example-bubbletea" --snap "$ans" --size 50x0 >>"$OUT/bubbletea.log" 2>&1 &&
+    "$ROOT/target/release/omarchy-ansi" check "$ans" --size 50x17 >>"$OUT/bubbletea.log" 2>&1 &&
+    "$ROOT/target/release/omarchy-ansi" png "$ans" "$png" >>"$OUT/bubbletea.log" 2>&1 && rendered "$png"; then
+    ok bubbletea "$png"
+  else
+    bad bubbletea "build/examples/bubbletea.log has the output"
+  fi
+else
+  skip bubbletea "no go"
 fi
 
 exit "$fail"

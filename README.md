@@ -14,6 +14,7 @@ A cross-framework UI kit for apps that look and feel like Omarchy, in any toolki
 | KDE / Qt Widgets | [`kde/`](kde) | `OmarchyWidgets`: one `Omarchy::Widgets::apply(app)` sets the palette, a `QProxyStyle` for stock widgets, a live KDE color scheme for KF6 and Kirigami apps; the full kit as QWidgets. |
 | GPUI | [`gpui/`](gpui) | `omarchy-gpui`: one `omarchy_gpui::init(cx)`, the full kit as GPUI elements, and gpui-component's theme mapped from the tokens. |
 | Ratatui (terminal) | [`tui/ratatui/`](tui/ratatui) | `omarchy-ratatui`: one `omarchy_ratatui::run(app)`, the full kit on the terminal's cell grid ([`spec/terminal.md`](spec/terminal.md)), the reference for the terminal bindings. |
+| Bubble Tea (terminal, Go) | [`tui/bubbletea/`](tui/bubbletea) | `omarchy-ui/tui/bubbletea`: one `omarchy.Run(theme, model)` feeds theme changes into the program as `omarchy.ThemeChangedMsg` and fades them; the full kit as Lip Gloss-style values, cell for cell with Ratatui. |
 | Electron / web | [`web/`](web) | `@omarchy/ui`: CSS custom properties, a restyle for plain HTML controls, the full kit as Web Components, and `followOmarchy()` for Electron. |
 | Tauri | [`web/tauri/`](web/tauri) | `tauri-plugin-omarchy`: one `.plugin(tauri_plugin_omarchy::init())` gives every webview the theme before first paint and every change, for `@omarchy/ui` in the page; checked on WebKitGTK. |
 | Rust, any framework | [`crates/omarchy-theme`](crates/omarchy-theme) | The resolver and watcher, with no UI dependency. Start an iced or egui binding here. |
@@ -26,6 +27,7 @@ bin/build
 build/qt/omarchy-qt-gallery                  # follows your theme; switch themes and watch
 target/release/omarchy-rune-gallery
 tui/ratatui/target/release/omarchy-ratatui-gallery   # the terminal kit, in this terminal
+build/bubbletea/omarchy-bubbletea-gallery    # the same on Bubble Tea
 bin/review --open                            # every binding vs Qt, 6 themes × 2 roundings, every section
 target/release/omarchy-theme                 # the resolved tokens as JSON
 ```
@@ -42,6 +44,7 @@ It's a library: apps depend on it rather than copying it. [`docs/`](docs/README.
 - **KDE / Qt Widgets** ([`docs/using-kde.md`](docs/using-kde.md)): `find_package(OmarchyWidgets)` and one `Omarchy::Widgets::apply(app)`.
 - **GPUI** ([`docs/using-gpui.md`](docs/using-gpui.md)): one path dependency on `omarchy-gpui` and one `omarchy_gpui::init(cx)`.
 - **Ratatui** ([`docs/using-ratatui.md`](docs/using-ratatui.md)): one path dependency on `omarchy-ratatui` and one `omarchy_ratatui::run(app)`; any other terminal toolkit follows [`spec/terminal.md`](spec/terminal.md) ([`docs/using-terminal.md`](docs/using-terminal.md)).
+- **Bubble Tea** ([`docs/using-bubbletea.md`](docs/using-bubbletea.md)): a `replace` on `omarchy-ui/tui/bubbletea` in `go.mod` and one `omarchy.Run(theme, model)`.
 - **Electron / web** ([`docs/using-web.md`](docs/using-web.md)): `followOmarchy()` in main, the preload, and `import "@omarchy/ui"` in the renderer.
 - **Tauri** ([`docs/using-tauri.md`](docs/using-tauri.md)): one path or git dependency on `tauri-plugin-omarchy`, one `.plugin(tauri_plugin_omarchy::init())`, and `import "@omarchy/ui"` in the page.
 - **iced, egui, any other Rust UI** ([`docs/using-rust.md`](docs/using-rust.md#any-other-rust-framework-omarchy-theme)): `omarchy-theme` gives tokens, a live watch, icons and strings.
