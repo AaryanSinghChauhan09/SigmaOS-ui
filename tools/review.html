@@ -59,6 +59,21 @@
   .term > h3 span { color: var(--dim); font-weight: 400; }
   .note { color: var(--dim); margin-bottom: 8px; }
   @media (max-width: 720px) { .pair { grid-template-columns: 1fr; } input[type=range] { width: 160px; } }
+  main img { cursor: zoom-in; }
+  .zoom { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: var(--bg); }
+  .zoom[hidden] { display: none; }
+  .zoom-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+  .zoom-cap { flex: 1 1 240px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zoom-cap span { color: var(--dim); }
+  .zoom-view { flex: 1; overflow: auto; cursor: grab; touch-action: pan-x pan-y pinch-zoom; }
+  .zoom-view.dragging { cursor: grabbing; }
+  .zoom-view:focus { outline: none; }
+  .zoom-inner { display: grid; place-items: center; min-width: 100%; min-height: 100%; width: max-content; padding: 16px; }
+  .zoom img { max-width: none; }
+  .zoom.pixels img { image-rendering: pixelated; }
+  .zoom .stage { max-width: none; }
+  .zoom-hint { color: var(--dim); }
+  @media (max-width: 720px) { .zoom-hint { display: none; } }
 </style>
 </head>
 <body>
@@ -74,6 +89,20 @@
   </div>
 </header>
 <main id="main"></main>
+<div class="zoom" id="zoom" hidden role="dialog" aria-modal="true" aria-label="Zoomed screenshot">
+  <div class="zoom-bar">
+    <div class="zoom-cap" id="zoom-cap"></div>
+    <div class="group" id="zoom-levels"></div>
+    <div class="group">
+      <button class="chip" id="zoom-prev" title="Previous (←)">◀</button>
+      <span id="zoom-pos" class="zoom-hint"></span>
+      <button class="chip" id="zoom-next" title="Next (→)">▶</button>
+      <button class="chip" id="zoom-close" title="Close (Esc)">close</button>
+    </div>
+    <span class="zoom-hint">drag to pan · + − 0 zoom · ← → step · Esc close</span>
+  </div>
+  <div class="zoom-view" id="zoom-view" tabindex="-1"><div class="zoom-inner" id="zoom-inner"></div></div>
+</div>
 <script>
 const DATA = /*DATA*/null;
 // One column per binding in the registry (tools/bindings.d), the reference (Qt) first; every other
@@ -306,6 +335,110 @@ function render() {
     main.append(el("section", { class: "card" }, head, body));
   }
 }
+
+// Click a screenshot to zoom: the image, or the whole stage in overlay, swipe and diff views (as
+// it is set), at Fit or 1× to 8× its page size, panned by dragging; ← → step through the page.
+const zoom = (() => {
+  const box = document.getElementById("zoom"), view = document.getElementById("zoom-view"), inner = document.getElementById("zoom-inner");
+  const LEVELS = [["fit", "fit"], [1, "1×"], [2, "2×"], [4, "4×"], [8, "8×"]];
+  let targets = [], at = -1, level = "fit";
+  const targetOf = node => node.closest(".stage") || node;
+  const baseWidth = t => {
+    const i = t.matches("img") ? t : t.querySelector("img");
+    return Number(i && i.getAttribute("width")) || (i ? i.naturalWidth / 2 : 0) || t.offsetWidth;
+  };
+  const baseHeight = t => {
+    const i = t.matches("img") ? t : t.querySelector("img");
+    const w = baseWidth(t);
+    return i && i.naturalWidth ? w * i.naturalHeight / i.naturalWidth : t.offsetHeight * w / Math.max(1, t.offsetWidth);
+  };
+  function caption(t) {
+    const card = t.closest(".card"), term = t.closest(".term");
+    const fig = t.closest("figure");
+    const words = (n, sep) => n ? [...n.childNodes].map(c => c.textContent.trim()).filter(Boolean).join(sep) : "";
+    const cap = fig && fig.querySelector("figcaption") ? words(fig.querySelector("figcaption"), " ")
+      : words(t.parentElement.querySelector(".slider"), " ↔ ");
+    const where = card ? card.querySelector("h2").firstChild.textContent + " · " + card.querySelector("h2 .meta").textContent : "";
+    return [cap, where + (term ? " · terminal" : "")];
+  }
+  function scale() {
+    if (level !== "fit") return level;
+    const t = targets[at], w = baseWidth(t), h = baseHeight(t);
+    return Math.min((view.clientWidth - 32) / w, (view.clientHeight - 32) / h);
+  }
+  function show() {
+    const t = targets[at];
+    const copy = t.cloneNode(true);
+    copy.removeAttribute("loading");
+    const s = scale(), w = Math.round(baseWidth(t) * s);
+    for (const i of copy.matches("img") ? [copy] : copy.querySelectorAll("img")) { i.removeAttribute("loading"); i.setAttribute("width", w); }
+    inner.replaceChildren(copy);
+    box.classList.toggle("pixels", s * devicePixelRatio > 2.01);
+    const [cap, where] = caption(t);
+    const capEl = document.getElementById("zoom-cap");
+    capEl.replaceChildren(document.createTextNode(cap + " "), el("span", {}, where));
+    document.getElementById("zoom-pos").textContent = `${at + 1} / ${targets.length}`;
+    const levels = document.getElementById("zoom-levels");
+    levels.replaceChildren(...LEVELS.map(([v, label]) => {
+      const b = el("button", { class: "chip", "aria-pressed": String(level === v) }, label);
+      b.onclick = () => set(v);
+      return b;
+    }));
+  }
+  function set(v) {
+    // Keep the point in the middle of the view in the middle across zoom levels.
+    const fx = (view.scrollLeft + view.clientWidth / 2) / Math.max(1, view.scrollWidth);
+    const fy = (view.scrollTop + view.clientHeight / 2) / Math.max(1, view.scrollHeight);
+    level = v; show();
+    view.scrollLeft = fx * view.scrollWidth - view.clientWidth / 2;
+    view.scrollTop = fy * view.scrollHeight - view.clientHeight / 2;
+  }
+  function step(d) { if (!targets.length) return; at = (at + d + targets.length) % targets.length; show(); view.scrollTo(0, 0); }
+  function open(node) {
+    const main = document.getElementById("main");
+    targets = [...main.querySelectorAll(".stage, img")].filter(n => !n.closest(".stage") || n.matches(".stage"));
+    at = Math.max(0, targets.indexOf(targetOf(node)));
+    box.hidden = false; document.body.style.overflow = "hidden";
+    show(); view.focus();
+  }
+  function close() { box.hidden = true; inner.replaceChildren(); document.body.style.overflow = ""; }
+  document.getElementById("main").addEventListener("click", e => {
+    if (e.target.tagName === "IMG") open(e.target);
+  });
+  document.getElementById("zoom-prev").onclick = () => step(-1);
+  document.getElementById("zoom-next").onclick = () => step(1);
+  document.getElementById("zoom-close").onclick = close;
+  // Drag to pan; a click on the backdrop without a drag closes.
+  let drag = null;
+  view.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    drag = { x: e.clientX, y: e.clientY, l: view.scrollLeft, t: view.scrollTop, moved: false, on: e.target };
+    view.setPointerCapture(e.pointerId);
+  });
+  view.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; view.classList.add("dragging"); }
+    view.scrollLeft = drag.l - dx; view.scrollTop = drag.t - dy;
+  });
+  view.addEventListener("pointerup", e => {
+    const d = drag; drag = null; view.classList.remove("dragging");
+    if (d && !d.moved && (d.on === view || d.on === inner)) close();
+  });
+  addEventListener("resize", () => { if (!box.hidden && level === "fit") show(); });
+  document.addEventListener("keydown", e => {
+    if (box.hidden) return;
+    e.stopImmediatePropagation();
+    const i = LEVELS.findIndex(([v]) => v === level);
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowLeft") step(-1);
+    else if (e.key === "ArrowRight") step(1);
+    else if (e.key === "+" || e.key === "=") set(LEVELS[Math.min(LEVELS.length - 1, Math.max(1, i + 1))][0]);
+    else if (e.key === "-") set(i <= 1 ? "fit" : LEVELS[i - 1][0]);
+    else if (e.key === "0") set("fit");
+  }, true);
+  return { open, close };
+})();
 
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT") return;
