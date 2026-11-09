@@ -12,6 +12,7 @@ Omarchy UI is meant to be used from your own app, not copied into it. Pick your 
 | Electron, or a web UI in any Chromium shell | [using-web.md](using-web.md) | `@omarchy/ui` (by path; not on npm), `followOmarchy()` in main plus the preload; `<omarchy-*>` elements for React, Vue, Svelte or plain HTML |
 | Tauri v2 (WebKitGTK on Linux) | [using-tauri.md](using-tauri.md) | `tauri-plugin-omarchy` as a Cargo path or git dependency, one `.plugin(tauri_plugin_omarchy::init())`; `import "@omarchy/ui"` in the page |
 | Ratatui, or any terminal UI | [using-ratatui.md](using-ratatui.md), [using-terminal.md](using-terminal.md) | `omarchy-ratatui` as a Cargo path dependency, one `omarchy_ratatui::run(app)`; the cell-grid contract every terminal binding follows |
+| Textual (Python, terminal) | [using-textual.md](using-textual.md), [using-terminal.md](using-terminal.md) | `omarchy-textual` as a uv path or git dependency, `OmarchyApp` instead of `App` (or one `follow(app)`); the kit as Textual widgets, stock widgets restyled |
 | Any other Rust UI (iced, egui) | [using-rust.md](using-rust.md#any-other-rust-framework-omarchy-theme) | `omarchy-theme`: tokens, live watch, icons, strings |
 | C, C++, anything with a C FFI | [using-c.md](using-c.md) | `libomarchy-theme` (`pkg-config omarchy-theme`): tokens, a main-loop watch, icons, strings |
 | Node, scripts, anything that spawns a process | [using-c.md](using-c.md#the-cli-stream) | `omarchy-theme --watch --state`: one JSON line per change |
@@ -25,6 +26,7 @@ Each route has a working example under [`examples/`](../examples), which `bin/te
 - [`examples/kde-widgets`](../examples/kde-widgets), [`kde-kirigami`](../examples/kde-kirigami): a Qt Widgets app through CMake, and a Kirigami app following the theme.
 - [`examples/gpui`](../examples/gpui): a GPUI app with a path dependency on `omarchy-gpui`.
 - [`examples/ratatui`](../examples/ratatui): a Ratatui app with a path dependency on `omarchy-ratatui`, snapshotted as ANSI text.
+- [`examples/textual`](../examples/textual): a Textual app with a uv path dependency on `omarchy-textual`, in an environment of its own, snapshotted as ANSI text.
 - [`examples/web-electron`](../examples/web-electron), [`web-plain`](../examples/web-plain): an Electron app and a plain HTML page on `@omarchy/ui`.
 - [`examples/tauri`](../examples/tauri): a Tauri v2 app on `tauri-plugin-omarchy` and `@omarchy/ui`.
 
