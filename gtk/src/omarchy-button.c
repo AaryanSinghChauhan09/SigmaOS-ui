@@ -36,6 +36,8 @@ struct _OmarchyButton {
   char *label;
   char *icon;
   gboolean bordered, selected, active, cursor, destructive, left_align;
+  gboolean has_foreground;
+  GdkRGBA foreground;
 };
 
 enum { B_PROP_0, B_PROP_LABEL, B_PROP_ICON, B_PROP_BORDERED, B_PROP_SELECTED, B_PROP_ACTIVE, B_PROP_CURSOR,
@@ -113,7 +115,7 @@ button_snapshot (GtkWidget *w, GtkSnapshot *s)
   gboolean pressed = omarchy_widget_pressed (w);
   gboolean focus = omarchy_widget_focus_shown (w);
   gboolean hot = omarchy_widget_hovered (w) || self->cursor;
-  const GdkRGBA *fg = self->destructive ? &p->urgent : &p->foreground;
+  const GdkRGBA *fg = self->destructive ? &p->urgent : self->has_foreground ? &self->foreground : &p->foreground;
 
   GdkRGBA fill = { 0, 0, 0, 0 };
   if (pressed)
@@ -362,6 +364,24 @@ omarchy_button_set_label (OmarchyButton *self, const char *label)
   gtk_accessible_update_property (GTK_ACCESSIBLE (self), GTK_ACCESSIBLE_PROPERTY_LABEL, self->label, -1);
   gtk_widget_queue_resize (GTK_WIDGET (self));
   g_object_notify_by_pspec (G_OBJECT (self), b_props[B_PROP_LABEL]);
+}
+
+/**
+ * omarchy_button_set_foreground:
+ * @self: the button
+ * @color: (nullable): the ink and the base of its state fills, or %NULL for the theme's
+ *   foreground
+ *
+ * For a button on a surface with its own text color (a toast on the notifications surface).
+ * A fixed color doesn't follow the theme: set it again from #OmarchyTheme::repaint.
+ */
+void
+omarchy_button_set_foreground (OmarchyButton *self, const GdkRGBA *color)
+{
+  self->has_foreground = color != NULL;
+  if (color)
+    self->foreground = *color;
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 const char *

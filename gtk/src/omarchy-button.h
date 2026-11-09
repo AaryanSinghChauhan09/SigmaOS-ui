@@ -27,6 +27,7 @@ gboolean omarchy_button_get_cursor (OmarchyButton *self);
 void omarchy_button_set_cursor (OmarchyButton *self, gboolean cursor);
 gboolean omarchy_button_get_destructive (OmarchyButton *self);
 void omarchy_button_set_destructive (OmarchyButton *self, gboolean destructive);
+void omarchy_button_set_foreground (OmarchyButton *self, const GdkRGBA *color);
 gboolean omarchy_button_get_left_align (OmarchyButton *self);
 void omarchy_button_set_left_align (OmarchyButton *self, gboolean left_align);
 
