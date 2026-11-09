@@ -146,7 +146,9 @@ impl App for Gallery {
                 if k.modifiers.contains(KeyModifiers::CONTROL) && k.code == KeyCode::Char('c') {
                     return Flow::Quit;
                 }
-                if interact::key(&mut self.state, k) {
+                // Tab is the window's: it walks the controls (spec/terminal.md, Harness), so a
+                // control that would keep it (a list's sections, a dialog's buttons) never traps it.
+                if !matches!(k.code, KeyCode::Tab | KeyCode::BackTab) && interact::key(&mut self.state, k) {
                     return Flow::Continue;
                 }
                 match k.code {

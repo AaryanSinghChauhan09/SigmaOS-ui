@@ -509,3 +509,38 @@ fn list_row_action_click_reaches_the_action() {
     rt.click("row-6");
     assert_eq!(rt.s.current_row, 6, "the rest of the row chooses it");
 }
+
+/// Composed: Tab goes to the Wi-Fi panel's networks, then the search list, in reading order (as
+/// Qt's gallery walks them: the Card's ScrollArea before the SearchList).
+#[test]
+fn composed_tab_walks_networks_then_the_search_list() {
+    assert_eq!(tab_walk("composed", KeyCode::Tab, 3), [Some("networks"), Some("searchlist"), Some("networks")]);
+}
+
+/// Where focus goes on each of `n` presses of `key` in a section's window.
+fn tab_walk(section: &str, key: KeyCode, n: usize) -> Vec<Option<&'static str>> {
+    let section = SECTIONS.iter().position(|(name, _)| *name == section).unwrap();
+    let mut g = Gallery { theme: fixture("tokyo-night"), state: State::init(), section, scroll: 0, body: (20, 7) };
+    (0..n)
+        .map(|_| {
+            g.event(&Event::Key(KeyEvent::new(key, KeyModifiers::NONE)));
+            g.state.focus
+        })
+        .collect()
+}
+
+/// In every section Tab walks the focusable controls in order and wraps, and Shift+Tab walks back:
+/// no control keeps Tab (a list's sections, a dialog's buttons) in the window.
+#[test]
+fn tab_walks_every_section_and_wraps() {
+    for (name, _) in SECTIONS {
+        let f = interact::focusables(name);
+        if f.is_empty() {
+            continue;
+        }
+        let want: Vec<_> = f.iter().chain(f.iter()).map(|k| Some(*k)).collect();
+        assert_eq!(tab_walk(name, KeyCode::Tab, 2 * f.len()), want, "Tab in {name}");
+        let back: Vec<_> = f.iter().rev().chain(f.iter().rev()).map(|k| Some(*k)).collect();
+        assert_eq!(tab_walk(name, KeyCode::BackTab, 2 * f.len()), back, "Shift+Tab in {name}");
+    }
+}

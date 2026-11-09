@@ -107,6 +107,14 @@ class GalleryApp(OmarchyApp):
         header.refresh()
         self.set_focus(None)
 
+    def action_focus_previous(self) -> None:
+        # Shift+Tab with nothing focused starts from the last control, as the other galleries do.
+        chain = self.screen.focus_chain
+        if self.focused is None and chain:
+            self.set_focus(chain[-1])
+            return
+        super().action_focus_previous()
+
     def on_key(self, event: events.Key) -> None:
         if event.key == "escape":
             self.set_focus(None)

@@ -53,7 +53,7 @@ func focusables(section string) []string {
 	case "color":
 		return []string{"picker"}
 	case "composed":
-		return []string{"searchlist", "networks"}
+		return []string{"networks", "searchlist"}
 	}
 	return nil
 }

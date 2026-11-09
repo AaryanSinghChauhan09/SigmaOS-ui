@@ -139,7 +139,10 @@ func (g gallery) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" || (o.IsQuit(msg) && !g.state.typing()) {
 			return g, tea.Quit
 		}
-		if g.state.key(msg) {
+		// Tab is the window's: it walks the controls (spec/terminal.md, Harness), so a control
+		// that would keep it (a list's sections, a dialog's buttons) never traps it.
+		walk := key.Matches(msg, keys.Focus) || key.Matches(msg, keys.Back)
+		if !walk && g.state.key(msg) {
 			return g, nil
 		}
 		body := max(g.height-3, 0)

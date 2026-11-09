@@ -142,5 +142,43 @@ class Sliders(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(posted(app, Slider.Changed))
 
 
+
+#: Every section's focusable controls in Tab order: the reference gallery's
+#: (`tui/ratatui/gallery/src/interact.rs`, `focusables`), reading order as Qt's gallery walks them.
+FOCUSABLES = {
+    "buttons": ["plain", "bordered", "icon", "power", "align"],
+    "toggles": ["switch-0", "switch-1", "wifi"],
+    "inputs": ["search", "name", "gaps", "theme"],
+    "slider": ["level", "stepped"],
+    "surfaces": ["network", "confirm", "add-layer", "night-light"],
+    "lists": ["rows"],
+    "tiles": ["tile"],
+    "messages": ["scan"],
+    "menus": ["menu", "context"],
+    "navigation": ["tabs", "rail"],
+    "forms": ["night", "check-0", "check-1", "check-4", "radio", "password"],
+    "pickers": ["notify", "swatch", "discard"],
+    "data": ["table", "tree"],
+    "layout": ["sidebar", "handle", "cal"],
+    "timeline": ["timeline", "scrubber", "drag"],
+    "color": ["picker"],
+    "composed": ["networks", "searchlist"],
+}
+
+
+class FocusOrder(unittest.IsolatedAsyncioTestCase):
+    async def test_tab_walks_every_section_and_wraps(self):
+        """Tab walks each section's controls in the reference's order and wraps, Shift+Tab walks
+        back: no control keeps Tab (a list's sections, a dialog's buttons)."""
+        for section, want in FOCUSABLES.items():
+            for key, order in (("tab", want), ("shift+tab", want[::-1])):
+                async with gallery(section) as (app, pilot):
+                    seen = []
+                    for _ in range(2 * len(want)):
+                        await pilot.press(key)
+                        seen.append(app.focused.id if app.focused else None)
+                    self.assertEqual(seen, order + order, f"{key} in {section}")
+
+
 if __name__ == "__main__":
     unittest.main()

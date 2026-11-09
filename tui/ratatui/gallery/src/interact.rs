@@ -28,7 +28,7 @@ pub fn focusables(section: &str) -> &'static [&'static str] {
         "layout" => &["sidebar", "handle", "cal"],
         "timeline" => &["timeline", "scrubber", "drag"],
         "color" => &["picker"],
-        "composed" => &["searchlist", "networks"],
+        "composed" => &["networks", "searchlist"],
         _ => &[],
     }
 }

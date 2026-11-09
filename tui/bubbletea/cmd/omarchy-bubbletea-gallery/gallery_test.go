@@ -771,3 +771,42 @@ func TestListRowActionClickReachesTheAction(t *testing.T) {
 		t.Errorf("the rest of the row chooses it: %d", r.s.currentRow)
 	}
 }
+
+// tabWalk is where focus goes on each of n presses of k in a section's window.
+func tabWalk(t *testing.T, section, k string, n int) []string {
+	s := initState()
+	var m tea.Model = gallery{theme: fixture(t, "tokyo-night", "0"), state: &s, section: sectionIndex(section), width: 100, height: 40}
+	var seen []string
+	for range n {
+		m, _ = m.Update(press(k))
+		seen = append(seen, s.focus)
+	}
+	return seen
+}
+
+// Composed: Tab goes to the Wi-Fi panel's networks, then the search list, in reading order (as
+// Qt's gallery walks them: the Card's ScrollArea before the SearchList).
+func TestComposedTabWalksNetworksThenTheSearchList(t *testing.T) {
+	if got := tabWalk(t, "composed", "Tab", 3); !slices.Equal(got, []string{"networks", "searchlist", "networks"}) {
+		t.Errorf("Tab walks %v", got)
+	}
+}
+
+// In every section Tab walks the focusable controls in order and wraps, and Shift+Tab walks back:
+// no control keeps Tab (a list's sections, a dialog's buttons) in the window.
+func TestTabWalksEverySectionAndWraps(t *testing.T) {
+	for _, sec := range sections {
+		f := focusables(sec.name)
+		if len(f) == 0 {
+			continue
+		}
+		if got, want := tabWalk(t, sec.name, "Tab", 2*len(f)), slices.Concat(f, f); !slices.Equal(got, want) {
+			t.Errorf("Tab in %s: %v, want %v", sec.name, got, want)
+		}
+		r := slices.Clone(f)
+		slices.Reverse(r)
+		if got, want := tabWalk(t, sec.name, "Shift+Tab", 2*len(f)), slices.Concat(r, r); !slices.Equal(got, want) {
+			t.Errorf("Shift+Tab in %s: %v, want %v", sec.name, got, want)
+		}
+	}
+}
