@@ -307,8 +307,10 @@ fn start_fade(cx: &mut App, to: Arc<Tokens>) {
         }
     });
     let start = cx.background_executor().now();
-    // The first frame of the fade is `from` exactly; it moves from the next one.
-    cx.set_global(Paint { shown: from.clone(), fade: Some(Fade { from, start, duration, _driver: Rc::new(driver) }) });
+    // The first frame of the fade has the old colors and everything else new (layout, sizes and
+    // the font switch at once); the colors move from the next frame.
+    let shown = Arc::new(mix_tokens(&from, &to, 0.0));
+    cx.set_global(Paint { shown, fade: Some(Fade { from, start, duration, _driver: Rc::new(driver) }) });
 }
 
 /// One frame of the fade; true when it has landed.
