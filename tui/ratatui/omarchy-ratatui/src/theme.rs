@@ -301,3 +301,59 @@ impl Theme {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::buffer::Buffer;
+
+    fn theme() -> Theme {
+        let mut t = Theme::from_tokens(omarchy_theme::resolve(&omarchy_theme::Sources::default()));
+        t.set_depth(Depth::True);
+        t
+    }
+
+    /// The page background is never painted; other fills are, mapped down below truecolor.
+    #[test]
+    fn finish_leaves_the_background_to_the_terminal() {
+        let mut t = theme();
+        let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
+        crate::paint::fill(&t, &mut buf, Rect::new(0, 0, 1, 1), t.bg());
+        crate::paint::fill(&t, &mut buf, Rect::new(1, 0, 1, 1), t.shown().controls.hover.fill);
+        crate::paint::put(&t, &mut buf, 2, 0, "x", t.dim());
+        let mut tc = buf.clone();
+        t.finish(&mut tc);
+        assert_eq!(tc[(0, 0)].bg, Color::Reset);
+        assert!(matches!(tc[(1, 0)].bg, Color::Rgb(..)));
+        t.set_depth(Depth::Ansi16);
+        let mut c16 = buf.clone();
+        t.finish(&mut c16);
+        assert_eq!(c16[(1, 0)].bg, Color::DarkGray, "the cursor's fill is bright black");
+        assert_eq!(c16[(2, 0)].fg, Color::DarkGray, "textDim is bright black");
+        t.set_depth(Depth::Ansi256);
+        let mut c256 = buf;
+        t.finish(&mut c256);
+        assert!(matches!(c256[(1, 0)].bg, Color::Indexed(16..=255)));
+    }
+
+    /// A change counts once, fades in truecolor and lands exactly; none at 16 colors.
+    #[test]
+    fn changes_fade_and_land() {
+        let mut t = theme();
+        let mut next = (**t.tokens()).clone();
+        next.palette.background = Rgba::rgb(0xef, 0xf1, 0xf5);
+        next.reduce_motion = false;
+        assert!(t.set_tokens(next.clone()));
+        assert!(!t.set_tokens(next.clone()), "the same tokens are no change");
+        assert_eq!(t.revision(), 1);
+        assert!(t.fading());
+        assert_ne!(t.shown().palette.background, next.palette.background);
+        std::thread::sleep(Duration::from_millis(next.motion.theme as u64 + 20));
+        assert!(!t.tick());
+        assert_eq!(t.shown().palette.background, next.palette.background);
+        let mut t16 = theme();
+        t16.set_depth(Depth::Ansi16);
+        t16.set_tokens(next);
+        assert!(!t16.fading());
+    }
+}

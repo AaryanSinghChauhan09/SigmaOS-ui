@@ -907,6 +907,7 @@ dependencies = [
 name = "omarchy-ratatui-gallery"
 version = "0.1.0"
 dependencies = [
+ "omarchy-ansi",
  "omarchy-ratatui",
 ]
 

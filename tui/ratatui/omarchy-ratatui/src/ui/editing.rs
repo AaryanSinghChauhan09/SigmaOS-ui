@@ -152,6 +152,9 @@ impl Draw for Timeline {
         for (ti, clips) in self.tracks.iter().enumerate() {
             let ly = area.y + 2 + ti as u16 * lane_h;
             let lh = if ti as u16 == n - 1 { lanes_h - lane_h * (n - 1) } else { lane_h };
+            if lh == 0 || w < 2 {
+                continue;
+            }
             fill(t, buf, Rect::new(area.x, ly, w, lh), c.normal.fill);
             for (ci, clip) in clips.iter().enumerate() {
                 let x0 = Timeline::x_of(clip.start, self.duration, w);

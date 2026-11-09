@@ -2,7 +2,7 @@
 //! components drawn on the terminal's cell grid the way `spec/terminal.md` maps them.
 //!
 //! ```no_run
-//! use omarchy_ratatui::{App, Flow, Theme, Themed, ui::*};
+//! use omarchy_ratatui::{App, Draw, Flow, Theme, Themed, ui::*};
 //! use omarchy_ratatui::ratatui::Frame;
 //! use omarchy_ratatui::crossterm::event::Event;
 //!

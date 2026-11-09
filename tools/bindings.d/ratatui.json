@@ -1,0 +1,23 @@
+{
+  "name": "ratatui",
+  "title": "Ratatui",
+  "family": "terminal",
+  "reference": true,
+  "order": 110,
+  "docs": "docs/using-ratatui.md",
+  "available": { "commands": ["cargo"] },
+  "build": "tui/ratatui/build",
+  "gallery": {
+    "sections": "tui/ratatui/target/release/omarchy-ratatui-gallery --list-sections",
+    "snap": "tui/ratatui/target/release/omarchy-ratatui-gallery --snap {out} --section {section} --size {width}x{height}",
+    "window": "tools/terminal-window tui/ratatui/target/release/omarchy-ratatui-gallery"
+  },
+  "tokens": "core",
+  "icons": "none",
+  "tests": [
+    { "name": "kit and gallery tests", "run": "cargo test -q --manifest-path tui/ratatui/Cargo.toml" },
+    { "name": "window in a pty", "run": "tui/ratatui/pty-test" },
+    { "name": "live switch", "run": "tools/live/run tui/ratatui/target/release/omarchy-ratatui-live-test" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run tui/ratatui/target/release/omarchy-ratatui-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}
