@@ -593,7 +593,7 @@ fn tokens() -> Col {
         ];
         for (i, (n, f, b, ink, bold)) in states.into_iter().enumerate() {
             let x = area.x + i as u16 * 16;
-            paint::fill(t, buf, Rect::new(x + 1, area.y, 13, 1), f);
+            paint::fill(t, buf, Rect::new(x, area.y, 15, 1), f);
             if !b.is_none() {
                 paint::edges(t, buf, x, area.y, 15, Some(b.color));
             }
