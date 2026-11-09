@@ -3,8 +3,8 @@
 //!   cargo run --release                         a window; switch themes while it runs
 //!   cargo run --release -- --snap out.png       render once, headless (Rune's tooling)
 
-use omarchy_rune::Theme;
-use omarchy_rune::rune::{self, AppSpec, Cx, El, col, row};
+use omarchy_rune::rune::{AppSpec, Cx, El, col, row};
+use omarchy_rune::{Theme, Themed};
 use omarchy_rune::ui::{Button, Heading, HeadingLevel, ListRow, Pane, Toggle, Tone};
 
 const WIDTH: f32 = 400.0;
@@ -14,10 +14,18 @@ struct App {
     wifi: bool,
 }
 
-fn view(s: &App, cx: &mut Cx<App>) -> El {
+// Where the theme lives, so omarchy_rune::run can follow the desktop for the app.
+impl Themed for App {
+    fn theme(&self) -> &Theme {
+        &self.theme
+    }
+    fn theme_mut(&mut self) -> &mut Theme {
+        &mut self.theme
+    }
+}
+
+fn view(s: &App, _: &mut Cx<App>) -> El {
     let t = &s.theme;
-    // Every frame: colors, rounding and font follow the theme without a restart.
-    t.apply(cx);
     let pad = t.tokens().spacing.panel_padding as f32;
     let inner = WIDTH - 4.0 * pad;
 
@@ -46,10 +54,7 @@ fn init() -> App {
 }
 
 fn main() {
-    rune::run(AppSpec {
-        families: Theme::load().families(),
-        setup: Some(|s: &mut App, wake| s.theme.follow(wake)),
-        poll: Some(|s: &mut App, _, _| s.theme.poll()),
-        ..AppSpec::new("Network", (WIDTH, 283.0), init, view)
-    });
+    // rune::run with the theme followed: colors fade, rounding and fonts switch, on every
+    // `omarchy theme set`, font change, text size change and Hyprland reload.
+    omarchy_rune::run(AppSpec::new("Network", (WIDTH, 283.0), init, view));
 }

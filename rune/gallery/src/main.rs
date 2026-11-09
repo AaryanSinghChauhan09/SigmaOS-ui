@@ -12,8 +12,8 @@
 //! module, list it in `gallery!` below (same name as the Qt gallery's `sections/<name>.qml`), and
 //! keep any state it needs in its own struct, as a field of `State`.
 
-use omarchy_rune::Theme;
 use omarchy_rune::ui::section_header;
+use omarchy_rune::{Theme, Themed};
 use rune::{AppSpec, Cx, El, TextEdit, col};
 
 mod sections;
@@ -49,6 +49,15 @@ pub(crate) struct State {
     pub timeline: sections::timeline::Editing,
     pub color: sections::color::Picker,
     pub composed: sections::composed::Composed,
+}
+
+impl Themed for State {
+    fn theme(&self) -> &Theme {
+        &self.theme
+    }
+    fn theme_mut(&mut self) -> &mut Theme {
+        &mut self.theme
+    }
 }
 
 pub(crate) fn init() -> State {
@@ -133,9 +142,8 @@ fn section(t: &Theme, title: &str, body: Vec<El>) -> El {
     col().w_full().gap(sp.lg as f32).child(section_header(t, title)).child(col().w_full().gap(sp.xxl as f32).children(body))
 }
 
-fn view(s: &State, cx: &mut Cx<State>) -> El {
+fn view(s: &State, _cx: &mut Cx<State>) -> El {
     let t = &s.theme;
-    t.apply(cx);
     let sp = &t.tokens().spacing;
     let mut layer = Vec::new();
     let page = col().w_full().padding(sp.panel_padding as f32).gap(sp.huge as f32 * 2.0).children(sections(s, t, &mut layer));
@@ -152,20 +160,20 @@ fn main() {
         println!("{}", SECTIONS.join("\n"));
         return;
     }
-    let families = Theme::load().families();
-    rune::run(AppSpec {
-        scenes: SCENES,
-        families,
-        setup: Some(|s, wake| s.theme.follow(wake)),
-        poll: Some(|s, _, _| s.theme.poll()),
-        ..AppSpec::new("Omarchy UI · Rune", (WIDTH, 900.0), init, view)
-    });
+    // Follows the theme (setup, poll, the per-frame apply and the font) through omarchy_rune.
+    omarchy_rune::run(AppSpec { scenes: SCENES, ..AppSpec::new("Omarchy UI · Rune", (WIDTH, 900.0), init, view) });
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use rune::{Env, Runtime};
+
+    /// The view as `omarchy_rune::run` wraps it: the theme applied first.
+    fn view(s: &State, cx: &mut Cx<State>) -> El {
+        s.theme.apply(cx);
+        super::view(s, cx)
+    }
 
     fn fixture(name: &str) -> Theme {
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/themes").join(name);
