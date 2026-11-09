@@ -101,6 +101,7 @@ if(OMARCHY_WIDGETS_TESTS)
   add_executable(omarchy-widgets-tests tests/main.cpp ${TEST_SOURCES})
   target_include_directories(omarchy-widgets-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests ${CMAKE_CURRENT_SOURCE_DIR}/src/components)
   target_link_libraries(omarchy-widgets-tests PRIVATE OmarchyWidgets Qt6::Test)
+  target_compile_definitions(omarchy-widgets-tests PRIVATE OMARCHY_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
   add_executable(omarchy-widgets-live-test tests/live.cpp)
   target_link_libraries(omarchy-widgets-live-test PRIVATE OmarchyWidgets Qt6::Test)
