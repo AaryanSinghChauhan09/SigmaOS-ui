@@ -10,3 +10,4 @@ include(../omarchy-ui.pri)
 SOURCES += main.cpp
 DEFINES += QUICK_TEST_SOURCE_DIR=\\\"$$PWD\\\"
 OTHER_FILES += $$files($$PWD/tst_*.qml)
+OTHER_FILES += $$files($$PWD/../tests-live/tst_*.qml)

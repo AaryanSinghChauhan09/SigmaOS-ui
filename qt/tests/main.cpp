@@ -6,12 +6,39 @@
 //
 // Offscreen, under the Basic style, in the tokyo-night fixture at radius 0 unless the
 // environment says otherwise, so a run doesn't depend on the desktop.
+//
+// The live-switch test (spec/following.md) is qt/tests-live/tst_follow.qml (outside this
+// directory, so a plain run doesn't pick it up), run in a desktop of its own:
+//
+//   tools/live/run build/qt-tests/omarchy-qt-tests -input qt/tests-live
+//   OMARCHY_UI_REDUCE_MOTION=1 tools/live/run build/qt-tests/omarchy-qt-tests -input qt/tests-live
+//
+// Under tools/live/run nothing is pinned, and `LiveSwitch.to(name)` switches the theme with
+// tools/live/theme-set, as `omarchy theme set` would.
 
 #include <QByteArray>
 #include <QObject>
+#include <QProcess>
+#include <QtQml>
 #include <QtQuickTest>
 
 #include "omarchyui.h"
+
+// `import Omarchy.Test`: LiveSwitch, for qt/tests-live/tst_follow.qml.
+class LiveSwitch : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(bool available READ available CONSTANT)
+
+public:
+  bool available() const { return !qEnvironmentVariableIsEmpty("OMARCHY_UI_LIVE_HOME"); }
+
+  // `omarchy theme set <name>` under the test HOME; true when it ran.
+  Q_INVOKABLE bool to(const QString &name) {
+    if (!available()) return false;
+    return QProcess::execute(qEnvironmentVariable("OMARCHY_UI_LIVE_SWITCH"),
+                             {qEnvironmentVariable("OMARCHY_UI_LIVE_HOME"), name}) == 0;
+  }
+};
 
 class Setup : public QObject {
   Q_OBJECT
@@ -24,13 +51,19 @@ public:
     };
     preset("QT_QPA_PLATFORM", "offscreen");
     preset("QT_QUICK_CONTROLS_STYLE", "Basic");
-    preset("OMARCHY_UI_THEME_DIR", QUICK_TEST_SOURCE_DIR "/../../fixtures/themes/tokyo-night");
+    // A live run follows its own HOME instead of a pinned fixture.
+    if (qEnvironmentVariableIsEmpty("OMARCHY_UI_LIVE_HOME"))
+      preset("OMARCHY_UI_THEME_DIR", QUICK_TEST_SOURCE_DIR "/../../fixtures/themes/tokyo-night");
     preset("OMARCHY_UI_ROUNDING", "0");
     preset("QT_FORCE_STDERR_LOGGING", "1");
   }
 
 public slots:
-  void applicationAvailable() { OmarchyUi::registerTypes(); }
+  void applicationAvailable() {
+    OmarchyUi::registerTypes();
+    qmlRegisterSingletonType<LiveSwitch>("Omarchy.Test", 1, 0, "LiveSwitch",
+                                         [](QQmlEngine *, QJSEngine *) -> QObject * { return new LiveSwitch(); });
+  }
 };
 
 QUICK_TEST_MAIN_WITH_SETUP(omarchy_ui, Setup)
