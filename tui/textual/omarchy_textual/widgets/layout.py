@@ -65,6 +65,30 @@ class Box(KitWidget):
         return L.Boxed(w, h, parts[0], center=self.center)
 
 
+class _Stacked(Draw):
+    def __init__(self, w: int, h: int, items: list[Draw]):
+        self.w, self.h, self.items = w, h, items
+
+    def size(self, t) -> tuple[int, int]:
+        return (self.w, self.h)
+
+    def draw(self, t, area: Rect, buf: Buffer) -> None:
+        for d in self.items:
+            d.draw(t, area, buf)
+
+
+class Stack(KitWidget):
+    """Children drawn one over another, each given the whole `width` × `height` box, in order: a
+    Dialog over the Card it belongs to (its scrim darkens what is under it)."""
+
+    def __init__(self, *children: Widget, width: int, height: int, **kw):
+        super().__init__(*children, **kw)
+        self.box = (width, height)
+
+    def component(self) -> Draw:
+        return _Stacked(self.box[0], self.box[1], self.parts())
+
+
 class Spacer(KitWidget):
     """Empty space, `width` × `height`."""
 

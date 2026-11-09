@@ -150,6 +150,8 @@ class KitWidget(Widget):
 
     #: Pin the hover-cursor look (a specimen showing the state; the gallery's "Hover").
     pinned_cursor: bool = False
+    #: Drawn on its own even inside another kit widget (a popup over the page: a DropdownList).
+    own_root: bool = False
     _kit_refreshing: bool = False
 
     def __init__(self, *children: Widget, name: str | None = None, id: str | None = None,
@@ -201,13 +203,13 @@ class KitWidget(Widget):
     def kit_root(self) -> "KitWidget":
         """The kit widget that draws this one: the outermost kit ancestor in an unbroken chain."""
         node: KitWidget = self
-        while isinstance(node.parent, KitWidget):
+        while not node.is_root:
             node = node.parent
         return node
 
     @property
     def is_root(self) -> bool:
-        return not isinstance(self.parent, KitWidget)
+        return self.own_root or not isinstance(self.parent, KitWidget)
 
     def refresh(self, *regions, repaint: bool = True, layout: bool = False, recompose: bool = False):
         """Any repaint of a kit widget (a reactive changed, focus, hover, the theme) draws its root
@@ -293,7 +295,7 @@ class KitWidget(Widget):
         for w in self.walk_children(Widget, with_self=False):
             parent = w.parent
             # Only widgets drawn by this root (stock widgets inside kit containers included).
-            if not isinstance(parent, KitWidget):
+            if not isinstance(parent, KitWidget) or (isinstance(w, KitWidget) and w.own_root):
                 continue
             r = places.get(w)
             st = w.styles
