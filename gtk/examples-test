@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# Build one GTK example (examples/gtk-<route>) and render it once, offscreen, to
+# build/examples/gtk-<route>.png, in a fixture theme. The registry runs one per route, so
+# bin/test proves every way of adopting the GTK binding:
+#
+#   gtk/examples-test c|rust|python|gjs|vala
+#
+# Each app only makes the one call; OMARCHY_GTK_SNAP renders its window, and
+# build/gtk/omarchy-gtk-headless gives it a display nobody sees. A route whose toolchain (or the
+# GObject Introspection data it needs) is missing is skipped with the reason, not failed.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+B="$ROOT/build/gtk"
+OUT="$ROOT/build/examples"
+route="${1:?usage: gtk/examples-test c|rust|python|gjs|vala}"
+mkdir -p "$OUT"
+png="$OUT/gtk-$route.png"
+rm -f "$png"
+
+export OMARCHY_UI_THEME_DIR="$ROOT/fixtures/themes/tokyo-night"
+export OMARCHY_UI_ROUNDING=0
+export OMARCHY_UI_REDUCE_MOTION=1
+export PKG_CONFIG_PATH="$B/meson-uninstalled:$ROOT/build/ffi/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export LD_LIBRARY_PATH="$B:$ROOT/build/ffi/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export GI_TYPELIB_PATH="$B${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+
+skip() {
+  echo "gtk-$route: skipped ($1)"
+  exit 0
+}
+
+snap() {
+  if OMARCHY_GTK_SNAP="$png" timeout 60 "$B/omarchy-gtk-headless" "$@" >"$OUT/gtk-$route.log" 2>&1 &&
+    [[ -s $png ]] && file -b "$png" | grep -q "^PNG image"; then
+    echo "gtk-$route: rendered to ${png#"$ROOT"/}"
+  else
+    echo "gtk-$route: failed; build/examples/gtk-$route.log has its output"
+    tail -20 "$OUT/gtk-$route.log"
+    exit 1
+  fi
+}
+
+typelib="$B/Omarchy-1.typelib"
+no_gi="no Omarchy-1.typelib: g-ir-scanner (gobject-introspection) isn't installed"
+
+case $route in
+  c)
+    cc "$ROOT/examples/gtk-c/main.c" -o "$OUT/gtk-c-network" $(pkg-config --cflags --libs omarchy-gtk-1) \
+      -Wl,-rpath,"$B" -Wl,-rpath,"$ROOT/build/ffi/lib"
+    snap "$OUT/gtk-c-network"
+    ;;
+  rust)
+    command -v cargo >/dev/null || skip "no cargo"
+    cargo build -q --release --manifest-path "$ROOT/examples/gtk-rust/Cargo.toml" --target-dir "$ROOT/build/gtk-rust"
+    snap "$ROOT/build/gtk-rust/release/omarchy-ui-example-gtk"
+    ;;
+  python)
+    [[ -f $typelib ]] || skip "$no_gi"
+    python3 -c "import gi" 2>/dev/null || skip "no PyGObject"
+    snap python3 "$ROOT/examples/gtk-python/network.py"
+    ;;
+  gjs)
+    [[ -f $typelib ]] || skip "$no_gi"
+    command -v gjs >/dev/null || skip "no gjs"
+    snap gjs -m "$ROOT/examples/gtk-gjs/network.js"
+    ;;
+  vala)
+    command -v valac >/dev/null || skip "no valac (vala)"
+    [[ -f $B/omarchy-gtk-1.vapi ]] || skip "no omarchy-gtk-1.vapi: it's generated from Omarchy-1.gir, $no_gi"
+    valac --vapidir "$B" --pkg gtk4 --pkg omarchy-gtk-1 -X -I"$B" -X -I"$ROOT/gtk/src" \
+      -X "-Wl,-rpath,$B" -X "-Wl,-rpath,$ROOT/build/ffi/lib" -X -L"$B" -X -lomarchy-gtk-1 \
+      -o "$OUT/gtk-vala-network" "$ROOT/examples/gtk-vala/network.vala"
+    snap "$OUT/gtk-vala-network"
+    ;;
+  *)
+    echo "unknown route $route" >&2
+    exit 2
+    ;;
+esac

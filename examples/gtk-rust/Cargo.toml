@@ -1,0 +1,12 @@
+[package]
+name = "omarchy-ui-example-gtk"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# An app of its own, outside the repository's workspace.
+[workspace]
+
+[dependencies]
+# From a checkout: a path dependency. From git: omarchy-gtk = { git = "<omarchy-ui-repo>" }.
+omarchy-gtk = { path = "../../gtk/rust/omarchy-gtk" }

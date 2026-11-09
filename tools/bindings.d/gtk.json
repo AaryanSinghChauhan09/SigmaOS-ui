@@ -4,7 +4,11 @@
   "order": 30,
   "docs": "docs/using-gtk.md",
   "available": {
-    "commands": ["cc", "pkg-config", "gtk4-broadwayd"],
+    "commands": [
+      "cc",
+      "pkg-config",
+      "gtk4-broadwayd"
+    ],
     "check": "pkg-config --exists gtk4 libadwaita-1 json-glib-1.0",
     "reason": "no gtk4, libadwaita-1 or json-glib development files"
   },
@@ -17,8 +21,40 @@
   "tokens": "core",
   "icons": "core",
   "tests": [
-    { "name": "behavior", "run": "build/gtk/omarchy-gtk-tests" },
-    { "name": "live switch", "run": "tools/live/run build/gtk/omarchy-gtk-live-test" },
-    { "name": "live switch, reduced motion", "run": "tools/live/run build/gtk/omarchy-gtk-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+    {
+      "name": "behavior",
+      "run": "build/gtk/omarchy-gtk-tests"
+    },
+    {
+      "name": "live switch",
+      "run": "tools/live/run build/gtk/omarchy-gtk-live-test"
+    },
+    {
+      "name": "live switch, reduced motion",
+      "run": "tools/live/run build/gtk/omarchy-gtk-live-test",
+      "env": {
+        "OMARCHY_UI_REDUCE_MOTION": "1"
+      }
+    },
+    {
+      "name": "example, C",
+      "run": "gtk/examples-test c"
+    },
+    {
+      "name": "example, Rust (gtk4-rs)",
+      "run": "gtk/examples-test rust"
+    },
+    {
+      "name": "example, Python (PyGObject)",
+      "run": "gtk/examples-test python"
+    },
+    {
+      "name": "example, GJS",
+      "run": "gtk/examples-test gjs"
+    },
+    {
+      "name": "example, Vala",
+      "run": "gtk/examples-test vala"
+    }
   ]
 }
