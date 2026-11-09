@@ -1,0 +1,26 @@
+# A Tauri v2 app outside any omarchy-ui workspace, the way an app in its own repository adopts the
+# kit: tauri-plugin-omarchy in Rust (one call), @omarchy/ui in the page (one import).
+#
+# From another repository, as a git dependency instead (<omarchy-ui-repo>: see docs/using-tauri.md):
+#
+#   tauri-plugin-omarchy = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+
+[package]
+name = "omarchy-ui-example-tauri"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Its own workspace: it sits inside omarchy-ui's directory without being a member.
+[workspace]
+
+[features]
+# `--snap out.png`: render the window offscreen and exit (web/tauri/test-example builds with it).
+snap = ["tauri-plugin-omarchy/snap"]
+
+[dependencies]
+tauri = { version = "=2.12.5", features = ["custom-protocol"] }
+tauri-plugin-omarchy = { path = "../../web/tauri/plugin" }
+
+[build-dependencies]
+tauri-build = { version = "=2.7.4" }

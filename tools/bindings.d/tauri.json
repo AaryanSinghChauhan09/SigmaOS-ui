@@ -16,6 +16,7 @@
     { "name": "plugin", "run": "cargo test -q --release --manifest-path web/tauri/Cargo.toml -p tauri-plugin-omarchy" },
     { "name": "bridge", "run": "node web/test/tauri.mjs" },
     { "name": "live switch", "run": "tools/live/run node web/test/tauri-live.mjs" },
-    { "name": "live switch, reduced motion", "run": "tools/live/run node web/test/tauri-live.mjs", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+    { "name": "live switch, reduced motion", "run": "tools/live/run node web/test/tauri-live.mjs", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } },
+    { "name": "example", "run": "web/tauri/test-example" }
   ]
 }

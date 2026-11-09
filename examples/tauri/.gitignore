@@ -1,0 +1,3 @@
+# build.rs copies web/src here; tauri-build writes gen/.
+/dist/omarchy-ui/
+/gen/

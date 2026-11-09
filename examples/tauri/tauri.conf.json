@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "omarchy-ui-example-tauri",
+  "identifier": "org.omarchy.ui.example-tauri",
+  "build": { "frontendDist": "dist" },
+  "app": {
+    "windows": [{ "label": "main", "title": "Network", "width": 400, "height": 283, "resizable": true }],
+    "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' omarchy: http://omarchy.localhost; connect-src omarchy: http://omarchy.localhost" }
+  },
+  "bundle": { "icon": ["icons/icon.png"] }
+}
