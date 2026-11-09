@@ -85,12 +85,20 @@ def strip_of(buf: Buffer, y: int, x0: int, x1: int) -> Strip:
 
 
 class _Frame:
-    __slots__ = ("buf", "hits", "places")
+    __slots__ = ("buf", "hits", "places", "rows")
 
     def __init__(self, buf: Buffer, hits: list, places: dict):
         self.buf = buf
         self.hits = hits
         self.places = places
+        self.rows: dict[int, Strip] = {}
+
+    def row(self, y: int) -> Strip:
+        """Row `y` as a strip, built once per frame (every widget of the tree crops it)."""
+        s = self.rows.get(y)
+        if s is None:
+            s = self.rows[y] = strip_of(self.buf, y, 0, self.buf.area.width)
+        return s
 
 
 class Placed(Draw):
@@ -213,25 +221,13 @@ class KitWidget(Widget):
 
     def refresh(self, *regions, repaint: bool = True, layout: bool = False, recompose: bool = False):
         """Any repaint of a kit widget (a reactive changed, focus, hover, the theme) draws its root
-        again: the root's frame holds every cell of its tree."""
+        again: the root's frame holds every cell of its tree, and repainting the root's region
+        repaints every widget in it."""
         if repaint and not self._kit_refreshing and self.is_attached:
             root = self.kit_root
-            if root._kit_refreshing:
-                return super().refresh(*regions, repaint=repaint, layout=layout, recompose=recompose)
             root._frame = None
-            root._kit_refreshing = True
-            try:
-                if root is not self:
-                    root.refresh(layout=layout)
-                for w in root.walk_children(KitWidget):
-                    if w is not self:
-                        w._kit_refreshing = True
-                        try:
-                            w.refresh()
-                        finally:
-                            w._kit_refreshing = False
-            finally:
-                root._kit_refreshing = False
+            if root is not self and not root._kit_refreshing:
+                Widget.refresh(root, layout=layout)
         return super().refresh(*regions, repaint=repaint, layout=layout, recompose=recompose)
 
     def kit_refresh(self, layout: bool = True) -> None:
@@ -336,7 +332,7 @@ class KitWidget(Widget):
                 continue
             x0 = r.x + crop.x
             x1 = min(r.x + min(crop.x + crop.width, r.width), buf.area.width)
-            s = strip_of(buf, by, x0, x1) if x1 > x0 else Strip([], 0)
+            s = frame.row(by).crop(x0, x1) if x1 > x0 else Strip([], 0)
             if s.cell_length < crop.width:
                 s = s.extend_cell_length(crop.width)
             out.append(s)

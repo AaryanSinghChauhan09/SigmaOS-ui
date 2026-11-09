@@ -64,12 +64,14 @@ class PageFilter(LineFilter):
 
     def apply(self, segments: list[Segment], background: Color) -> list[Segment]:
         t = self.kit.theme
-        key = (id(t.shown), t.depth)
+        key = (id(t.shown), t.depth, getattr(self.kit, "_textual_bg", None))
         if key != self._key:
             self._key = key
             self._map_style.cache_clear()
             bg = t.bg()
             self._bg = (bg.r, bg.g, bg.b)
+            tb = getattr(self.kit, "_textual_bg", None) or bg
+            self._textual_bg = (tb.r, tb.g, tb.b)
             fg = t.fg()
             self._fg = (fg.r, fg.g, fg.b)
             self._tables = tables(t.shown) if t.depth == Depth.ANSI16 else None
@@ -86,7 +88,9 @@ class PageFilter(LineFilter):
         bg = bgc.get_truecolor() if bgc is not None and bgc.type != ColorType.DEFAULT else None
         fg = tuple(fg) if fg is not None else None
         bg = tuple(bg) if bg is not None else None
-        if bg == self._bg:
+        if bg == self._bg or bg == self._textual_bg:
+            # The page: the theme background as Textual's CSS has it (mid-fade, maybe a step
+            # behind the kit's) is the terminal's own.
             bg = None
         dim = None
         if depth == Depth.TRUE:
@@ -282,7 +286,7 @@ class Kit:
         if not self.theme.set_tokens(tokens):
             return False
         self._apply_textual(self.theme.shown)
-        self.redraw()
+        self.redraw(layout=True)
         if self.theme.fading:
             self._start_fade()
         self.app.post_message(OmarchyThemeChanged(self.theme.tokens, self.theme.revision))
@@ -294,13 +298,22 @@ class Kit:
 
     def _fade_frame(self) -> None:
         running = self.theme.tick()
-        self._apply_textual(self.theme.shown)
+        # Textual's own CSS (stock widgets, the screen) fades with the kit when restyling the app
+        # is cheap; in a big tree it lands at the end instead (the kit's widgets still fade).
+        if not running or self._css_ms < 6.0:
+            self._apply_textual(self.theme.shown)
         self.redraw()
         if not running and self._timer is not None:
             self._timer.stop()
             self._timer = None
 
+    _css_ms = 0.0
+
     def _apply_textual(self, tokens: Tokens) -> None:
+        import time
+
+        t0 = time.perf_counter()
+        self._textual_bg = tokens.palette.background
         app = self.app
         app.register_theme(textual_theme(tokens))
         if app.theme != THEME_NAME:
@@ -308,15 +321,20 @@ class Kit:
         else:
             app._invalidate_css()
             app.refresh_css(animate=False)
+        self._css_ms = (time.perf_counter() - t0) * 1000
 
-    def redraw(self) -> None:
-        """Draw every kit widget again from what is on screen now."""
+    def redraw(self, layout: bool = False) -> None:
+        """Draw every kit widget again from what is on screen now (`layout`: sizes may have
+        changed too, as a new language's strings can)."""
+        from textual.widget import Widget
+
         from .widget import KitWidget
 
         for screen in self.app.screen_stack:
             for w in screen.walk_children(KitWidget):
                 w._frame = None
-                w.refresh(layout=True)
+                # Each one repaints; the root draws the tree once.
+                Widget.refresh(w, layout=layout and w.is_root)
         self.app.refresh()
 
     def stop(self) -> None:

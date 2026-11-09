@@ -110,7 +110,7 @@ class Tokens:
         if not isinstance(other, Tokens):
             return NotImplemented
         a, b = self.state, other.state
-        return all(a.get(k) == b.get(k) for k in ("tokens", "colors", "strings", "language", "iconTheme"))
+        return all(a.get(k) == b.get(k) for k in ("tokens", "colors", "strings", "language", "iconTheme", "theme"))
 
     def __hash__(self) -> int:  # pragma: no cover - identity is enough
         return id(self)
