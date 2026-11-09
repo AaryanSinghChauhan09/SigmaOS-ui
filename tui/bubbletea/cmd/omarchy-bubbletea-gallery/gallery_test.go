@@ -810,3 +810,17 @@ func TestTabWalksEverySectionAndWraps(t *testing.T) {
 		}
 	}
 }
+
+// A click on a revealable PasswordField's eye shows the text (and focuses the field), again hides
+// it.
+func TestPasswordEyeClickReveals(t *testing.T) {
+	r := newRT(t, "forms")
+	r.click("password-eye")
+	if !r.s.revealed || r.s.focus != "password" {
+		t.Errorf("revealed %v, focus %q", r.s.revealed, r.s.focus)
+	}
+	r.click("password-eye")
+	if r.s.revealed {
+		t.Error("the eye hides it again")
+	}
+}

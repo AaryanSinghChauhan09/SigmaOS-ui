@@ -544,3 +544,14 @@ fn tab_walks_every_section_and_wraps() {
         assert_eq!(tab_walk(name, KeyCode::BackTab, 2 * f.len()), back, "Shift+Tab in {name}");
     }
 }
+
+/// A click on a revealable PasswordField's eye shows the text (and focuses the field), again hides it.
+#[test]
+fn password_eye_click_reveals() {
+    let mut rt = Rt::new("forms");
+    rt.click("password-eye");
+    assert!(rt.s.revealed);
+    assert_eq!(rt.s.focus, Some("password"));
+    rt.click("password-eye");
+    assert!(!rt.s.revealed);
+}

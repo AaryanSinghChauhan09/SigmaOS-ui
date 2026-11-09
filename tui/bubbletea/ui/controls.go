@@ -301,8 +301,8 @@ func (f TextField) Draw(t *Theme, area Rect, buf *Buffer) {
 }
 
 // PasswordField is a TextField for secrets: a lock before the text, dots for it (and TextField's
-// caret while focused), an optional eye at the end, and with an error the urgent edges and the
-// message on the row under it.
+// caret while focused), an optional eye at the end (keyed `<key>-eye`), and with an error the
+// urgent edges and the message on the row under it.
 type PasswordField struct {
 	text, placeholder, err       string
 	width, caret                 int
@@ -365,6 +365,9 @@ func (f PasswordField) Draw(t *Theme, area Rect, buf *Buffer) {
 	}
 	if f.key != "" {
 		t.Hit(f.key, rect(area.X, area.Y, area.W, 1))
+		if f.revealable {
+			t.Hit(f.key+"-eye", rect(sub(area.Right(), 3), area.Y, 1, 1))
+		}
 	}
 }
 

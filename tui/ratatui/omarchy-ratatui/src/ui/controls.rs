@@ -382,8 +382,8 @@ impl Draw for TextField {
 }
 
 /// A TextField for secrets: a lock before the text, dots for it (and TextField's caret while
-/// focused), an optional eye at the end, and with an error the urgent edges and the message on the
-/// row under it.
+/// focused), an optional eye at the end (keyed `<k>-eye`), and with an error the urgent edges and
+/// the message on the row under it.
 pub struct PasswordField {
     text: String,
     placeholder: String,
@@ -461,6 +461,9 @@ impl Draw for PasswordField {
         }
         if let Some(k) = &self.key {
             t.hit(k.clone(), Rect { height: 1, ..area });
+            if self.revealable {
+                t.hit(format!("{k}-eye"), Rect::new(area.right().saturating_sub(3), area.y, 1, 1));
+            }
         }
     }
 }

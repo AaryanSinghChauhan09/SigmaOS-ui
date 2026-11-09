@@ -428,6 +428,8 @@ func focusOf(section, key string) string {
 		base = "networks"
 	case strings.HasPrefix(key, "gaps"):
 		base = "gaps"
+	case key == "password-eye":
+		base = "password"
 	case strings.HasPrefix(key, "swatch-") || key == "picker-square":
 		base = "picker"
 	}
@@ -484,6 +486,8 @@ func (s *State) click(t *o.Theme, section, key string, col int, rect o.Rect) boo
 	case key == "discard-accept":
 		s.discardSelected = 1
 	case key == "password" || key == "modules" || key == "picker-square":
+	case key == "password-eye":
+		s.revealed = !s.revealed
 	case key == "notify":
 		s.notifyState.Open = !s.notifyState.Open
 	case key == "timeline-ruler":

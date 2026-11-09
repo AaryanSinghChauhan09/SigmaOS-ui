@@ -322,6 +322,7 @@ pub fn focus_of(section: &str, key: &str) -> Option<&'static str> {
         k if k.starts_with("search-") => "searchlist",
         k if k.starts_with("wifi-") => "networks",
         k if k.starts_with("gaps") => "gaps",
+        "password-eye" => "password",
         k if k.starts_with("swatch-") || k == "picker-square" => "picker",
         k => k,
     };
@@ -352,6 +353,7 @@ pub fn click(s: &mut State, t: &omarchy_ratatui::Theme, section: &str, key: &str
         "discard-cancel" => s.discard_selected = 0,
         "discard-accept" => s.discard_selected = 1,
         "password" => {}
+        "password-eye" => s.revealed = !s.revealed,
         "notify" => s.notify_state.open = !s.notify_state.open,
         "modules" => {}
         "timeline-ruler" => s.playhead = Timeline::time_at(col - rect.x, 30.0, rect.width),
