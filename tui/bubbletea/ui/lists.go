@@ -388,6 +388,10 @@ func (r ListRow) Draw(t *Theme, area Rect, buf *Buffer) {
 	} else if r.current && !r.off {
 		f, border = c.Selected.Fill, borderOf(c.Selected.Border)
 	}
+	// The whole row first, so the action and anything keyed in the row lie over it.
+	if r.key != "" && !r.off {
+		t.Hit(r.key, rect(area.X, area.Y, area.W, 1))
+	}
 	omarchy.Fill(t, buf, area, f)
 	for dy := range area.H {
 		omarchy.Edges(t, buf, area.X, area.Y+dy, area.W, border)
@@ -460,9 +464,6 @@ func (r ListRow) Draw(t *Theme, area Rect, buf *Buffer) {
 	if r.expansion != nil {
 		_, eh := r.expansion.Size(t)
 		r.expansion.Draw(t, rect(area.X+2, y+1, sub(area.W, 4), eh), buf)
-	}
-	if r.key != "" && !r.off {
-		t.Hit(r.key, rect(area.X, area.Y, area.W, 1))
 	}
 }
 

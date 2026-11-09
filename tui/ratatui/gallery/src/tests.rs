@@ -495,3 +495,17 @@ fn password_field_shows_its_caret_while_focused() {
     rt.key("!");
     assert_eq!(reversed_cells(&rt, "password"), vec![(4 + 9, 0)]);
 }
+
+/// A click on a row's action (Office shows it: the action cursor) is the action, not the row.
+#[test]
+fn list_row_action_click_reaches_the_action() {
+    let mut rt = Rt::new("lists");
+    let r = rt.find("row-6-action");
+    assert_eq!(rt.t.hit_at(r.x, r.y).as_deref(), Some("row-6-action"));
+    rt.click("row-6-action");
+    assert_eq!(rt.s.ran, Some("forget"));
+    assert_eq!(rt.s.current_row, 2, "the row isn't chosen");
+    assert_eq!(rt.s.focus, Some("rows"));
+    rt.click("row-6");
+    assert_eq!(rt.s.current_row, 6, "the rest of the row chooses it");
+}

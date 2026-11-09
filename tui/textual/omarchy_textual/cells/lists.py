@@ -320,6 +320,9 @@ class ListRow(Draw):
             fill_c, border = c.selected.fill, border_of(c.selected.border)
         else:
             fill_c, border = TRANSPARENT, None
+        # The whole row first, so the action and anything keyed in the row lie over it.
+        if self.key is not None and not self.disabled:
+            t.hit(self.key, area.replace(height=1))
         fill(t, buf, area, fill_c)
         for dy in range(area.height):
             edges(t, buf, area.x, area.y + dy, area.width, border)
@@ -373,8 +376,6 @@ class ListRow(Draw):
         if self.expansion is not None:
             _, eh = self.expansion.size(t)
             self.expansion.draw(t, Rect(area.x + 2, y + 1, max(0, area.width - 4), eh), buf)
-        if self.key is not None and not self.disabled:
-            t.hit(self.key, area.replace(height=1))
 
 
 def _f32(x: float) -> float:

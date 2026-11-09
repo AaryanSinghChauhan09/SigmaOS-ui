@@ -754,3 +754,20 @@ func TestPasswordFieldShowsItsCaretWhileFocused(t *testing.T) {
 		t.Errorf("after typing: %v", got)
 	}
 }
+
+// A click on a row's action (Office shows it: the action cursor) is the action, not the row.
+func TestListRowActionClickReachesTheAction(t *testing.T) {
+	r := newRT(t, "lists")
+	a := r.find("row-6-action")
+	if got := r.t.HitAt(a.X, a.Y); got != "row-6-action" {
+		t.Fatalf("the action cell hits %q", got)
+	}
+	r.click("row-6-action")
+	if r.s.ran != "forget" || r.s.currentRow != 2 || r.s.focus != "rows" {
+		t.Errorf("ran %q, current row %d, focus %q", r.s.ran, r.s.currentRow, r.s.focus)
+	}
+	r.click("row-6")
+	if r.s.currentRow != 6 {
+		t.Errorf("the rest of the row chooses it: %d", r.s.currentRow)
+	}
+}

@@ -124,9 +124,7 @@ class ListRow(KitWidget):
         if self.disabled:
             return
         event.stop()
-        r = self.rect_of((self, "action"))
-        off = self.root_offset(event)
-        if r is not None and off is not None and r.contains(off.x, off.y):
+        if self.part_at(event) == "action":
             self.post_message(self.ActionPressed(self))
         else:
             self.post_message(self.Selected(self))

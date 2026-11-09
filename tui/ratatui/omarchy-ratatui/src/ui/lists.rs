@@ -406,6 +406,12 @@ impl Draw for ListRow {
         } else {
             (Rgba::TRANSPARENT, None)
         };
+        // The whole row first, so the action and anything keyed in the row lie over it.
+        if let Some(k) = &self.key
+            && !self.disabled
+        {
+            t.hit(k.clone(), Rect { height: 1, ..area });
+        }
         fill(t, buf, area, fill_c);
         for dy in 0..area.height {
             edges(t, buf, area.x, area.y + dy, area.width, border);
@@ -471,11 +477,6 @@ impl Draw for ListRow {
             let (_, eh) = e.size(t);
             let inner = Rect::new(area.x + 2, y + 1, area.width.saturating_sub(4), eh);
             e.draw(t, inner, buf);
-        }
-        if let Some(k) = &self.key
-            && !self.disabled
-        {
-            t.hit(k.clone(), Rect { height: 1, ..area });
         }
     }
 }
