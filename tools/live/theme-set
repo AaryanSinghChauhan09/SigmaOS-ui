@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Switch the Omarchy theme under a test HOME the way `omarchy theme set` does, for the live-switch
+# tests (spec/following.md). Every binding's test uses this one script, so they all see the same
+# sequence of filesystem events:
+#
+#   tools/live/theme-set HOME NAME          NAME is a fixture under fixtures/themes/
+#
+# The steps are omarchy-theme-set's: fill current/next-theme, replace current/theme with it
+# (rm -rf, then mv: the directory is swapped, never edited), write theme.generation, then
+# rewrite theme.name. The first call on an empty HOME sets the starting theme the same way.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+home="${1:?usage: theme-set HOME NAME}"
+name="${2:?usage: theme-set HOME NAME}"
+src="$ROOT/fixtures/themes/$name"
+[[ -d $src ]] || { echo "theme-set: no fixture $name" >&2; exit 1; }
+
+current="$home/.local/state/omarchy/current"
+mkdir -p "$current" "$home/.config/omarchy"
+
+rm -rf "$current/next-theme"
+mkdir -p "$current/next-theme"
+cp -r "$src/"* "$current/next-theme/"
+
+rm -rf "$current/theme"
+mv "$current/next-theme" "$current/theme"
+printf '%s\n' "$$-$(date +%s%N)" >"$current/theme.generation"
+echo "$name" >"$current/theme.name"
