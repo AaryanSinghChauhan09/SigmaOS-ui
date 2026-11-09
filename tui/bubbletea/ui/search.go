@@ -30,7 +30,7 @@ const (
 // SearchList is on the menu surface: a box in its border color, padded 2 × 1; the filter line
 // (the query, or the placeholder in textDim), a blank row, then the body: ListRows under the
 // cursor (keyed `<key>-row-<i>`) and, with the detail pane, two columns, a `│` rule in track,
-// three columns and the pane (the cursor item's title bold over its detail in textDim, wrapped).
+// two columns and the pane (the cursor item's title bold over its detail in textDim, wrapped).
 // No items: an overlay EmptyState centered in the body.
 type SearchList struct {
 	query          string
