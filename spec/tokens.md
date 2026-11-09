@@ -17,6 +17,8 @@ The rules are lifted from the Omarchy shell (`shell/Commons/Color.qml`, `Style.q
 
 A theme switch replaces the whole `current/theme` directory and rewrites `current/theme.name`, so bindings watch the `current/` directory, not files inside the theme. They also watch the theme directory itself, re-armed after every change (a swap leaves a watch on the old directory), so an edit inside it, such as to `icons.theme`, is followed too (Qt watches `icons.theme` as a file as well: `QFileSystemWatcher`'s directory watch misses a file rewritten in place). Hyprland announces `configreloaded` on `.socket2.sock` once new rounding and gaps are in effect. When `HYPRLAND_INSTANCE_SIGNATURE` is unset, bindings use the most recently modified instance under `$XDG_RUNTIME_DIR/hypr/`.
 
+How a binding follows these while an app runs (coalescing, the public changed hook, the theme-switch color fade, the live-switch test every binding has) is [`following.md`](following.md).
+
 ### Overrides for review and tests
 
 Every binding honors these, so a gallery can render any fixture without touching the live desktop:
