@@ -116,6 +116,10 @@ public:
   static Tokens mix(const Tokens &a, const Tokens &b, qreal t);
   bool sameColors(const Tokens &o) const { return m_colors == o.m_colors; }
 
+  // `themed` (a state color of this theme) re-tinted for a control drawn in `tint`: the tint at
+  // the state's alpha when the theme draws that state in the foreground, else `themed`.
+  QColor tinted(const QColor &themed, const QColor &tint) const { return retint(themed, tint); }
+
   static QColor parseColor(const QString &rrggbbaa);
   static QString colorName(const QColor &c);  // "#rrggbbaa"
 

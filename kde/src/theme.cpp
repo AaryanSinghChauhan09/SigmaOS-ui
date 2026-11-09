@@ -90,7 +90,12 @@ QJsonValue Tokens::value(const QString &path) const {
   return v;
 }
 
-QColor Tokens::color(const QString &path) const { return m_colors.value(path); }
+QColor Tokens::color(const QString &path) const {
+  const auto it = m_colors.constFind(path);
+  if (it != m_colors.constEnd()) return it.value();
+  // A border spec's path reads as its color.
+  return m_colors.value(path + QStringLiteral(".color"));
+}
 
 int Tokens::number(const QString &path, int fallback) const {
   const QJsonValue v = value(path);
