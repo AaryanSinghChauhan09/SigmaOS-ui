@@ -16,6 +16,7 @@
 use std::io::{BufRead, BufReader};
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::time::Duration;
 
@@ -24,9 +25,20 @@ use notify::{RecursiveMode, Watcher as _};
 use crate::Tokens;
 use crate::source;
 
-/// Keeps the watch running; dropping it stops delivering changes.
+/// Keeps the watch running; dropping it stops delivering changes. Once the drop returns, no
+/// new delivery starts (one already running finishes on its own thread).
 pub struct Watch {
     _watcher: Arc<Mutex<Option<notify::RecommendedWatcher>>>,
+    stop: Arc<AtomicBool>,
+    wake: mpsc::Sender<()>,
+}
+
+impl Drop for Watch {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::SeqCst);
+        // Wake the delivery thread so it sees `stop` and ends, letting the rest go with it.
+        let _ = self.wake.send(());
+    }
 }
 
 /// Call `on_change` on a background thread with fresh tokens whenever the theme, the user's
@@ -68,6 +80,8 @@ pub fn watch(initial: Tokens, mut on_change: impl FnMut(Tokens) + Send + 'static
     });
     let watcher = Arc::new(Mutex::new(watcher));
     let rearm = watcher.clone();
+    let stop = Arc::new(AtomicBool::new(false));
+    let stopped = stop.clone();
 
     if !source::is_pinned() {
         let hypr_tx = tx.clone();
@@ -84,6 +98,9 @@ pub fn watch(initial: Tokens, mut on_change: impl FnMut(Tokens) + Send + 'static
             while rx.recv().is_ok() {
                 // Coalesce the burst a theme switch makes (dir swap, theme.name, Hyprland reload).
                 while rx.recv_timeout(Duration::from_millis(150)).is_ok() {}
+                if stopped.load(Ordering::SeqCst) {
+                    return;
+                }
                 if !source::is_pinned()
                     && let Some(w) = rearm.lock().unwrap().as_mut()
                 {
@@ -92,7 +109,7 @@ pub fn watch(initial: Tokens, mut on_change: impl FnMut(Tokens) + Send + 'static
                     let _ = w.watch(&theme, RecursiveMode::NonRecursive);
                 }
                 let next = crate::load();
-                if next != last {
+                if next != last && !stopped.load(Ordering::SeqCst) {
                     last = next.clone();
                     on_change(next);
                 }
@@ -100,7 +117,7 @@ pub fn watch(initial: Tokens, mut on_change: impl FnMut(Tokens) + Send + 'static
         })
         .ok();
 
-    Watch { _watcher: watcher }
+    Watch { _watcher: watcher, stop, wake: tx }
 }
 
 fn hypr_events(tx: mpsc::Sender<()>) {

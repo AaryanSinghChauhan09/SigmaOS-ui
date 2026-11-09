@@ -7,7 +7,7 @@
 //! the Qt binding's `I18n.t` does; a plural entry gives its `other` form. Placeholders stay as
 //! the catalog writes them (`%1`).
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::OnceLock;
 
 use serde_json::Value;
@@ -69,6 +69,28 @@ pub fn t(language: &str, key: &str, fallback: &str) -> String {
     lookup(language, key).unwrap_or(fallback).to_string()
 }
 
+/// Every key the catalog has, in `language`: the exact language over its base over English, as
+/// [`lookup`] falls back. Empty strings are left out (the caller's fallback shows instead).
+pub fn table(language: &str) -> BTreeMap<String, String> {
+    let c = catalog();
+    let base = language.split('-').next().unwrap_or(language);
+    let mut out = BTreeMap::new();
+    for l in ["en", base, language] {
+        for (k, v) in c.get(l).into_iter().flatten() {
+            if !v.is_empty() {
+                out.insert(k.clone(), v.clone());
+            }
+        }
+    }
+    out
+}
+
+/// [`table`] for the display language as one JSON object: `{"language":"de","strings":{...}}`
+/// (`omarchy-theme --strings`, `omarchy_theme_strings_json`).
+pub fn table_json(language: &str) -> String {
+    serde_json::json!({ "language": language, "strings": table(language) }).to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -92,6 +114,14 @@ mod tests {
         assert_eq!(lookup("en", "no.such.key"), None);
         assert_eq!(t("en", "no.such.key", "Fallback"), "Fallback");
         assert_eq!(lookup("en", "multiSelect.selectedCount"), Some("%1 selected"), "a plural gives its other form");
+    }
+
+    #[test]
+    fn the_table_falls_back_key_by_key() {
+        let de = table("de-AT");
+        assert_eq!(de.get("common.cancel").map(String::as_str), lookup("de", "common.cancel"));
+        assert_eq!(de.len(), table("en").len(), "every English key is there, translated or not");
+        assert!(table_json("de").starts_with("{\"language\":\"de\""));
     }
 
     #[test]

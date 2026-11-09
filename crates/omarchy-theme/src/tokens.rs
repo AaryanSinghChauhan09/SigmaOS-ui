@@ -317,9 +317,37 @@ impl Tokens {
     /// The canonical JSON dump (`spec/tokens.md`), with whole numbers printed as integers so
     /// every binding's dump compares byte for byte.
     pub fn to_canonical_json(&self) -> String {
+        serde_json::to_string_pretty(&self.canonical_value()).expect("json")
+    }
+
+    /// The same canonical JSON on one line: what `omarchy-theme --watch` prints per change and
+    /// the C library returns.
+    pub fn to_canonical_json_compact(&self) -> String {
+        serde_json::to_string(&self.canonical_value()).expect("json")
+    }
+
+    /// The canonical JSON as a value.
+    pub fn canonical_value(&self) -> serde_json::Value {
         let mut v = serde_json::to_value(self).expect("tokens serialize");
         normalize(&mut v);
-        serde_json::to_string_pretty(&v).expect("json")
+        v
+    }
+
+    /// Everything a process outside Rust needs in one object, on one line: the theme name, the
+    /// icon theme, the display language, the canonical tokens and the kit's strings in that
+    /// language (`omarchy-theme --state`, `omarchy_theme_state_json`). `revision` counts changes
+    /// since the consumer started (`spec/following.md`).
+    pub fn to_state_json(&self, revision: u64) -> String {
+        serde_json::json!({
+            "schema": 1,
+            "revision": revision,
+            "theme": self.theme,
+            "iconTheme": self.icon_theme,
+            "language": self.language,
+            "tokens": self.canonical_value(),
+            "strings": crate::strings::table(&self.language),
+        })
+        .to_string()
     }
 }
 
