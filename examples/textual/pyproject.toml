@@ -1,0 +1,20 @@
+# A Textual app using Omarchy UI from outside the kit's tree: a path dependency on omarchy-textual
+# (a git or index dependency works the same), which brings the Textual and Rich it is pinned to.
+[project]
+name = "omarchy-ui-example-textual"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["omarchy-textual"]
+
+[project.scripts]
+omarchy-ui-example-textual = "wifi:main"
+
+[tool.uv.sources]
+omarchy-textual = { path = "../../tui/textual", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+include = ["wifi.py"]
