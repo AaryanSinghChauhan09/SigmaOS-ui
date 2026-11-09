@@ -35,4 +35,16 @@ for dir in "$ROOT"/examples/kde-*/; do
     fail=1
   fi
 done
+# The pkg-config route: the same Qt Widgets example, compiled by hand against omarchy-widgets.pc.
+exe="$ROOT/build/examples/kde-widgets-pkgconfig"
+if PKG_CONFIG_PATH="$STAGE/lib/pkgconfig:$ROOT/build/ffi/lib/pkgconfig" \
+  c++ -std=c++17 -fPIC "$ROOT/examples/kde-widgets/main.cpp" -o "$exe" \
+  $(PKG_CONFIG_PATH="$STAGE/lib/pkgconfig:$ROOT/build/ffi/lib/pkgconfig" pkg-config --cflags --libs omarchy-widgets) 2>"$OUT/kde-widgets-pkgconfig.log" &&
+  timeout 60 "$exe" --snap "$OUT/kde-widgets-pkgconfig.png" >>"$OUT/kde-widgets-pkgconfig.log" 2>&1 &&
+  cmp -s "$OUT/kde-widgets-pkgconfig.png" "$OUT/kde-widgets.png"; then
+  echo "examples: kde-widgets through pkg-config renders the same"
+else
+  echo "examples: kde-widgets through pkg-config failed (build/examples/kde-widgets-pkgconfig.log)"
+  fail=1
+fi
 exit $fail
