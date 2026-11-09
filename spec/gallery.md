@@ -21,4 +21,6 @@ Every binding ships a gallery with these sections, in this order, with these spe
 
 The order is the galleries' order: `qt/gallery/Sections.qml` and the `gallery!` list in `rune/gallery/src/main.rs`, which `tools/review.py` reads.
 
-Adding a component means adding a specimen here and to every gallery, so the review covers it.
+Terminal galleries render the same sections on a cell grid, 96 columns wide, at the sizes [`terminal.md`](terminal.md#gallery) lists.
+
+Adding a component means adding a specimen here and to every gallery (the terminal ones too, with its cell form in `terminal.md`), so the review covers it.

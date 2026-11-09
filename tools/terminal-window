@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Open a terminal gallery (or any command) in a new terminal window that follows the desktop, as
+# `bin/review --live` does for the terminal bindings (tools/bindings.d, "family": "terminal"):
+#
+#   tools/terminal-window CMD [ARGS...]
+#
+# CMD is resolved from the repository root. Uses xdg-terminal-exec (Omarchy's default terminal),
+# else foot, alacritty, kitty or ghostty. OMARCHY_UI_TERMINAL_DRY_RUN=1 prints the command instead
+# of running it.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+(( $# )) || { echo "usage: tools/terminal-window CMD [ARGS...]" >&2; exit 2; }
+
+cmd="$1"
+shift
+if [[ $cmd == */* ]]; then
+  [[ $cmd == /* ]] || cmd="$ROOT/$cmd"
+else
+  cmd="$(command -v "$cmd" || echo "$cmd")"
+fi
+[[ -x $cmd ]] || { echo "terminal-window: $cmd isn't built (bin/build)" >&2; exit 1; }
+title="Omarchy UI · $(basename "$cmd")"
+
+if command -v xdg-terminal-exec >/dev/null; then
+  launch=(xdg-terminal-exec --title="$title" --dir="$ROOT" -- "$cmd" "$@")
+elif command -v foot >/dev/null; then
+  launch=(foot --title="$title" --working-directory="$ROOT" -- "$cmd" "$@")
+elif command -v alacritty >/dev/null; then
+  launch=(alacritty --title "$title" --working-directory "$ROOT" -e "$cmd" "$@")
+elif command -v kitty >/dev/null; then
+  launch=(kitty --title "$title" --directory "$ROOT" "$cmd" "$@")
+elif command -v ghostty >/dev/null; then
+  launch=(ghostty --title="$title" --working-directory="$ROOT" -e "$cmd" "$@")
+else
+  echo "terminal-window: no terminal found (xdg-terminal-exec, foot, alacritty, kitty, ghostty)" >&2
+  exit 1
+fi
+
+if [[ ${OMARCHY_UI_TERMINAL_DRY_RUN:-} == 1 ]]; then
+  printf '%q ' "${launch[@]}"
+  echo
+  exit 0
+fi
+exec "${launch[@]}"
