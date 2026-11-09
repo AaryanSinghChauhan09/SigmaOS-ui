@@ -13,5 +13,7 @@ export PKG_CONFIG_PATH="$ROOT/build/ffi/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CO
 # Configure every time (cheap): a new source file is picked up, moc included, in this build.
 cmake -S "$ROOT/kde" -B "$ROOT/build/kde" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DCMAKE_INSTALL_RPATH="$ROOT/build/ffi/lib" -DCMAKE_BUILD_RPATH="$ROOT/build/ffi/lib" >/dev/null
+# AUTOMOC can miss a .moc a new test file includes until its scan is forced again.
+rm -f "$ROOT"/build/kde/*_autogen/timestamp
 ninja -C "$ROOT/build/kde" >/dev/null || ninja -C "$ROOT/build/kde"
 echo "build/kde/omarchy-widgets-gallery"
