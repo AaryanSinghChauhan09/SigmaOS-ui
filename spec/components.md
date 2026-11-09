@@ -37,6 +37,8 @@ Each group has its own file with every component's anatomy, API in both bindings
 | Editing | [`components/editing.md`](components/editing.md) | Timeline, Scrubber, TrimHandle, CropFrame, DragHandle, DropIndicator, ColorPicker | `timeline`, `color` |
 | Composed | [`components/composed.md`](components/composed.md) | SearchList, and a Wi-Fi panel, search overlays and an app inspector built only from kit parts | `composed` |
 
+Terminal bindings draw every component here on the cell grid as [`terminal.md`](terminal.md) maps it.
+
 ## Shared rules
 
 - **Strings** a component shows by default (Cancel, Confirm, Search..., None selected, No matches for “%1”, Previous month) come from one catalog in both bindings: `qt/qml/Omarchy/Theme/Strings.js`, harvested from Omarchy's `default/i18n` for every key a Qt kit file asks for (`I18n.t`), read by Rust through `omarchy_theme::strings` (`Tokens::string`). Both follow `~/.config/omarchy/language`. A component that adds one asks for it with `I18n.t(key, english)` in Qt and `tk.string(key, english)` in Rune, then `bin/harvest-qt` carries it.

@@ -35,6 +35,7 @@ Following takes no app code, or one call at startup. Never a loop, a timer or a 
 | Rune | `omarchy_rune::run(spec)` instead of `rune::run(spec)`, with `impl Themed for App` (two accessor methods). |
 | C (any main loop) | `omarchy_theme_watch_new()`, then add `omarchy_theme_watch_fd()` to the loop (`g_unix_fd_add`, `QSocketNotifier`, `poll`) and call `omarchy_theme_watch_take()` when it's readable. Or `omarchy_theme_watch_callback()`. |
 | Rust, other UI | `omarchy_theme::watch(initial, callback)`; marshal to the UI thread. |
+| Ratatui | `omarchy_ratatui::run(app)` instead of the app's own loop, with `impl Themed` (two accessors). |
 | Process-spawning (Electron, scripts) | Spawn `omarchy-theme --watch` (or `--watch --state`) and read one JSON line per change. |
 
 A binding that wraps a toolkit (GTK, Qt Widgets, GPUI, Electron) makes the toolkit side zero-code or one-call too: re-theme the toolkit's own palette or CSS from each change, so the app never sees the mechanism.
@@ -83,7 +84,7 @@ Every binding has an automated test that switches the theme the way Omarchy does
    - the revision is 1.
 6. **Where it fades**, also: a fade ran (a color between the two was on screen, or the binding says it is fading) and landed exactly; under `OMARCHY_UI_REDUCE_MOTION=1` no fade ran.
 
-The tests today: `crates/omarchy-theme/tests/live_switch.rs` (the Rust watch), `crates/omarchy-theme-ffi/tests/live.c` (the C library, both watch forms), `rune/omarchy-rune/tests/live_switch.rs` (Rune, with the transition and reduced motion), `qt/tests-live/tst_follow.qml` (Qt, run with and without `OMARCHY_UI_REDUCE_MOTION=1`), and each newer binding's `live switch` entries in `tools/bindings.d/` (GTK `build/gtk/omarchy-gtk-live-test`, KDE `build/kde/omarchy-widgets-live-test` and its Kirigami twin, GPUI `omarchy-gpui-live-test`, web `web/test/live.mjs` in Chromium and `web/test/electron-live.mjs` in Electron).
+The tests today: `crates/omarchy-theme/tests/live_switch.rs` (the Rust watch), `crates/omarchy-theme-ffi/tests/live.c` (the C library, both watch forms), `rune/omarchy-rune/tests/live_switch.rs` (Rune, with the transition and reduced motion), `qt/tests-live/tst_follow.qml` (Qt, run with and without `OMARCHY_UI_REDUCE_MOTION=1`), and each newer binding's `live switch` entries in `tools/bindings.d/` (GTK `build/gtk/omarchy-gtk-live-test`, KDE `build/kde/omarchy-widgets-live-test` and its Kirigami twin, GPUI `omarchy-gpui-live-test`, Ratatui `omarchy-ratatui-live-test` (on the kit's own loop with a `TestBackend`), web `web/test/live.mjs` in Chromium and `web/test/electron-live.mjs` in Electron).
 
 `tools/live/theme-set` is the one simulation every test uses, so they all exercise the same sequence. A binding's registry entry (`tools/bindings.d/<name>.json`) lists its live test with its other tests.
 
@@ -99,4 +100,5 @@ The tests today: `crates/omarchy-theme/tests/live_switch.rs` (the Rust watch), `
 | GTK 4 (`libomarchy-gtk-1`) | `omarchy_gtk_init()` (the C library's fd on `g_unix_fd_add`) | `OmarchyTheme::changed (GVariant *tokens)` | the `revision` property | the generated CSS and the kit widgets, 280 ms `ease` |
 | KDE / Qt Widgets (`OmarchyWidgets`) | `Omarchy::Widgets::apply(app)` (the fd on a `QSocketNotifier`) | `Omarchy::Theme::changed(QJsonObject)` | `Omarchy::Theme::revision()` | palette, style and KDE color scheme, 280 ms `ease` |
 | GPUI (`omarchy-gpui`) | `omarchy_gpui::init(cx)` (`watch` onto the app thread) | `omarchy_gpui::on_change(cx, f)`, or `cx.observe_global::<Theme>()` | `Theme::get(cx).revision()` | the `Paint` global, 280 ms `ease`, layout instant |
+| Ratatui (`omarchy-ratatui`) | `omarchy_ratatui::run(app)` (the core's `watch` onto the app's loop), or `Theme::follow` + `Theme::take_change` | `Themed::theme_changed(&mut self, &Tokens)` | `Theme::revision()` | `Theme::shown()`, redrawn, 280 ms `ease`, 24-bit only (spec/terminal.md) |
 | Electron / web (`@omarchy/ui`) | `followOmarchy()` in main (the CLI stream), applied on import in the renderer | `omarchy.onChange(cb)` | `omarchy.revision` | `@property` transitions on the `--omarchy-*` colors, 280 ms `ease` |

@@ -13,6 +13,7 @@ A cross-framework UI kit for apps that look and feel like Omarchy, in any toolki
 | GTK 4 / libadwaita | [`gtk/`](gtk) | `libomarchy-gtk-1`: one `omarchy_gtk_init()` restyles stock GTK and libadwaita widgets and follows the theme; the full kit as GObject widgets, usable from C, Python, GJS, Vala (through GObject Introspection) and Rust (`gtk/rust/omarchy-gtk`). |
 | KDE / Qt Widgets | [`kde/`](kde) | `OmarchyWidgets`: one `Omarchy::Widgets::apply(app)` sets the palette, a `QProxyStyle` for stock widgets, a live KDE color scheme for KF6 and Kirigami apps; the full kit as QWidgets. |
 | GPUI | [`gpui/`](gpui) | `omarchy-gpui`: one `omarchy_gpui::init(cx)`, the full kit as GPUI elements, and gpui-component's theme mapped from the tokens. |
+| Ratatui (terminal) | [`tui/ratatui/`](tui/ratatui) | `omarchy-ratatui`: one `omarchy_ratatui::run(app)`, the full kit on the terminal's cell grid ([`spec/terminal.md`](spec/terminal.md)), the reference for the terminal bindings. |
 | Electron / web | [`web/`](web) | `@omarchy/ui`: CSS custom properties, a restyle for plain HTML controls, the full kit as Web Components, and `followOmarchy()` for Electron. |
 | Rust, any framework | [`crates/omarchy-theme`](crates/omarchy-theme) | The resolver and watcher, with no UI dependency. Start an iced or egui binding here. |
 | C, any language | [`crates/omarchy-theme-ffi`](crates/omarchy-theme-ffi) | `libomarchy-theme`: the same resolver and a main-loop watch as a C library (`omarchy-theme.h`, `pkg-config omarchy-theme`), and the `omarchy-theme` CLI's line-per-change stream. Start a binding for any other toolkit here ([`docs/using-c.md`](docs/using-c.md)). |
@@ -23,6 +24,7 @@ A cross-framework UI kit for apps that look and feel like Omarchy, in any toolki
 bin/build
 build/qt/omarchy-qt-gallery                  # follows your theme; switch themes and watch
 target/release/omarchy-rune-gallery
+tui/ratatui/target/release/omarchy-ratatui-gallery   # the terminal kit, in this terminal
 bin/review --open                            # every binding vs Qt, 6 themes × 2 roundings, every section
 target/release/omarchy-theme                 # the resolved tokens as JSON
 ```
@@ -38,6 +40,7 @@ It's a library: apps depend on it rather than copying it. [`docs/`](docs/README.
 - **GTK 4** ([`docs/using-gtk.md`](docs/using-gtk.md)): `pkg-config omarchy-gtk-1` from C, `gi.require_version("Omarchy", "1")` from Python, `gi://Omarchy` from GJS, `--pkg omarchy-gtk-1` from Vala, `omarchy-gtk` from Rust; then one `init` call.
 - **KDE / Qt Widgets** ([`docs/using-kde.md`](docs/using-kde.md)): `find_package(OmarchyWidgets)` and one `Omarchy::Widgets::apply(app)`.
 - **GPUI** ([`docs/using-gpui.md`](docs/using-gpui.md)): one path dependency on `omarchy-gpui` and one `omarchy_gpui::init(cx)`.
+- **Ratatui** ([`docs/using-ratatui.md`](docs/using-ratatui.md)): one path dependency on `omarchy-ratatui` and one `omarchy_ratatui::run(app)`; any other terminal toolkit follows [`spec/terminal.md`](spec/terminal.md) ([`docs/using-terminal.md`](docs/using-terminal.md)).
 - **Electron / web** ([`docs/using-web.md`](docs/using-web.md)): `followOmarchy()` in main, the preload, and `import "@omarchy/ui"` in the renderer.
 - **iced, egui, any other Rust UI** ([`docs/using-rust.md`](docs/using-rust.md#any-other-rust-framework-omarchy-theme)): `omarchy-theme` gives tokens, a live watch, icons and strings.
 - **Anything else** ([`docs/using-c.md`](docs/using-c.md)): `libomarchy-theme` from C or any FFI, or `omarchy-theme --watch --state` from a spawned process.
