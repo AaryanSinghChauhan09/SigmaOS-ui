@@ -1,3 +1,287 @@
 /* Textual's stock widgets in Omarchy's terminal forms (spec/terminal.md): one-row controls of
-   foreground glass with thin ▏▕ edges, accent only for what is chosen, the page background never
-   painted. Colors are the kit's $omarchy-* variables (docs/using-textual.md). */
+   foreground glass with thin ▏▕ edges (`vkey` borders), the hover look under the pointer and with
+   the keys (keyboard first: focus looks like hover), accent only for what is chosen, bold only
+   for selection and titles, light box lines for surfaces, the page background never painted.
+   Every color is a kit variable ($omarchy-*, docs/using-textual.md), so it follows the theme.
+   An app's own CSS still wins over these. */
+
+Screen {
+    background: $omarchy-background;
+    color: $omarchy-foreground;
+}
+
+/* Button: label + 4 wide, one row; bordered at rest; Primary is the selected look; Error is
+   destructive (urgent). */
+Button, Button.-style-default, Button:ansi.-style-default {
+    height: 1;
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    line-pad: 1;
+    border: none;
+    border-left: vkey $omarchy-normal-border;
+    border-right: vkey $omarchy-normal-border;
+    background: transparent;
+    background-tint: transparent;
+    color: $omarchy-foreground;
+    text-style: none;
+    tint: transparent;
+    &:hover, &:focus {
+        background: $omarchy-hover-fill;
+        border: none;
+        border-left: vkey $omarchy-hover-border;
+        border-right: vkey $omarchy-hover-border;
+        text-style: none;
+        background-tint: transparent;
+    }
+    &.-active {
+        background: $omarchy-pressed-fill;
+        border: none;
+        border-left: vkey $omarchy-hover-border;
+        border-right: vkey $omarchy-hover-border;
+        tint: transparent;
+    }
+    &.-primary {
+        background: $omarchy-selected-fill;
+        color: $omarchy-selected-text;
+        text-style: bold;
+        border: none;
+        border-left: vkey $omarchy-normal-border;
+        border-right: vkey $omarchy-normal-border;
+        &:hover, &:focus { background: $omarchy-hover-fill; }
+    }
+    &.-success, &.-warning {
+        color: $omarchy-foreground;
+        border: none;
+        border-left: vkey $omarchy-normal-border;
+        border-right: vkey $omarchy-normal-border;
+        background: transparent;
+        &:hover, &:focus { background: $omarchy-hover-fill; }
+    }
+    &.-error {
+        color: $omarchy-urgent;
+        border: none;
+        border-left: vkey $omarchy-urgent;
+        border-right: vkey $omarchy-urgent;
+        background: transparent;
+        &:hover, &:focus { background: $omarchy-hover-fill; }
+    }
+    &:disabled {
+        color: $omarchy-text-faint;
+        text-style: none;
+        background: transparent;
+        border: none;
+        border-left: vkey $omarchy-normal-border;
+        border-right: vkey $omarchy-normal-border;
+    }
+}
+
+/* Input, MaskedInput, TextArea: the TextField frame, text from column 2. */
+Input {
+    height: 1;
+    padding: 0 1;
+    border: none;
+    border-left: vkey $omarchy-normal-border;
+    border-right: vkey $omarchy-normal-border;
+    background: $omarchy-normal-fill;
+    background-tint: transparent;
+    color: $omarchy-foreground;
+    &:focus, &:hover {
+        border: none;
+        border-left: vkey $omarchy-hover-border;
+        border-right: vkey $omarchy-hover-border;
+        background: $omarchy-hover-fill;
+        background-tint: transparent;
+    }
+    &.-invalid, &.-invalid:focus {
+        border: none;
+        border-left: vkey $omarchy-error-border;
+        border-right: vkey $omarchy-error-border;
+    }
+    & > .input--cursor { background: $omarchy-foreground; color: $omarchy-background; text-style: none; }
+    & > .input--selection { background: $omarchy-selection-fill; }
+    & > .input--placeholder, & > .input--suggestion { color: $omarchy-text-faint; }
+}
+
+TextArea {
+    border: none;
+    border-left: vkey $omarchy-normal-border;
+    border-right: vkey $omarchy-normal-border;
+    padding: 0 1;
+    background: $omarchy-normal-fill;
+    background-tint: transparent;
+    &:focus {
+        border: none;
+        border-left: vkey $omarchy-hover-border;
+        border-right: vkey $omarchy-hover-border;
+        background: $omarchy-hover-fill;
+        background-tint: transparent;
+    }
+    & > .text-area--cursor-line { background: transparent; }
+    & > .text-area--selection { background: $omarchy-selection-fill; }
+    & > .text-area--gutter { color: $omarchy-text-faint; }
+}
+
+/* Switch: 6 × 1 with the cursor ring's edges; the track in the normal fill (on: selected). */
+Switch {
+    height: 1;
+    width: 6;
+    padding: 0;
+    border: none;
+    border-left: vkey $omarchy-background 0%;
+    border-right: vkey $omarchy-background 0%;
+    background: transparent;
+    background-tint: transparent;
+    & .switch--slider { color: $omarchy-text-dim; background: $omarchy-normal-fill; }
+    &.-on .switch--slider { color: $omarchy-selected-text; background: $omarchy-selected-fill; }
+    &:hover > .switch--slider, &:light:hover > .switch--slider { color: $omarchy-text-dim; }
+    &.-on:hover > .switch--slider, &:light.-on:hover > .switch--slider { color: $omarchy-selected-text; }
+    &:focus, &:hover {
+        border: none;
+        border-left: vkey $omarchy-hover-border;
+        border-right: vkey $omarchy-hover-border;
+        background-tint: transparent;
+    }
+}
+
+/* Checkbox, RadioButton: the box's cells in the control fills, the mark accent bold. */
+ToggleButton {
+    height: 1;
+    padding: 0;
+    border: none;
+    background: transparent;
+    background-tint: transparent;
+    & > .toggle--button { color: $omarchy-normal-fill; background: $omarchy-normal-fill; }
+    &.-on > .toggle--button { color: $omarchy-accent; background: $omarchy-selected-fill; text-style: bold; }
+    & > .toggle--label { color: $omarchy-foreground; background: transparent; }
+    &:focus, &:hover {
+        border: none;
+        background-tint: transparent;
+        & > .toggle--button { background: $omarchy-hover-fill; }
+        & > .toggle--label { color: $omarchy-foreground; background: transparent; text-style: none; }
+    }
+    &:disabled > .toggle--label { color: $omarchy-text-faint; }
+}
+
+RadioSet {
+    border: none;
+    padding: 0;
+    background: transparent;
+    &:focus { border: none; background-tint: transparent; }
+    & > RadioButton.-selected { background: transparent; }
+}
+
+/* Select: the Dropdown trigger; its list a box in the popups border. */
+SelectCurrent {
+    height: 1;
+    padding: 0 1;
+    border: none;
+    border-left: vkey $omarchy-normal-border;
+    border-right: vkey $omarchy-normal-border;
+    background: $omarchy-normal-fill;
+    & Static#label { color: $omarchy-text-faint; }
+    &.-has-value Static#label { color: $omarchy-foreground; }
+    & .arrow { color: $omarchy-text-dim; }
+}
+Select:focus > SelectCurrent, Select:hover > SelectCurrent {
+    border: none;
+    border-left: vkey $omarchy-hover-border;
+    border-right: vkey $omarchy-hover-border;
+    background: $omarchy-hover-fill;
+    background-tint: transparent;
+}
+SelectOverlay {
+    border: round $omarchy-popup-border;
+    background: $omarchy-background;
+    padding: 0;
+}
+
+/* Lists: a row per item, the cursor in the hover fill, the chosen bold. */
+OptionList, ListView, SelectionList {
+    border: none;
+    background: transparent;
+    padding: 0;
+    &:focus { border: none; background-tint: transparent; }
+}
+OptionList > .option-list--option-highlighted,
+OptionList:focus > .option-list--option-highlighted,
+SelectionList > .option-list--option-highlighted {
+    background: $omarchy-hover-fill;
+    color: $omarchy-foreground;
+    text-style: none;
+}
+OptionList > .option-list--option-hover { background: $omarchy-hover-fill; }
+OptionList > .option-list--separator { color: $omarchy-track; }
+ListView > ListItem { background: transparent; }
+ListView > ListItem.-highlight, ListView:focus > ListItem.-highlight {
+    background: $omarchy-hover-fill;
+    color: $omarchy-foreground;
+    text-style: none;
+}
+ListItem:hover { background: $omarchy-hover-fill; }
+
+/* DataTable and Tree: the Table's row ladder; headers bold textDim. */
+DataTable {
+    background: transparent;
+    border: none;
+    &:focus { background-tint: transparent; border: none; }
+    & > .datatable--header { background: transparent; color: $omarchy-text-dim; text-style: bold; }
+    & > .datatable--cursor, &:focus > .datatable--cursor { background: $omarchy-hover-fill; color: $omarchy-foreground; text-style: none; }
+    & > .datatable--hover { background: $omarchy-hover-fill; }
+    & > .datatable--even-row, & > .datatable--odd-row { background: transparent; }
+    & > .datatable--fixed { background: transparent; }
+    & > .datatable--header-hover { background: transparent; }
+}
+Tree {
+    background: transparent;
+    border: none;
+    &:focus { background-tint: transparent; border: none; }
+    & > .tree--guides, & > .tree--guides-hover, & > .tree--guides-selected { color: $omarchy-track; }
+    & > .tree--cursor, &:focus > .tree--cursor { background: $omarchy-hover-fill; color: $omarchy-foreground; text-style: none; }
+    & > .tree--highlight-line { background: $omarchy-hover-fill; }
+}
+
+/* Tabs: labels textDim, the selected bold on an accent rule over a track rule. */
+Tabs {
+    & Tab { color: $omarchy-text-dim; text-style: none; background: transparent; }
+    & Tab:hover { color: $omarchy-foreground; background: $omarchy-hover-fill; }
+    & Tab.-active { color: $omarchy-selected-text; text-style: bold; background: transparent; }
+    &:focus Tab.-active { background: $omarchy-hover-fill; }
+    & Underline > .underline--bar { color: $omarchy-accent; background: $omarchy-track; }
+}
+
+/* Feedback. */
+ProgressBar Bar > .bar--bar, ProgressBar Bar > .bar--indeterminate { color: $omarchy-accent; background: $omarchy-track; }
+ProgressBar Bar > .bar--complete { color: $omarchy-accent; }
+ProgressBar Bar { background: transparent; }
+LoadingIndicator { color: $omarchy-foreground; background: transparent; }
+Toast {
+    border-left: none;
+    border: round $omarchy-notification-border;
+    background: $omarchy-background;
+    & > .toast--title { text-style: bold; color: $omarchy-foreground; }
+}
+Toast.-error { border: round $omarchy-urgent; }
+Toast.-warning { border: round $omarchy-warning; }
+Tooltip {
+    border: round $omarchy-tooltip-border;
+    background: $omarchy-background;
+    color: $omarchy-foreground;
+    padding: 0 1;
+}
+
+/* Surfaces: light box lines (rounded when Hyprland rounds, from the app's own choice of
+   `round`/`solid`), titles bold textDim. */
+Collapsible { border: none; background: transparent; padding-left: 0; }
+CollapsibleTitle { color: $omarchy-text-dim; text-style: bold; background: transparent; }
+CollapsibleTitle:hover, CollapsibleTitle:focus { background: $omarchy-hover-fill; color: $omarchy-foreground; }
+Rule { color: $omarchy-track; }
+
+Header { background: transparent; color: $omarchy-foreground; text-style: bold; }
+Footer {
+    background: transparent;
+    & FooterKey { background: transparent; color: $omarchy-text-dim; }
+    & FooterKey .footer-key--key { background: $omarchy-normal-fill; color: $omarchy-foreground; text-style: none; }
+    & FooterKey .footer-key--description { color: $omarchy-text-dim; }
+    & FooterKey:hover { background: $omarchy-hover-fill; }
+}

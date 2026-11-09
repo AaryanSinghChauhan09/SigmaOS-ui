@@ -257,7 +257,7 @@ class Kit:
             Depth.ANSI16: ColorSystem.STANDARD,
         }[self.theme.depth]
         if not getattr(app, "_omarchy_css", False):
-            app.stylesheet.add_source(stock_css(), read_from=("omarchy_textual", "stock.tcss"), is_default_css=True)
+            app.stylesheet.add_source(stock_css(), read_from=("omarchy_textual", "stock.tcss"), is_default_css=False)
             app._omarchy_css = True
 
     def start(self) -> None:
