@@ -328,8 +328,9 @@ export class MenuSeparator extends OmarchyElement {
 export class MenuSection extends OmarchyElement {
   static props = { text: ["string", ""] };
   static css = `
-:host { display: block; padding: var(--omarchy-space-sm) var(--omarchy-space-control-padding-x) var(--omarchy-space-xxs); }
-omarchy-section-header { display: inline-block; }`;
+/* A flex row, not a line box: the header sits at its own height, with no strut of the menu's font
+   under it (whose rounded ascent and descent differ between engines). */
+:host { display: flex; padding: var(--omarchy-space-sm) var(--omarchy-space-control-padding-x) var(--omarchy-space-xxs); }`;
   setup() {
     this.shadowRoot.innerHTML = `<omarchy-section-header></omarchy-section-header>`;
     this.setAttribute("role", "presentation");
