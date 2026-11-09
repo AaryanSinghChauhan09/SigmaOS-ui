@@ -9,6 +9,7 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func repo() string {
@@ -196,5 +197,29 @@ func TestWrapDeliversTheHookOnceAfterTheChange(t *testing.T) {
 	}
 	if len(rec.hooks) != 1 {
 		t.Fatal("fade frames are not changes")
+	}
+}
+
+// Lip Gloss strings draw into the grid with their colors and attributes; cells they give no
+// background keep what is painted under them.
+func TestStyledDrawsLipGlossStrings(t *testing.T) {
+	th := fixture(t, "tokyo-night", "0")
+	s := th.Styles().Section.Render("Hi") + " " + lipgloss.NewStyle().Background(th.Accent()).Render("x")
+	st := Styled(s)
+	if w, h := st.Size(th); w != 4 || h != 1 {
+		t.Fatalf("size %dx%d", w, h)
+	}
+	buf := NewBuffer(R(0, 0, 4, 1))
+	Fill(th, buf, buf.Area, th.Shown().Controls.Hover.Fill)
+	st.Draw(th, buf.Area, buf)
+	h := buf.At(0, 0)
+	if h.Symbol != "H" || h.Attrs&Bold == 0 || h.Fg != CellRGB(th.Dim()) {
+		t.Errorf("styled cell %+v", h)
+	}
+	if h.Bg != CellRGB(Over(th.Shown().Controls.Hover.Fill, th.Bg())) {
+		t.Error("no background keeps the fill under it")
+	}
+	if buf.At(3, 0).Bg != CellRGB(th.Accent()) {
+		t.Error("a background paints")
 	}
 }

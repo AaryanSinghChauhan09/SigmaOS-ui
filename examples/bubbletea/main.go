@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"omarchy-ui/tui/bubbletea/omarchy"
 	"omarchy-ui/tui/bubbletea/ui"
@@ -87,7 +88,12 @@ func (m model) panel() omarchy.Component {
 	)
 }
 
-func (m model) View() tea.View { return tea.NewView(m.theme.Render(m.panel())) }
+// View is the panel with a line of help under it in Lip Gloss, in the kit's roles (built every
+// frame, so it fades with the theme).
+func (m model) View() tea.View {
+	help := m.theme.Styles().Dim.Render("  j/k move · enter connect · q quit")
+	return tea.NewView(lipgloss.JoinVertical(lipgloss.Left, m.theme.Render(m.panel()), help))
+}
 
 func main() {
 	theme, err := omarchy.Load()
