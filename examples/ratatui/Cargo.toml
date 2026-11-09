@@ -1,0 +1,12 @@
+# A Ratatui app outside every workspace using Omarchy UI through a path dependency, as an app
+# would (docs/using-ratatui.md). bin/test-examples builds it and snapshots it.
+[package]
+name = "omarchy-ui-example-ratatui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+omarchy-ratatui = { path = "../../tui/ratatui/omarchy-ratatui", features = ["snap"] }
+
+[workspace]

@@ -7,6 +7,8 @@
 #   qt-installed  qt/module installed into build/stage (make install INSTALL_ROOT=...), then a
 #                 pure-QML file run with Qt 6's qml tool against it (QML_IMPORT_PATH)
 #   rune          a crate outside the workspace with a path dependency on omarchy-rune
+#   ratatui       the same for omarchy-ratatui, snapshotted as ANSI text (spec/terminal.md) and
+#                 checked and rendered with omarchy-ansi
 #
 # The two Qt routes run the same QML on the same kit, so their PNGs must match byte for byte.
 # A route whose tool is missing is skipped. bin/test runs this.
@@ -78,6 +80,23 @@ if command -v cargo >/dev/null; then
   fi
 else
   skip rune "no cargo"
+fi
+
+if command -v cargo >/dev/null; then
+  # The binding's own target dir (tui/ratatui), so Ratatui compiles once.
+  ans="$OUT/ratatui.ans"
+  png="$OUT/ratatui.png"
+  rm -f "$ans" "$png"
+  if CARGO_TARGET_DIR="$ROOT/tui/ratatui/target" cargo build -q --release --manifest-path "$ROOT/examples/ratatui/Cargo.toml" &&
+    timeout 30 "$ROOT/tui/ratatui/target/release/omarchy-ui-example-ratatui" --snap "$ans" --size 50x0 >"$OUT/ratatui.log" 2>&1 &&
+    "$ROOT/target/release/omarchy-ansi" check "$ans" --size 50x17 >>"$OUT/ratatui.log" 2>&1 &&
+    "$ROOT/target/release/omarchy-ansi" png "$ans" "$png" >>"$OUT/ratatui.log" 2>&1 && rendered "$png"; then
+    ok ratatui "$png"
+  else
+    bad ratatui "build/examples/ratatui.log has the output"
+  fi
+else
+  skip ratatui "no cargo"
 fi
 
 exit "$fail"
