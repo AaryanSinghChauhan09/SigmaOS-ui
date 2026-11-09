@@ -246,8 +246,10 @@ row_geom (OmarchyListRow *self, int width, RowGeom *g)
   g->info_x = g->lead_w;
   g->info_w = MAX (0, body_w - g->lead_w - g->trail_w);
 
-  if (child_shown (self->expansion)) {
-    int ew = MAX (0, width - g->pad * 2);
+  if (child_shown (self->expansion) && width > 0) {
+    int emin;
+    gtk_widget_measure (self->expansion, GTK_ORIENTATION_HORIZONTAL, -1, &emin, NULL, NULL, NULL);
+    int ew = MAX (emin, width - g->pad * 2);
     gtk_widget_measure (self->expansion, GTK_ORIENTATION_VERTICAL, ew, NULL, &g->exp_h, NULL, NULL);
   }
 }
