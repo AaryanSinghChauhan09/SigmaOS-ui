@@ -339,6 +339,18 @@ glib::wrapper! {
 }
 
 glib::wrapper! {
+    /// `OmarchySearchItem` (see the C library's gtk-doc and spec/components.md).
+    pub struct SearchItem(Object<ffi::OmarchySearchItem, ffi::OmarchySearchItemClass>) ;
+    match fn { type_ => || ffi::omarchy_search_item_get_type(), }
+}
+
+glib::wrapper! {
+    /// `OmarchySearchList` (see the C library's gtk-doc and spec/components.md).
+    pub struct SearchList(Object<ffi::OmarchySearchList, ffi::OmarchySearchListClass>) @extends gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
+    match fn { type_ => || ffi::omarchy_search_list_get_type(), }
+}
+
+glib::wrapper! {
     /// `OmarchySlider` (see the C library's gtk-doc and spec/components.md).
     pub struct Slider(Object<ffi::OmarchySlider, ffi::OmarchySliderClass>) @extends gtk::Widget, @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
     match fn { type_ => || ffi::omarchy_slider_get_type(), }

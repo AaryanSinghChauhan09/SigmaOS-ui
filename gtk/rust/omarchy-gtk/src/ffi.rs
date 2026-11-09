@@ -114,6 +114,10 @@ pub use crate::ffi_manual::*;
 #[repr(C)] pub struct OmarchyPaneClass { _p: [u8; 0] }
 #[repr(C)] pub struct OmarchySettingRow { _p: [u8; 0] }
 #[repr(C)] pub struct OmarchySettingRowClass { _p: [u8; 0] }
+#[repr(C)] pub struct OmarchySearchItem { _p: [u8; 0] }
+#[repr(C)] pub struct OmarchySearchItemClass { _p: [u8; 0] }
+#[repr(C)] pub struct OmarchySearchList { _p: [u8; 0] }
+#[repr(C)] pub struct OmarchySearchListClass { _p: [u8; 0] }
 #[repr(C)] pub struct OmarchySlider { _p: [u8; 0] }
 #[repr(C)] pub struct OmarchySliderClass { _p: [u8; 0] }
 #[repr(C)] pub struct OmarchySectionHeader { _p: [u8; 0] }
@@ -192,6 +196,8 @@ unsafe extern "C" {
     pub fn omarchy_heading_get_type() -> glib::ffi::GType;
     pub fn omarchy_pane_get_type() -> glib::ffi::GType;
     pub fn omarchy_setting_row_get_type() -> glib::ffi::GType;
+    pub fn omarchy_search_item_get_type() -> glib::ffi::GType;
+    pub fn omarchy_search_list_get_type() -> glib::ffi::GType;
     pub fn omarchy_slider_get_type() -> glib::ffi::GType;
     pub fn omarchy_section_header_get_type() -> glib::ffi::GType;
     pub fn omarchy_separator_get_type() -> glib::ffi::GType;
