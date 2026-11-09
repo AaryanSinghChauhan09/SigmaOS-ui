@@ -90,11 +90,11 @@ use tauri_plugin_omarchy::OmarchyExt;
 let o = app.omarchy();               // on an AppHandle, Window or Webview
 o.tokens().palette.accent;           // omarchy_theme::Tokens
 o.revision();
-o.on_change(|tokens| { /* once per change, on the watch's thread */ });
+o.on_change(|tokens| { /* once per change, on the main thread */ });
 o.icon_path("firefox", 48);
 ```
 
-`on_change` runs on the watch's thread; use `app.run_on_main_thread` for UI work.
+`on_change` runs on the main thread, after every webview was sent the new state, so a handler can touch windows.
 
 ## Previews and snapshots
 

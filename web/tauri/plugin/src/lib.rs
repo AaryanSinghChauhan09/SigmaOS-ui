@@ -109,8 +109,7 @@ impl Omarchy {
     }
 
     /// The process's changed hook: `f(tokens)` once per real change, after the webviews were sent
-    /// the new state, on the watch's thread (marshal to the main thread with
-    /// `app.run_on_main_thread` for UI work). Never for the initial load.
+    /// the new state, on the main thread. Never for the initial load.
     pub fn on_change(&self, f: impl Fn(&Tokens) + Send + Sync + 'static) {
         self.0.listeners.lock().unwrap().push(Box::new(f));
     }
@@ -176,15 +175,21 @@ fn follow<R: Runtime>(app: AppHandle<R>, shared: Arc<Shared>) {
             cur.tokens = tokens.clone();
             cur.state.clone()
         };
-        let script = push_script(&state);
-        for win in app.webview_windows().values() {
-            let _ = win.eval(&script);
-            dress_window(&win.as_ref().window(), &tokens);
-            dress_webview(win.as_ref(), &tokens);
-        }
-        for f in on.listeners.lock().unwrap().iter() {
-            f(&tokens);
-        }
+        // Webviews, windows and the changed hook on the main thread (spec/following.md: the hook
+        // runs on the UI thread, so a handler can touch windows).
+        let (app, on, tokens) = (app.clone(), on.clone(), tokens.clone());
+        let main = app.clone();
+        let _ = main.run_on_main_thread(move || {
+            let script = push_script(&state);
+            for win in app.webview_windows().values() {
+                let _ = win.eval(&script);
+                dress_window(&win.as_ref().window(), &tokens);
+                dress_webview(win.as_ref(), &tokens);
+            }
+            for f in on.listeners.lock().unwrap().iter() {
+                f(&tokens);
+            }
+        });
     });
     *shared.watch.lock().unwrap() = Some(watch);
 }
