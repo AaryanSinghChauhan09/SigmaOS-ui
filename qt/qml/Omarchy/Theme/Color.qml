@@ -334,9 +334,13 @@ QtObject {
     return c
   }
 
+  // The palette keys that differ between the two themes: only those move (each assignment
+  // re-evaluates every binding that reads it).
+  property var fadeMoving: []
+
   onFadeProgressChanged: {
     if (!fading) return
-    for (var i = 0; i < fadeKeys.length; i++) root[fadeKeys[i]] = fadeAt(fadeKeys[i], fadeProgress)
+    for (var i = 0; i < fadeMoving.length; i++) root[fadeMoving[i]] = fadeAt(fadeMoving[i], fadeProgress)
   }
 
   property NumberAnimation fade: NumberAnimation {
@@ -355,6 +359,7 @@ QtObject {
     var differs = false
     for (var k in to) if (!sameColor8(from[k], to[k])) differs = true
     if (!differs) return
+    fadeMoving = fadeKeys.filter(function (key) { return !sameColor8(from[key], to[key]) })
     fadeFrom = from
     fadeTo = to
     fadeProgress = 0
