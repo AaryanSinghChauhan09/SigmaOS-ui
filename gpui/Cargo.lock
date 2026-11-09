@@ -4215,6 +4215,19 @@ dependencies = [
  "gpui-pre",
  "gpui-pre-platform",
  "omarchy-theme",
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "omarchy-gpui-gallery"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gpui-component",
+ "gpui-pre-platform",
+ "gpui-pre-wgpu",
+ "image",
+ "omarchy-gpui",
 ]
 
 [[package]]

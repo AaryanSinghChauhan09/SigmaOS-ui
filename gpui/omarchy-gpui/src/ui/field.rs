@@ -45,6 +45,7 @@ pub struct TextInput {
     last_layout: Option<ShapedLine>,
     last_bounds: Option<Bounds<Pixels>>,
     is_selecting: bool,
+    caret: bool,
     on_submit: Option<Rc<dyn Fn(&SharedString, &mut Window, &mut App)>>,
 }
 
@@ -69,6 +70,7 @@ impl TextInput {
             last_layout: None,
             last_bounds: None,
             is_selecting: false,
+            caret: true,
             on_submit: None,
         })
     }
@@ -88,6 +90,10 @@ impl TextInput {
     /// Show bullets instead of the text (passwords).
     pub fn set_secure(&mut self, on: bool) {
         self.secure = on;
+    }
+    /// Draw the caret while focused (on by default; SearchList's filter line has none).
+    pub fn set_caret(&mut self, on: bool) {
+        self.caret = on;
     }
     /// Return in the field.
     pub fn on_submit(&mut self, f: impl Fn(&SharedString, &mut Window, &mut App) + 'static) {
@@ -510,6 +516,7 @@ impl gpui::Element for TextElement {
         let line = prepaint.line.take().unwrap();
         let _ = line.paint(bounds.origin, window.line_height(), gpui::TextAlign::Left, None, window, cx);
         if focus.is_focused(window)
+            && self.input.read(cx).caret
             && let Some(cursor) = prepaint.cursor.take()
         {
             window.paint_quad(cursor);

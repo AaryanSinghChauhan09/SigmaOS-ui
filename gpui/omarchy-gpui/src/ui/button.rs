@@ -7,10 +7,10 @@ use gpui::prelude::*;
 use gpui::{App, ClickEvent, ElementId, KeyDownEvent, SharedString, Window, div, px};
 use omarchy_theme::{BorderSpec, Rgba};
 
-use super::{GROUP, Handler, Look, chrome, focus_handle, id_for, is_activate, label, reserve, tab_keys};
+use super::{Handler, Look, chrome, focus_handle, id_for, is_activate, label, reserve, tab_keys};
 use crate::{Paint, color};
 
-/// A glyph (a Nerd Font codepoint) in the Omarchy font, one line.
+/// A glyph (a Nerd Font codepoint) in the Omarchy font, one line, unboxed.
 pub(crate) fn glyph(t: &Paint, s: impl Into<SharedString>, size: i64, ink: gpui::Hsla) -> gpui::Div {
     label(t, s, size, false, ink)
 }
@@ -124,7 +124,7 @@ impl RenderOnce for Button {
             .pr(px(sp.control_padding_x as f32 + rr));
         let mut e = chrome(base, &t, &rest, &hot, hot_now, t.radius());
         if let Some(icon) = self.icon {
-            e = e.child(glyph(&t, icon, tk.font.icon, ink));
+            e = e.child(super::lists::glyph(&t, window, icon, tk.font.icon, ink));
         }
         if !self.label.is_empty() {
             e = e.child(label(&t, self.label, tk.font.body, self.selected, ink));
@@ -180,8 +180,8 @@ impl RenderOnce for IconButton {
         // PanelActionButton shows the hover border only when bordered.
         let hot = Look::new(c.hover.fill, if self.bordered { c.hover.border.clone() } else { BorderSpec::none() });
         let base = div().id(self.id).flex().flex_shrink_0().items_center().justify_center().size(px(size));
-        let e = chrome(base, &t, &rest, &hot, hot_now, t.radius()).child(glyph(&t, self.glyph, icon, t.fg()));
-        let _ = GROUP;
+        let mark = super::navigation::optical(window, cx, &t, &self.glyph, icon, t.fg(), None, size, size);
+        let e = chrome(base, &t, &rest, &hot, hot_now, t.radius()).child(mark);
         pressable(e, &focus, self.on_click)
     }
 }

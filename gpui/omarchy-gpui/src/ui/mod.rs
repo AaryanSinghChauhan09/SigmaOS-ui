@@ -16,6 +16,7 @@ mod editing;
 mod feedback;
 mod field;
 mod forms;
+mod ink;
 mod lists;
 mod navigation;
 mod pickers;
@@ -35,7 +36,7 @@ pub use pickers::*;
 pub use search::*;
 
 pub use button::{Button, ButtonGroup, IconButton};
-pub use field::{Dropdown, NumberField, TextField, TextInput};
+pub use field::{Dropdown, NumberField, TextChanged, TextField, TextInput};
 pub use slider::Slider;
 pub use surface::{Card, ConfirmDialog, Dialog, Heading, HeadingLevel, MenuRow, Pane, SettingRow, Side, Tooltip, section_header, separator};
 pub use toggle::{Toggle, ToggleSwitch};
@@ -125,7 +126,8 @@ pub fn label(t: &Paint, s: impl Into<SharedString>, size: i64, bold: bool, ink: 
     let d = div()
         .font_family(t.family())
         .text_size(px(size as f32))
-        .line_height(t.line(size))
+        .line_height(px(t.exact_line(size)))
+        .pb(px(t.line_rest(size)))
         .text_color(ink)
         .whitespace_nowrap()
         .flex_shrink_0()
@@ -143,7 +145,8 @@ pub fn paragraph(t: &Paint, s: impl Into<SharedString>, size: i64, ink: Hsla) ->
     div()
         .font_family(t.family())
         .text_size(px(size as f32))
-        .line_height(t.line(size))
+        .line_height(px(t.exact_line(size)))
+        .pb(px(t.line_rest(size)))
         .text_color(ink)
         .font_weight(FontWeight::NORMAL)
         .child(s.into())

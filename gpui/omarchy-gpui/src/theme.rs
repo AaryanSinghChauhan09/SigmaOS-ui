@@ -167,6 +167,16 @@ impl Paint {
     pub fn line(&self, size: i64) -> Pixels {
         px(self.shown.font.line_px(size) as f32)
     }
+    /// The font's own line height at `size` (ascent + descent, unrounded): GPUI centers a line in
+    /// its box, Qt sets it at the top, so text sits in exactly this and [`Paint::line_rest`] pads
+    /// the box out to [`Paint::line`] below it.
+    pub fn exact_line(&self, size: i64) -> f32 {
+        (size as f64 * self.shown.font.line_height) as f32
+    }
+    /// What [`Paint::line`] adds under [`Paint::exact_line`].
+    pub fn line_rest(&self, size: i64) -> f32 {
+        self.shown.font.line_px(size) as f32 - self.exact_line(size)
+    }
 }
 
 /// The family GPUI should load: the resolved `monospace` (GPUI's text systems don't resolve

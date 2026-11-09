@@ -48,12 +48,19 @@ pub struct ToggleSwitch {
     id: ElementId,
     checked: bool,
     cursor: bool,
+    interactive: bool,
     on_toggle: Option<Handler<bool>>,
 }
 
 impl ToggleSwitch {
     pub fn new(id: impl Into<ElementId>, checked: bool) -> ToggleSwitch {
-        ToggleSwitch { id: id.into(), checked, cursor: false, on_toggle: None }
+        ToggleSwitch { id: id.into(), checked, cursor: false, interactive: true, on_toggle: None }
+    }
+    /// Off when a surrounding row owns the click and the cursor (Qt's `interactive: false`): the
+    /// bare track, with no focus, ring or padding.
+    pub fn interactive(mut self, on: bool) -> Self {
+        self.interactive = on;
+        self
     }
     pub fn cursor(mut self, on: bool) -> Self {
         self.cursor = on;
@@ -73,6 +80,9 @@ fn flip(checked: bool, f: Option<Handler<bool>>) -> Option<Handler<ClickEvent>> 
 impl RenderOnce for ToggleSwitch {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let t = Paint::of(cx);
+        if !self.interactive {
+            return track(&t, self.checked).into_any_element();
+        }
         let tk = t.tokens();
         let focus = focus_handle(&self.id, window, cx);
         let hot_now = self.cursor || focus.is_focused(window);
@@ -80,7 +90,7 @@ impl RenderOnce for ToggleSwitch {
         let ring = Look::new(Rgba::TRANSPARENT, tk.controls.hover.border.clone());
         let base = div().id(self.id).flex().flex_shrink_0().items_center().justify_center().p(px(pad));
         let e = chrome(base, &t, &Look::clear(), &ring, hot_now, t.radius()).child(track(&t, self.checked));
-        pressable(e, &focus, flip(self.checked, self.on_toggle))
+        pressable(e, &focus, flip(self.checked, self.on_toggle)).into_any_element()
     }
 }
 
