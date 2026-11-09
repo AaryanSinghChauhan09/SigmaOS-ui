@@ -1,0 +1,19 @@
+[package]
+name = "omarchy-ratatui"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Omarchy's look, live theme-following and component kit for Ratatui apps."
+
+[features]
+default = []
+# `omarchy_ratatui::snap`: write a buffer as a canonical ANSI snapshot (spec/terminal.md).
+snap = ["dep:omarchy-ansi"]
+
+[dependencies]
+ratatui.workspace = true
+crossterm.workspace = true
+omarchy-theme.workspace = true
+omarchy-ansi = { workspace = true, optional = true }
+unicode-width = "0.2"
+png = "0.18"

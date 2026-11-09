@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Build the Ratatui binding's gallery and live-switch test (tools/bindings.d/ratatui.json's build
+# step; bin/build ratatui runs it) into tui/ratatui/target/release. The binding has a workspace of
+# its own, as GPUI's does.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cargo build -q --release --manifest-path "$ROOT/tui/ratatui/Cargo.toml"
+echo "tui/ratatui/target/release/omarchy-ratatui-gallery"
+echo "tui/ratatui/target/release/omarchy-ratatui-live-test"
