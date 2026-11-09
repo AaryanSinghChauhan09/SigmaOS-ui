@@ -20,8 +20,11 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use tauri::http::{Response, StatusCode, header};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use tauri::{WebviewUrl, WebviewWindowBuilder};
-use tauri_plugin_omarchy::snap;
+use tauri_plugin_omarchy::{OmarchyExt, snap};
 
 const ORDER_JS: &str = include_str!("../../../gallery/order.js");
 
@@ -125,8 +128,14 @@ fn main() {
             if driving {
                 snap::headless_gtk();
                 let handle = app.handle().clone();
+                // The Rust side's changed hook, for the tests ({"host":true}).
+                let changes = Arc::new(AtomicU32::new(0));
+                let counter = changes.clone();
+                app.omarchy().on_change(move |_| {
+                    counter.fetch_add(1, Ordering::SeqCst);
+                });
                 std::thread::spawn(move || {
-                    drive_page(win.as_ref(), (w, h));
+                    drive_page(win.as_ref(), (w, h), &changes);
                     handle.exit(0);
                 });
             }
@@ -202,8 +211,10 @@ fn percent_decode(s: &str) -> String {
 ///   {"id":2,"snap":"/abs/out.png"}    → {"id":2,"ok":true}
 ///   {"id":3,"size":[w,h]}             → {"id":3,"ok":true}
 ///   {"id":4,"reload":true}            → {"id":4,"ok":true} once the page has loaded again
+///   {"id":5,"host":true}              → {"id":5,"ok":{"revision":1,"changes":1,"background":"#…"}}:
+///                                       the Rust side (app.omarchy() and its on_change)
 /// Starts with {"ready":true} once the page has loaded. Ends at EOF.
-fn drive_page<R: tauri::Runtime>(webview: &tauri::Webview<R>, (w, h): (f64, f64)) {
+fn drive_page<R: tauri::Runtime>(webview: &tauri::Webview<R>, (w, h): (f64, f64), changes: &AtomicU32) {
     let print = |v: serde_json::Value| {
         let mut out = std::io::stdout().lock();
         let _ = writeln!(out, "{v}");
@@ -228,6 +239,13 @@ fn drive_page<R: tauri::Runtime>(webview: &tauri::Webview<R>, (w, h): (f64, f64)
             && let (Some(w), Some(h)) = (w.as_f64(), h.as_f64())
         {
             snap::resize(webview, w, h).map(|_| serde_json::Value::Bool(true))
+        } else if req.get("host").is_some() {
+            let o = webview.omarchy();
+            Ok(serde_json::json!({
+                "revision": o.revision(),
+                "changes": changes.load(Ordering::SeqCst),
+                "background": o.tokens().palette.background.hex(),
+            }))
         } else if req.get("reload").is_some() {
             let _ = snap::eval(webview, "(window.__driveOld = true)");
             webview
