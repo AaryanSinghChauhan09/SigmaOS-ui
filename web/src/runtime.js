@@ -119,7 +119,7 @@ export function omarchyApi() {
   if (api) return api;
   const g = globalThis;
   if (g.omarchy && typeof g.omarchy._onBeforeChange === "function") {
-    api = g.omarchy; // the Electron preload's
+    api = g.omarchy; // the Electron preload's, or tauri-plugin-omarchy's initialization script
   } else if (g.omarchyBridge) {
     api = fromBridge(g.omarchyBridge); // a harness (the gallery, tests) or another shell
   } else {

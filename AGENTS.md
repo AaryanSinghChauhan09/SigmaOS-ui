@@ -1,6 +1,6 @@
 # Omarchy UI
 
-A cross-framework kit for apps that look and feel like Omarchy. One token contract (`spec/tokens.md`), resolved from the live Omarchy theme, and the same primitives (`spec/components.md`) in every framework: Qt Quick, Rune, GTK 4, KDE / Qt Widgets, GPUI and Electron / web today, each registered in `tools/bindings.d/`.
+A cross-framework kit for apps that look and feel like Omarchy. One token contract (`spec/tokens.md`), resolved from the live Omarchy theme, and the same primitives (`spec/components.md`) in every framework: Qt Quick, Rune, GTK 4, KDE / Qt Widgets, GPUI, Electron / web and Tauri today, each registered in `tools/bindings.d/`.
 
 ## Building an app with it
 
@@ -12,6 +12,7 @@ Use the kit's components and tokens. Never hard-code a color, radius, font, size
 - **KDE / Qt Widgets / Kirigami** ([`docs/using-kde.md`](docs/using-kde.md)): call `Omarchy::Widgets::apply(app)` once on the `QApplication`; use `Omarchy::*` widgets; `Omarchy::Theme::instance()->changed` for custom painting.
 - **GPUI** ([`docs/using-gpui.md`](docs/using-gpui.md)): depend on `omarchy-gpui` only (it re-exports `gpui`), call `omarchy_gpui::init(cx)` once, build with `omarchy_gpui::ui::*`, and read colors through the `Paint` global so they fade.
 - **Electron / web** ([`docs/using-web.md`](docs/using-web.md)): `followOmarchy()` in main and `omarchyPreload` on every window; `import "@omarchy/ui"` in the renderer; `<omarchy-*>` elements and `var(--omarchy-*)`, never literal colors.
+- **Tauri** ([`docs/using-tauri.md`](docs/using-tauri.md)): `.plugin(tauri_plugin_omarchy::init())` on the builder (a path or git dependency on `web/tauri/plugin`; no capability entry); `import "@omarchy/ui"` in the page; then everything Electron / web says about elements and `var(--omarchy-*)`.
 - **Any other Rust framework (iced, egui)**: depend on `omarchy-theme`, map `Tokens` onto the framework's theme, and follow `omarchy_theme::watch`. Then add a binding here (below).
 - **Any other toolkit or language** ([`docs/using-c.md`](docs/using-c.md)): link `libomarchy-theme` (`pkg-config omarchy-theme`: tokens JSON, a main-loop watch fd, icons, strings), or spawn `omarchy-theme --watch --state` and read a JSON line per change (Node, Electron). Fade colors on a change as [`spec/following.md`](spec/following.md) says.
 
@@ -23,6 +24,7 @@ Look at what you built before calling it done, in more than one theme and roundi
 - KDE / Qt Widgets: `QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2` and `QWidget::grab()`, as `kde/` does; the gallery has `--snap`.
 - GPUI: the `snap` feature's `omarchy_gpui::snap::from_args` gives an app `--snap out.png [--size WxH]` (headless wgpu, no window).
 - Electron / web: `web/bin/omarchy-web-gallery --snap`, or `npm start -- --snap out.png` in `examples/web-electron` (headless Chromium).
+- Tauri: the plugin's `snap` feature gives an app `--snap out.png [--size WxH]` (a private broadway display and WebKitGTK's own snapshot, no window shown); `web/tauri/target/release/omarchy-tauri-gallery --snap` for the gallery.
 - Any of them: prefix with `OMARCHY_UI_THEME_DIR=fixtures/themes/catppuccin-latte OMARCHY_UI_ROUNDING=8` to see a light theme with rounded corners, or any fixture under `fixtures/themes/`.
 
 What makes it read as Omarchy, in order of how often agents get it wrong:

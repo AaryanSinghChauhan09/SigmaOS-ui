@@ -265,7 +265,7 @@ Other state the hook can use:
 
 ## Outside Electron
 
-A plain browser page, Tauri, or any other Chromium shell has no preload. `@omarchy/ui` connects on import to whichever transport the page declares.
+A plain browser page, or any other shell, has no preload. `@omarchy/ui` connects on import to whichever transport the page declares. (Tauri has its own: `tauri-plugin-omarchy` installs `omarchy` in every webview, so the page needs only the import; see [`using-tauri.md`](using-tauri.md).)
 
 ### Live: the dev helper (SSE)
 
@@ -288,7 +288,6 @@ http.createServer((req, res) => omarchy(req, res) || yourApp(req, res));
 
 You can also call `connectOmarchy(url)` yourself.
 
-- **Tauri**: emit each line of `omarchy-theme --watch --state` (spawned from Rust) as an event, and call `setOmarchyState(line)` from your listener. Each state after the first that differs counts as a change.
 - **Any other shell**: feed `setOmarchyState()` from whatever channel you have.
 
 ### Static: a snapshot
@@ -328,7 +327,7 @@ OMARCHY_UI_THEME_DIR=fixtures/themes/catppuccin-latte OMARCHY_UI_ROUNDING=8 web/
 
 ## Limits
 
-- **Chromium only.** The kit uses the following:
+- **Chromium and WebKitGTK.** The kit uses the following:
   - `@property`
   - the Popover API
   - relative color syntax
@@ -337,7 +336,7 @@ OMARCHY_UI_THEME_DIR=fixtures/themes/catppuccin-latte OMARCHY_UI_ROUNDING=8 web/
   - `field-sizing`
   - the customizable `select`
 
-  That means Electron 36 or newer and Chrome 135 or newer. Tauri on Linux renders with WebKitGTK, not Chromium, so the tokens and the restyle work there but some elements draw imperfectly. Firefox and Safari aren't targets.
+  That means Electron 36 or newer and Chrome 135 or newer, or WebKitGTK 2.54 (Tauri on Linux, [`using-tauri.md`](using-tauri.md)), which `bin/review --bindings tauri` checks against Qt beside Chromium. Firefox and Safari aren't targets.
 - **Text rasterizes differently from Qt.** Chromium places some sizes' baselines up to about 1.5 px higher than Qt does (14, 18 and 24 px in JetBrains Mono), and its glyph antialiasing differs. Metrics, line boxes, colors and geometry match.
 - **No Hyprland of its own.** Rounding, gaps and reduced motion come from the core, which reads Hyprland. A page outside a desktop session gets the core's defaults.
 - **ColorPicker's palette row** shows only the palette roles the canonical JSON carries (urgent, success, warning, foreground), not every named color in `colors.toml`. The state has no named colors.
