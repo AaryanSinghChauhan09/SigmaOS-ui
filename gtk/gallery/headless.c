@@ -386,6 +386,19 @@ headless_wait (guint ms)
 void
 headless_present (GtkWindow *window, int width, int height)
 {
+  /* The viewer's screen size reaches GDK a moment after the display opens; until it does, a
+   * toplevel is bounded by broadway's default 1024 × 768. */
+  GdkDisplay *display = gtk_widget_get_display (GTK_WIDGET (window));
+  for (int i = 0; i < 100; i++) {
+    GListModel *monitors = gdk_display_get_monitors (display);
+    g_autoptr (GdkMonitor) m = g_list_model_get_n_items (monitors) ? g_list_model_get_item (monitors, 0) : NULL;
+    GdkRectangle r = { 0 };
+    if (m)
+      gdk_monitor_get_geometry (m, &r);
+    if (r.height > 768)
+      break;
+    headless_wait (10);
+  }
   gtk_window_set_decorated (window, FALSE);
   gtk_window_set_default_size (window, width, height);
   gtk_window_present (window);

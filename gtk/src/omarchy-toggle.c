@@ -314,7 +314,8 @@ toggle_text_height (OmarchyToggle *self, int text_w)
   int h = omarchy_line_height (t->subtitle);
   if (self->description && *self->description) {
     g_autoptr (PangoLayout) l = omarchy_layout (GTK_WIDGET (self), self->description, t->caption, FALSE);
-    pango_layout_set_width (l, text_w * PANGO_SCALE);
+    if (text_w < 100000)
+      pango_layout_set_width (l, text_w * PANGO_SCALE);
     pango_layout_set_wrap (l, PANGO_WRAP_WORD_CHAR);
     int lines = MAX (1, pango_layout_get_line_count (l));
     int dh = lines == 1 ? omarchy_line_height (t->caption) : 0;
@@ -339,7 +340,7 @@ toggle_measure (GtkWidget *w, GtkOrientation o, int for_size, int *min, int *nat
     *nat = MAX (*min, omarchy_space (240));
     return;
   }
-  int width = for_size >= 0 ? for_size : omarchy_space (240);
+  int width = for_size >= 0 ? for_size : G_MAXINT / 4;
   SwitchMetrics m = switch_metrics (FALSE);
   int content = MAX (toggle_text_height (self, toggle_text_width (self, width)), m.track_h);
   *min = *nat = MAX (54, content + t->huge);

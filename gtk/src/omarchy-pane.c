@@ -544,7 +544,8 @@ row_words_height (OmarchySettingRow *self, int words_w)
   int h = omarchy_line_height (t->body);
   if (self->description && *self->description) {
     g_autoptr (PangoLayout) l = omarchy_layout (GTK_WIDGET (self), self->description, t->caption, FALSE);
-    pango_layout_set_width (l, words_w * PANGO_SCALE);
+    if (words_w < 100000)
+      pango_layout_set_width (l, words_w * PANGO_SCALE);
     pango_layout_set_wrap (l, PANGO_WRAP_WORD_CHAR);
     int dh = omarchy_line_height (t->caption);
     if (pango_layout_get_line_count (l) > 1) {
@@ -572,7 +573,9 @@ row_measure (GtkWidget *w, GtkOrientation o, int for_size, int *min, int *nat, i
     *min = t->row_padding_x * 2 + tw + t->xxl;
     *nat = MAX (omarchy_space (240), *min + lw);
   } else {
-    int width = for_size >= 0 ? for_size : omarchy_space (240);
+    /* Unconstrained, the description takes one line: a parent laying rows out across measures
+     * them at their real width (GTK asks for width-for-height below this). */
+    int width = for_size >= 0 ? for_size : G_MAXINT / 4;
     *min = *nat = MAX (MAX (t->control_height, row_words_height (self, row_words_width (self, width))), th) + t->md * 2;
   }
 }
