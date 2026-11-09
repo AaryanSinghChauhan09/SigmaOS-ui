@@ -1,0 +1,18 @@
+# The Tauri half of the web binding, in a workspace of its own so Tauri's tree stays out of
+# omarchy-ui's: the plugin (tauri-plugin-omarchy) and the gallery app that runs web/gallery in it.
+[workspace]
+resolver = "3"
+members = ["plugin", "gallery"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+
+[workspace.dependencies]
+# Tauri v2, pinned exactly (docs/using-tauri.md). Move them together.
+tauri = { version = "=2.12.5" }
+tauri-build = { version = "=2.7.4" }
+omarchy-theme = { path = "../../crates/omarchy-theme" }
+
+[profile.dev.package."*"]
+opt-level = 2
