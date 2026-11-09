@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Build the Qt binding into build/ (tools/bindings.d/qt.json's build step; bin/build qt runs it):
+# the gallery, the Qt Quick tests and the installable QML module.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+step() {
+  local dir="$1" pro="$2" out="$3"
+  mkdir -p "$ROOT/build/$dir"
+  (cd "$ROOT/build/$dir" && qmake6 "$ROOT/$pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
+  [[ -e $ROOT/build/$dir/$out ]] || { echo "Qt: $pro failed to build" >&2; exit 1; }
+  echo "build/$dir/$out"
+}
+
+step qt qt/gallery/gallery.pro omarchy-qt-gallery
+step qt-tests qt/tests/tests.pro omarchy-qt-tests
+# The installed-module route (qt/module): `make -C build/qt-module install INSTALL_ROOT=...`.
+step qt-module qt/module/module.pro libomarchyuiplugin.so

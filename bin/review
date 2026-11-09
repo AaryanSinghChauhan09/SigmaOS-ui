@@ -1,33 +1,33 @@
 #!/bin/bash
 
-# Compare the frameworks: build both galleries, check that Qt and Rune resolve identical tokens
-# for every fixture theme, render every gallery section in both for a set of themes and
-# roundings, and write out/review/index.html (side by side, overlay, swipe and pixel diff).
+# Compare the frameworks: build every binding in the registry (tools/bindings.d), check that each
+# one resolving tokens itself matches the core for every fixture theme, render every gallery
+# section in each for a set of themes and roundings, diff each against the reference (Qt), and
+# write out/review/index.html (side by side in N columns, overlay, swipe and pixel diff).
 #
 #   bin/review                         default themes (live + five fixtures), radius 0 and 8
 #   bin/review --all-themes            every fixture
 #   bin/review --themes nord,white --radii 0 --sections buttons,inputs
+#   bin/review --bindings rune         only these beside the reference
 #   bin/review --open                  ...and open the page
-#   bin/review --live                  skip the report; open both galleries as windows instead
+#   bin/review --live                  skip the report; open every gallery as a window instead
 #
-# Keys on the page: t theme, r radius, s section, v view (shift goes back).
+# Keys on the page: t theme, r radius, s section, v view, a against (shift goes back).
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [[ ${1:-} == "--help" || ${1:-} == "-h" ]]; then
-  sed -n '3,14p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '3,16p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 fi
 
 if [[ ${1:-} == "--live" ]]; then
   "$ROOT/bin/build" >/dev/null
-  # Both follow the desktop theme: switch themes (or rounding) and watch them change together.
-  "$ROOT/build/qt/omarchy-qt-gallery" &
-  "$ROOT/target/release/omarchy-rune-gallery" &
-  wait
-  exit 0
+  # Every gallery follows the desktop theme: switch themes (or rounding) and watch them change
+  # together.
+  exec python3 "$ROOT/tools/bindings.py" windows
 fi
 
 open=0

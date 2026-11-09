@@ -1,34 +1,18 @@
 #!/bin/bash
 
-# Build both galleries (and the token CLI and the Qt tests) into build/.
+# Build the core (the omarchy-theme CLI and the C library) and every binding in the registry
+# (tools/bindings.d/*.json) into build/ and target/. A binding whose toolchain is missing is
+# skipped with a message.
 #
-#   bin/build          # everything
-#   bin/build qt       # just the Qt gallery, its tests and the installable QML module
-#   bin/build rune     # just the Rune gallery and omarchy-theme
-#   bin/build core     # the omarchy-theme CLI and the C library (build/ffi)
+#   bin/build              # the core, then every available binding
+#   bin/build core         # just the omarchy-theme CLI and the C library (build/ffi)
+#   bin/build qt rune      # just these bindings (by registry name)
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-what="${1:-all}"
 
-if [[ $what == "all" || $what == "qt" ]]; then
-  mkdir -p "$ROOT/build/qt"
-  (cd "$ROOT/build/qt" && qmake6 "$ROOT/qt/gallery/gallery.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
-  [[ -x $ROOT/build/qt/omarchy-qt-gallery ]] || { echo "Qt gallery failed to build" >&2; exit 1; }
-  echo "build/qt/omarchy-qt-gallery"
-  mkdir -p "$ROOT/build/qt-tests"
-  (cd "$ROOT/build/qt-tests" && qmake6 "$ROOT/qt/tests/tests.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
-  [[ -x $ROOT/build/qt-tests/omarchy-qt-tests ]] || { echo "Qt tests failed to build" >&2; exit 1; }
-  echo "build/qt-tests/omarchy-qt-tests"
-  # The installed-module route (qt/module): `make -C build/qt-module install INSTALL_ROOT=...`.
-  mkdir -p "$ROOT/build/qt-module"
-  (cd "$ROOT/build/qt-module" && qmake6 "$ROOT/qt/module/module.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
-  [[ -f $ROOT/build/qt-module/libomarchyuiplugin.so ]] || { echo "Qt module failed to build" >&2; exit 1; }
-  echo "build/qt-module/libomarchyuiplugin.so"
-fi
-
-if [[ $what == "all" || $what == "core" ]]; then
+core() {
   # The resolver for everything that isn't Rust: the CLI, and the C library staged as a package
   # lays it out (lib, include, pkgconfig), so PKG_CONFIG_PATH=build/ffi/lib/pkgconfig finds it.
   cargo build -q --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-theme -p omarchy-theme-ffi
@@ -36,10 +20,22 @@ if [[ $what == "all" || $what == "core" ]]; then
   "$ROOT/crates/omarchy-theme-ffi/stage" "$ROOT/target/release/libomarchy_theme_ffi.so" "" "$ROOT/build/ffi"
   echo "target/release/omarchy-theme"
   echo "build/ffi/lib/libomarchy-theme.so"
+}
+
+if (( $# == 0 )); then
+  core
+  python3 "$ROOT/tools/bindings.py" build
+  exit
 fi
 
-if [[ $what == "all" || $what == "rune" ]]; then
-  cargo build -q --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-rune-gallery -p omarchy-theme
-  echo "target/release/omarchy-rune-gallery"
-  echo "target/release/omarchy-theme"
+bindings=()
+for what in "$@"; do
+  if [[ $what == "core" ]]; then
+    core
+  else
+    bindings+=("$what")
+  fi
+done
+if (( ${#bindings[@]} )); then
+  python3 "$ROOT/tools/bindings.py" build "${bindings[@]}"
 fi

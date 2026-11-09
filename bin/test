@@ -1,68 +1,46 @@
 #!/bin/bash
 
-# Rust tests, the Qt Quick tests, then Qt/Rune token parity for every fixture theme at radius 0
-# and 8, icon lookup parity on the fixture icon tree, and the example apps (bin/test-examples).
-# Renders are bin/review's job; this stays fast enough to run on every change.
+# The core's tests (the Rust resolver and its live switch, the C library and its live switch),
+# then every binding's tests from the registry (tools/bindings.d/*.json: behavior tests and each
+# binding's live-switch test, spec/following.md), token and icon parity with the core for every
+# binding that resolves them itself, and the example apps (bin/test-examples). A binding whose
+# toolchain is missing is skipped with a message. Renders are bin/review's job; this stays fast
+# enough to run on every change.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-
-cargo test -q --manifest-path "$ROOT/Cargo.toml" --workspace 2>&1 | grep -E "^test result|FAILED|panicked|^error" || true
-"$ROOT/bin/build" >/dev/null
-
 fail=0
 
-# The Qt binding's behavior tests (qt/tests/tst_*.qml), offscreen in a fixture theme.
-qt_tests="$("$ROOT/build/qt-tests/omarchy-qt-tests" 2>&1)" || fail=1
-grep -E "^(FAIL|XPASS)!|^   Loc:|^Totals" <<<"$qt_tests" | sed 's/^Totals/qt tests: totals/'
-
-for dir in "$ROOT"/fixtures/themes/*/; do
-  for radius in 0 8; do
-    qt="$(OMARCHY_UI_THEME_DIR=$dir OMARCHY_UI_ROUNDING=$radius "$ROOT/build/qt/omarchy-qt-gallery" --dump-tokens | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin), sort_keys=True))')"
-    rs="$(OMARCHY_UI_THEME_DIR=$dir OMARCHY_UI_ROUNDING=$radius "$ROOT/target/release/omarchy-theme" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin), sort_keys=True))')"
-    if [[ $qt != "$rs" ]]; then
-      echo "token parity: $(basename "$dir") at radius $radius differs (bin/review shows where)"
-      fail=1
-    fi
-  done
-done
-
-# The icon lookup, the same algorithm in both: every fixture icon at sizes below, between and
-# above the fixture's directories.
-icons="$ROOT/fixtures/icons"
-export_icons=(OMARCHY_UI_ICON_DIRS="$icons/local:$icons/system:$icons/pixmaps" OMARCHY_UI_ICON_THEME=Fixture-Accent)
-for name in utilities-terminal org.gnome.Nautilus firefox chromium btop steam zoom printer edit-copy no-such-app; do
-  for size in 8 32 56 200; do
-    qt="$(env "${export_icons[@]}" "$ROOT/build/qt/omarchy-qt-gallery" --icon "$name" --icon-size "$size")"
-    rs="$(env "${export_icons[@]}" "$ROOT/target/release/omarchy-theme" --icon "$name" "$size")"
-    if [[ $qt != "$rs" ]]; then
-      echo "icon parity: $name at $size: qt=${qt:-none} rune=${rs:-none}"
-      fail=1
-    fi
-  done
-done
+# The core: omarchy-theme (resolver, CLI, the live-switch test in tests/live_switch.rs) and the
+# C library crate.
+core_tests="$(cargo test -q --manifest-path "$ROOT/Cargo.toml" -p omarchy-theme -p omarchy-theme-ffi 2>&1)" || fail=1
+grep -E "^test result|FAILED|panicked|^error" <<<"$core_tests" | sed 's/^/core: /' || true
+"$ROOT/bin/build" >/dev/null
 
 # The C library (build/ffi), built against through pkg-config as an app would, then a live switch
-# under a HOME of its own (spec/following.md).
+# under a HOME of its own.
 if command -v cc >/dev/null && command -v pkg-config >/dev/null; then
+  icons="$ROOT/fixtures/icons"
   mkdir -p "$ROOT/build/ffi-test"
   if cc -Wall -Wextra -Werror -o "$ROOT/build/ffi-test/live" "$ROOT/crates/omarchy-theme-ffi/tests/live.c" \
     $(PKG_CONFIG_PATH="$ROOT/build/ffi/lib/pkgconfig" pkg-config --cflags --libs omarchy-theme) -lpthread; then
-    env "${export_icons[@]}" LD_LIBRARY_PATH="$ROOT/build/ffi/lib" "$ROOT/tools/live/run" "$ROOT/build/ffi-test/live" || fail=1
+    OMARCHY_UI_ICON_DIRS="$icons/local:$icons/system:$icons/pixmaps" OMARCHY_UI_ICON_THEME=Fixture-Accent \
+      LD_LIBRARY_PATH="$ROOT/build/ffi/lib" "$ROOT/tools/live/run" "$ROOT/build/ffi-test/live" 2>&1 | sed 's/^c library: /core: c library: /' ||
+      fail=1
   else
-    echo "c library: the test didn't build against omarchy-theme.pc"
+    echo "core: c library: the test didn't build against omarchy-theme.pc"
     fail=1
   fi
 else
-  echo "c library: skipped (no cc or pkg-config)"
+  echo "core: c library: skipped (no cc or pkg-config)"
 fi
+
+# Each binding's own tests, then parity with the core.
+python3 "$ROOT/tools/bindings.py" test || fail=1
+python3 "$ROOT/tools/bindings.py" parity || fail=1
 
 # Each way of using the kit from an app (examples/), built and rendered once.
 "$ROOT/bin/test-examples" || fail=1
 
-if (( fail )); then
-  exit 1
-fi
-echo "token parity: Qt and Rune agree on every fixture"
-echo "icon parity: Qt and Rune resolve every fixture icon alike"
+exit "$fail"

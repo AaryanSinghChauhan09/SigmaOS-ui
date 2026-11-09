@@ -1,0 +1,19 @@
+{
+  "name": "rune",
+  "title": "Rune",
+  "order": 20,
+  "docs": "docs/using-rust.md",
+  "available": { "commands": ["cargo"] },
+  "build": "rune/build",
+  "gallery": {
+    "sections": "target/release/omarchy-rune-gallery --list-sections",
+    "snap": "target/release/omarchy-rune-gallery --snap {out} --scene {section} --size {width}x{height} --scale {scale}",
+    "window": "target/release/omarchy-rune-gallery"
+  },
+  "tokens": "core",
+  "icons": "core",
+  "tests": [
+    { "name": "kit and gallery tests", "run": "cargo test -q -p omarchy-rune -p omarchy-rune-gallery --lib --bins" },
+    { "name": "live switch", "run": "cargo test -q -p omarchy-rune --test live_switch" }
+  ]
+}

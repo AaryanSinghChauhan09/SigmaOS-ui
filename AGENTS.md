@@ -28,11 +28,11 @@ What makes it read as Omarchy, in order of how often agents get it wrong:
 ## Working on the kit
 
 ```sh
-bin/build                  # both galleries + the token CLI
-bin/test                   # Rust tests, Qt Quick tests (qt/tests), Qt/Rune token and icon parity, examples/
+bin/build                  # the core (omarchy-theme CLI, C library in build/ffi) + every binding in tools/bindings.d
+bin/test                   # core tests and live switches, each binding's tests and live switch, parity with the core, examples/
 bin/test-examples          # build each example app (examples/) and render it to build/examples/
-bin/review --open          # render every section in both, compare in the browser
-bin/review --live          # both galleries as windows, following the desktop
+bin/review --open          # render every section in every binding, diff each against Qt, compare in the browser
+bin/review --live          # every gallery as a window, following the desktop
 bin/harvest-qt --check     # what changed in the shell since the last harvest
 bin/fixtures               # regenerate fixtures/themes from ~/omarchy
 ```
@@ -40,9 +40,58 @@ bin/fixtures               # regenerate fixtures/themes from ~/omarchy
 The Omarchy checkout is `~/omarchy` on `quattro` (`$OMARCHY_SRC` to override). Pull it before harvesting or regenerating fixtures.
 
 - **Following**: `spec/following.md` is the contract for live changes: what is watched, 150 ms coalescing, the changed hook (once per real change, after the new tokens are in effect, on the UI thread, never for the initial load), the 280 ms `ease` color fade, and the live-switch test every binding has.
-- **Tokens**: `spec/tokens.md` is the contract. Change it first, then `crates/omarchy-theme` (Rust resolver) and the Qt side (`qt/qml/Omarchy/Theme`), and keep `bin/test` green: the two must dump byte-identical JSON for every fixture.
+- **Tokens**: `spec/tokens.md` is the contract. Change it first, then `crates/omarchy-theme` (Rust resolver) and the Qt side (`qt/qml/Omarchy/Theme`), and keep `bin/test` green: the two must dump byte-identical JSON for every fixture. Everything else reads the Rust resolver: Rust crates directly, other languages through `libomarchy-theme` (`crates/omarchy-theme-ffi`, `omarchy-theme.h`) or the `omarchy-theme` CLI ([`docs/using-c.md`](docs/using-c.md)). Never write a third resolver.
 - **Qt components** are harvested from the shell (`qt/HARVEST.md`). Don't edit harvested files: fix them in the shell, or add a patch under `qt/patches/` when the fix only matters outside the shell.
 - **A new component** goes in `spec/components.md` with its metrics, then in every binding under the same name, then into every gallery as `spec/gallery.md` lists it. Check it with `bin/review`. Behavior gets a test in both: a `qt/tests/tst_*.qml` case and a Rune gallery test (`rune/gallery/src/main.rs`) driving the same keys and clicks.
-- **A new framework** gets `<framework>/` with a binding that resolves tokens (reuse `omarchy-theme` from Rust), a gallery with the `spec/gallery.md` sections, `--dump-tokens`, a still-render mode at 2×, and the `OMARCHY_UI_*` overrides; then a column in `tools/review.py`.
 - **How apps consume the kit** (installed QML modules from `qt/module`, the vendored `qt/omarchy-ui.pri`, Cargo path/git dependencies) is documented in `docs/` and proven by `examples/`. Keep both building: `qt/src/native.pri` is the C++ both Qt routes compile, and `OmarchyUi::registerTypes()` is the one place native types are registered.
 - **Commits**: short, imperative, one change each.
+
+## A new framework
+
+A binding (GTK, Qt Widgets, GPUI, Electron, ...) is a directory of its own plus one registry file. Nothing shared needs editing: `bin/build`, `bin/test`, `bin/review` and `tools/review.py` read `tools/bindings.d/*.json` (through `tools/bindings.py`).
+
+1. **Tokens from the core, never a new resolver.** Rust: depend on `omarchy-theme`. C, GObject (and through GI: Python, GJS, Vala), C++: link `libomarchy-theme` (`pkg-config omarchy-theme`, [`docs/using-c.md`](docs/using-c.md)). Node/Electron: spawn `omarchy-theme --watch --state` and read lines. Map the canonical JSON onto the toolkit's own theme (GTK CSS, a `QPalette`, GPUI's theme, CSS custom properties).
+2. **Follow live, per [`spec/following.md`](spec/following.md)**: zero app code or one call; a public changed hook (once per real change, after the new tokens are in effect, on the UI thread, with the new tokens, never for the initial load) and a revision; colors fade over `motion.theme` on `motion.ease`, everything else switches at once, no fade under reduced motion or on first paint.
+3. **The components** of [`spec/components.md`](spec/components.md), under the same names, and a **gallery** with the [`spec/gallery.md`](spec/gallery.md) sections that can: list its sections; render one section to a PNG at 2× and a given size in points, offscreen; honor the `OMARCHY_UI_*` overrides; and (unless it reads the core's tokens directly) print its tokens as canonical JSON.
+4. **Tests**, run by `bin/test`: its behavior tests, and a **live-switch test** (`tools/live/run` + `tools/live/theme-set`, spec/following.md) that checks the new background, a changed hook that fires once, and the fade.
+5. **Docs**: `docs/using-<framework>.md`, linked from `docs/README.md`.
+6. **The registry file**, `tools/bindings.d/<name>.json` (the file name is the `name`):
+
+```json
+{
+  "name": "gtk",
+  "title": "GTK 4",
+  "order": 30,
+  "docs": "docs/using-gtk.md",
+  "available": { "commands": ["meson", "ninja"], "check": "pkg-config --exists gtk4 libadwaita-1", "reason": "no gtk4/libadwaita-1 development files" },
+  "build": "gtk/build",
+  "gallery": {
+    "sections": "build/gtk/omarchy-gtk-gallery --list-sections",
+    "snap": "build/gtk/omarchy-gtk-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
+    "window": "build/gtk/omarchy-gtk-gallery"
+  },
+  "tokens": "core",
+  "icons": "core",
+  "tests": [
+    { "name": "behavior", "run": "build/gtk/omarchy-gtk-tests" },
+    { "name": "live switch", "run": "tools/live/run build/gtk/omarchy-gtk-live-test" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/gtk/omarchy-gtk-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `name`, `title` | Registry name (= the file name; `bin/build gtk`) and the column title on the review page |
+| `order` | Column order after the reference (Qt is 10, Rune 20) |
+| `reference` | `true` only for Qt: every other binding is diffed against it and renders at its size |
+| `available` | `commands` that must be on `PATH`, and an optional shell `check` (exit 0 = available) with a `reason`. When it fails the binding is skipped with a message, never failed. |
+| `build` | Shell command from the repository root that builds everything below |
+| `gallery.sections` | Prints the gallery's sections, one per line |
+| `gallery.snap` | Renders `{section}` to the PNG `{out}` at `{width}`×`{height}` points and device scale `{scale}` (2), offscreen, under whatever `OMARCHY_UI_*` the caller set. The reference gets `{width}` 760 and sizes itself; the rest get the reference's size. |
+| `gallery.window` | The gallery as a window following the desktop (`bin/review --live`) |
+| `tokens` | `"core"` when the binding reads the core's tokens directly (Rust crate, C library, CLI), or `{ "dump": "<command printing canonical JSON>" }` for a resolver of its own; a dump is compared with the core for every fixture at radius 0 and 8 |
+| `icons` | `"core"`, or `{ "lookup": "<command printing the path for {name} at {size}>" }`, compared with the core on `fixtures/icons` |
+| `tests` | Each `{ name, run, env? }` runs from the repository root; exit 0 passes and its last output line is shown |
+
+Placeholders are shell-quoted when filled in. `tools/bindings.d/qt.json` and `rune.json` are working entries. `tools/bindings.py list` shows what's available here; `tools/bindings.py test gtk` runs one binding's tests.

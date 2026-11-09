@@ -2,6 +2,7 @@
 //
 //   omarchy-qt-gallery                          a window, following the desktop theme
 //   omarchy-qt-gallery --section buttons        one section (spec/gallery.md)
+//   omarchy-qt-gallery --list-sections          the sections, in order (Sections.qml)
 //   omarchy-qt-gallery --snap out.png           render offscreen to a PNG and exit
 //   omarchy-qt-gallery --dump-tokens            print the canonical token JSON and exit
 //   omarchy-qt-gallery --qml view.qml --snap out.png   render any QML file with the kit (an Item or a Window)
@@ -21,6 +22,7 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <QRegularExpression>
 #include <QTimer>
 #include <cstdio>
 
@@ -51,7 +53,7 @@ static const char *argValue(int argc, char **argv, const char *flag, const char 
 }
 
 int main(int argc, char **argv) {
-  const bool headless = hasArg(argc, argv, "--snap") || hasArg(argc, argv, "--dump-tokens") || hasArg(argc, argv, "--watch-tokens") || hasArg(argc, argv, "--icon");
+  const bool headless = hasArg(argc, argv, "--snap") || hasArg(argc, argv, "--dump-tokens") || hasArg(argc, argv, "--watch-tokens") || hasArg(argc, argv, "--icon") || hasArg(argc, argv, "--list-sections");
   if (headless) qputenv("QT_QPA_PLATFORM", "offscreen");
   // The device pixel ratio has to be set before the application exists.
   if (hasArg(argc, argv, "--snap")) qputenv("QT_SCALE_FACTOR", argValue(argc, argv, "--scale", "2"));
@@ -74,7 +76,19 @@ int main(int argc, char **argv) {
   args.addOption({"watch-tokens", "Print the resolved tokens on one line, then a line per change (the changed hook)."});
   args.addOption({"icon", "Print the file this icon name resolves to in the icon theme (empty if none) and exit.", "name"});
   args.addOption({"icon-size", "Size in pixels for --icon (default 48).", "n", "48"});
+  args.addOption({"list-sections", "Print the sections, one per line, in order, and exit."});
   args.process(app);
+
+  if (args.isSet("list-sections")) {
+    // Sections.qml's `order`, the one list the gallery shows.
+    QFile f(":/gallery/Sections.qml");
+    if (!f.open(QIODevice::ReadOnly)) return 1;
+    const QString qml = QString::fromUtf8(f.readAll());
+    const QString order = QRegularExpression("property var order: \\[([^\\]]*)\\]").match(qml).captured(1);
+    auto names = QRegularExpression("\"([a-z0-9_-]+)\"").globalMatch(order);
+    while (names.hasNext()) printf("%s\n", qPrintable(names.next().captured(1)));
+    return 0;
+  }
 
   Gallery gallery;
   gallery.section = args.value("section");

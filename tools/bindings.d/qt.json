@@ -1,0 +1,21 @@
+{
+  "name": "qt",
+  "title": "Qt Quick",
+  "order": 10,
+  "reference": true,
+  "docs": "docs/using-qt.md",
+  "available": { "commands": ["qmake6", "make"] },
+  "build": "qt/build",
+  "gallery": {
+    "sections": "build/qt/omarchy-qt-gallery --list-sections",
+    "snap": "build/qt/omarchy-qt-gallery --snap {out} --section {section} --scale {scale} --width {width}",
+    "window": "build/qt/omarchy-qt-gallery"
+  },
+  "tokens": { "dump": "build/qt/omarchy-qt-gallery --dump-tokens" },
+  "icons": { "lookup": "build/qt/omarchy-qt-gallery --icon {name} --icon-size {size}" },
+  "tests": [
+    { "name": "Qt Quick tests", "run": "build/qt-tests/omarchy-qt-tests -silent" },
+    { "name": "live switch", "run": "tools/live/run build/qt-tests/omarchy-qt-tests -silent -input qt/tests-live" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/qt-tests/omarchy-qt-tests -silent -input qt/tests-live", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}

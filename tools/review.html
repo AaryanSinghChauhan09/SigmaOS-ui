@@ -37,9 +37,11 @@
   .card h2 .score { margin-left: auto; font-weight: 400; }
   .score.good { color: var(--ok); } .score.mid { color: var(--warn); } .score.high { color: var(--bad); }
   .body { padding: 12px; overflow-x: auto; }
-  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .pair { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 12px; }
   .pair figure { margin: 0; min-width: 0; }
   figcaption { color: var(--dim); margin-bottom: 4px; }
+  figcaption .score { margin-left: 8px; }
+  .missing { color: var(--dim); border: 1px dashed var(--line); padding: 24px; text-align: center; }
   img { display: block; max-width: 100%; height: auto; image-rendering: auto; }
   .stage { position: relative; display: inline-block; max-width: 100%; }
   .stage img.top { position: absolute; inset: 0; }
@@ -62,21 +64,29 @@
     <div class="group" id="f-radius"><b>radius</b></div>
     <div class="group" id="f-section"><b>section</b></div>
     <div class="group" id="f-mode"><b>view</b></div>
+    <div class="group" id="f-against"><b>against</b></div>
   </div>
 </header>
 <main id="main"></main>
 <script>
 const DATA = /*DATA*/null;
+// One column per binding in the registry (tools/bindings.d), the reference (Qt) first; every other
+// binding is diffed against it.
+const REF = DATA.bindings[0];
+const OTHERS = DATA.bindings.slice(1);
+const TITLE = Object.fromEntries(DATA.bindings.map(b => [b.name, b.title]));
 const MODES = [["side", "side by side"], ["overlay", "overlay"], ["swipe", "swipe"], ["diff", "diff"]];
-const state = { theme: DATA.themes[0], radius: String(DATA.radii[0]), section: "all", mode: "side" };
+const state = { theme: DATA.themes[0], radius: String(DATA.radii[0]), section: "all", mode: "side", against: OTHERS.length ? OTHERS[0].name : "" };
 try { Object.assign(state, JSON.parse(localStorage.getItem("omarchy-ui-review") || "{}")); } catch (e) {}
 if (!DATA.themes.includes(state.theme)) state.theme = DATA.themes[0];
+if (!OTHERS.some(b => b.name === state.against)) state.against = OTHERS.length ? OTHERS[0].name : "";
 
 function save() { try { localStorage.setItem("omarchy-ui-review", JSON.stringify(state)); } catch (e) {} }
 
 function chips(id, key, options) {
   const g = document.getElementById(id);
   g.querySelectorAll("button").forEach(b => b.remove());
+  g.style.display = options.length ? "" : "none";
   for (const [value, label] of options) {
     const b = document.createElement("button");
     b.className = "chip";
@@ -98,33 +108,90 @@ function el(tag, attrs = {}, ...kids) {
 
 function img(src, w, cls = "") { return el("img", { src, width: w, alt: "", class: cls, loading: "lazy" }); }
 
+function scoreClass(s) { return s == null ? "" : s < 2 ? "good" : s < 6 ? "mid" : "high"; }
+
+function src(row, key) { return row.images[key] ? row.path + "/" + row.images[key] : null; }
+
+// What one binding shows for a row: its image, or why there's none.
+function cell(row, name) {
+  const s = src(row, name);
+  if (s) return img(s, row.w);
+  if (row.missing.includes(name)) return el("div", { class: "missing" }, "not in this binding");
+  return el("div", { class: "err" }, row.errors[name] || "not rendered");
+}
+
 function view(row) {
-  const qt = row.path + "/qt.png", rune = row.path + "/rune.png", diff = row.path + "/diff.png";
-  if (state.mode === "side") {
-    return el("div", { class: "pair" },
-      el("figure", {}, el("figcaption", {}, "Qt"), img(qt, row.w)),
-      el("figure", {}, el("figcaption", {}, "Rune"), img(rune, row.w)));
+  const against = state.against;
+  if (state.mode === "side" || !against) {
+    const pair = el("div", { class: "pair" });
+    pair.style.setProperty("--cols", String(DATA.bindings.length));
+    for (const b of DATA.bindings) {
+      const d = row.diffs[b.name];
+      const cap = el("figcaption", {}, b.title);
+      if (!b.reference && d != null) cap.append(el("span", { class: "score " + scoreClass(d) }, `${d}% vs ${REF.title}`));
+      pair.append(el("figure", {}, cap, cell(row, b.name)));
+    }
+    return pair;
   }
+  const ref = src(row, REF.name), other = src(row, against), diff = src(row, "diff-" + against);
+  if (!other) return el("div", {}, el("figcaption", {}, TITLE[against]), cell(row, against));
   if (state.mode === "diff") {
-    return el("figure", {}, el("figcaption", {}, "pixels that differ by more than 3%, over Qt"),
-      el("div", { class: "stage" }, img(qt, row.w), img(diff, row.w, "top")));
+    return el("figure", {}, el("figcaption", {}, `${TITLE[against]}: pixels that differ from ${REF.title} by more than 3%, over ${REF.title}`),
+      el("div", { class: "stage" }, img(ref, row.w), diff ? img(diff, row.w, "top") : ""));
   }
-  const stage = el("div", { class: "stage" }, img(qt, row.w));
+  const stage = el("div", { class: "stage" }, img(ref, row.w));
   const range = el("input", { type: "range", min: "0", max: "100", value: "50" });
   if (state.mode === "overlay") {
-    const top = img(rune, row.w, "top");
+    const top = img(other, row.w, "top");
     top.style.opacity = 0.5;
     stage.append(top);
     range.oninput = () => { top.style.opacity = range.value / 100; };
-    return el("div", {}, el("label", { class: "slider" }, "Qt", range, "Rune"), stage);
+    return el("div", {}, el("label", { class: "slider" }, REF.title, range, TITLE[against]), stage);
   }
-  const clip = el("div", { class: "clip" }, img(rune, row.w));
+  const clip = el("div", { class: "clip" }, img(other, row.w));
   const rule = el("div", { class: "rule" });
   const set = () => { clip.style.clipPath = `inset(0 0 0 ${range.value}%)`; rule.style.left = range.value + "%"; };
   range.oninput = set;
   set();
   stage.append(clip, rule);
-  return el("div", {}, el("label", { class: "slider" }, "Qt ◀", range, "▶ Rune"), stage);
+  return el("div", {}, el("label", { class: "slider" }, REF.title + " ◀", range, "▶ " + TITLE[against]), stage);
+}
+
+// The header's score: the one other binding's share as before, or each binding's.
+function score(row) {
+  const errs = Object.keys(row.errors);
+  if (errs.length) return el("span", { class: "score high" }, "failed: " + errs.map(n => TITLE[n]).join(", "));
+  const parts = OTHERS.filter(b => row.diffs[b.name] != null);
+  if (!parts.length) return el("span", { class: "score" }, "");
+  if (OTHERS.length === 1) {
+    const s = row.diffs[OTHERS[0].name];
+    return el("span", { class: "score " + scoreClass(s) }, `${s}% of pixels differ`);
+  }
+  const worst = Math.max(...parts.map(b => row.diffs[b.name]));
+  return el("span", { class: "score " + scoreClass(worst) }, parts.map(b => `${b.title} ${row.diffs[b.name]}%`).join(" · ") + ` vs ${REF.title}`);
+}
+
+function parityPanel() {
+  const own = Object.keys(DATA.parity);
+  const bad = [];
+  let total = 0;
+  for (const name of own) {
+    for (const [k, v] of Object.entries(DATA.parity[name])) {
+      total++;
+      if (v.length) bad.push([TITLE[name] + " " + k, v]);
+    }
+  }
+  const direct = DATA.bindings.filter(b => !own.includes(b.name)).map(b => b.title);
+  const tail = direct.length ? ` (${direct.join(", ")} read${direct.length === 1 ? "s" : ""} the core's tokens directly)` : "";
+  const key = `${state.theme}@${state.radius}`;
+  const here = own.reduce((n, name) => n + ((DATA.parity[name][key] || []).length), 0);
+  return el("details", { class: "parity " + (bad.length ? "bad" : "ok") },
+    el("summary", {}, bad.length
+      ? `Token parity: ${bad.length} of ${total} binding × theme × radius dumps differ from the core (this one: ${here})`
+      : `Token parity: ${own.map(n => TITLE[n]).join(", ") || "no binding"} resolve${own.length === 1 ? "s" : ""} the core's tokens for all ${total} theme × radius combinations${tail}`),
+    el("pre", {}, bad.length ? bad.map(([k, v]) => k + "\n  " + v.join("\n  ")).join("\n")
+      : "Every fixture theme, at every radius, dumps byte-identical canonical JSON from each binding and the core (omarchy-theme)."
+        + (DATA.skipped.length ? "\n\nSkipped here: " + DATA.skipped.map(s => `${s.title} (${s.why})`).join(", ") : "")));
 }
 
 function render() {
@@ -133,40 +200,30 @@ function render() {
   chips("f-radius", "radius", DATA.radii.map(r => [String(r), r === 0 ? "0 (sharp)" : String(r)]));
   chips("f-section", "section", [["all", "all"], ...DATA.sections.map(s => [s, s])]);
   chips("f-mode", "mode", MODES);
-  document.getElementById("sub").textContent = `· ${DATA.rev} · Qt vs Rune`;
+  chips("f-against", "against", state.mode !== "side" && OTHERS.length > 1 ? OTHERS.map(b => [b.name, b.title]) : []);
+  document.getElementById("sub").textContent = `· ${DATA.rev} · ` + DATA.bindings.map(b => b.title).join(" vs ");
 
   const main = document.getElementById("main");
   main.replaceChildren();
-
-  const key = `${state.theme}@${state.radius}`;
-  const diffs = DATA.parity[key] || [];
-  const allBad = Object.entries(DATA.parity).filter(([, v]) => v.length);
-  const p = el("details", { class: "parity " + (allBad.length ? "bad" : "ok") },
-    el("summary", {}, allBad.length
-      ? `Token parity: ${allBad.length} of ${Object.keys(DATA.parity).length} theme × radius dumps differ (this one: ${diffs.length})`
-      : `Token parity: Qt and Rune resolve identical tokens for all ${Object.keys(DATA.parity).length} theme × radius combinations`),
-    el("pre", {}, allBad.length ? allBad.map(([k, v]) => k + "\n  " + v.join("\n  ")).join("\n") : "Every fixture theme, at every radius, dumps byte-identical canonical JSON from both bindings."));
-  main.append(p);
+  main.append(parityPanel());
 
   const rows = DATA.rows.filter(r => r.theme === state.theme && String(r.radius) === state.radius && (state.section === "all" || r.section === state.section));
   if (!rows.length) { main.append(el("div", { class: "empty" }, "Nothing rendered for this combination.")); return; }
   for (const row of rows) {
-    const s = row.diff;
-    const cls = s == null ? "" : s < 2 ? "good" : s < 6 ? "mid" : "high";
-    const head = el("h2", {}, row.section, el("span", { class: "meta" }, `${row.theme} · radius ${row.radius}`),
-      el("span", { class: "score " + cls }, row.error ? "failed" : s == null ? "" : `${s}% of pixels differ`));
-    const body = el("div", { class: "body" }, row.error ? el("div", { class: "err" }, row.error) : view(row));
+    const head = el("h2", {}, row.section, el("span", { class: "meta" }, `${row.theme} · radius ${row.radius}`), score(row));
+    const body = el("div", { class: "body" }, row.errors[REF.name] ? el("div", { class: "err" }, row.errors[REF.name]) : view(row));
     main.append(el("section", { class: "card" }, head, body));
   }
 }
 
 document.addEventListener("keydown", e => {
   if (e.target.tagName === "INPUT") return;
-  const cycle = (key, list) => { const i = list.indexOf(state[key]); state[key] = list[(i + (e.shiftKey ? list.length - 1 : 1)) % list.length]; save(); render(); };
+  const cycle = (key, list) => { if (!list.length) return; const i = list.indexOf(state[key]); state[key] = list[(i + (e.shiftKey ? list.length - 1 : 1)) % list.length]; save(); render(); };
   if (e.key === "t") cycle("theme", DATA.themes);
   if (e.key === "r") cycle("radius", DATA.radii.map(String));
   if (e.key === "s") cycle("section", ["all", ...DATA.sections]);
   if (e.key === "v") cycle("mode", MODES.map(m => m[0]));
+  if (e.key === "a") cycle("against", OTHERS.map(b => b.name));
 });
 
 render();

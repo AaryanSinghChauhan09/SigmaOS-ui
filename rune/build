@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Build the Rune binding's gallery (tools/bindings.d/rune.json's build step; bin/build rune runs
+# it) to target/release/omarchy-rune-gallery.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cargo build -q --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-rune-gallery
+echo "target/release/omarchy-rune-gallery"
