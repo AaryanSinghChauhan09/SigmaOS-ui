@@ -569,15 +569,19 @@ OMARCHY_BOOL_ACCESSORS (OmarchyMenuRow, menu_row, highlighted, m_props, M_PROP_H
  * OmarchyTooltip:
  *
  * A tooltip as it draws, held open: the tooltip surface, `bodySmall` text, padding
- * `controlPaddingX` × `controlPaddingY`, Hyprland's rounding. GTK's own tooltips
- * (gtk_widget_set_tooltip_text()) get the same look from omarchy_gtk_init()'s CSS.
+ * `controlPaddingX` × `controlPaddingY`, Hyprland's rounding. With a #OmarchyTooltip:shortcut,
+ * an #OmarchyKeyCombo follows the text `controlGap` after it, both vertically centered (Qt's
+ * Tooltip). GTK's own tooltips (gtk_widget_set_tooltip_text()) get the plain look from
+ * omarchy_gtk_init()'s CSS.
  */
 struct _OmarchyTooltip {
   GtkWidget parent_instance;
   char *text;
+  char *shortcut;
+  GtkWidget *combo; /* the shortcut's keycaps, when there is one */
 };
 
-enum { T_PROP_0, T_PROP_TEXT, T_N_PROPS };
+enum { T_PROP_0, T_PROP_TEXT, T_PROP_SHORTCUT, T_N_PROPS };
 static GParamSpec *t_props[T_N_PROPS];
 
 G_DEFINE_FINAL_TYPE (OmarchyTooltip, omarchy_tooltip, GTK_TYPE_WIDGET)
@@ -589,20 +593,73 @@ tooltip_border (void)
   return p->tooltip.border;
 }
 
+/* The row inside the padding: the text, then the shortcut's keycaps. With a shortcut the text
+ * keeps its fractional advance, so the keycaps land where Qt's Row puts them. */
+static void
+tooltip_row (OmarchyTooltip *self, double *text_w, int *combo_w, int *combo_h, int *row_h)
+{
+  const OmarchyTokens *t = omarchy_tokens ();
+  g_autoptr (PangoLayout) l = omarchy_layout (GTK_WIDGET (self), self->text, t->body_small, FALSE);
+  int rounded;
+  omarchy_layout_size (l, &rounded, NULL);
+  *text_w = rounded;
+  *combo_w = *combo_h = 0;
+  if (self->combo) {
+    PangoRectangle logical;
+    pango_layout_get_extents (l, NULL, &logical);
+    *text_w = logical.width / (double) PANGO_SCALE;
+    gtk_widget_measure (self->combo, GTK_ORIENTATION_HORIZONTAL, -1, NULL, combo_w, NULL, NULL);
+    gtk_widget_measure (self->combo, GTK_ORIENTATION_VERTICAL, -1, NULL, combo_h, NULL, NULL);
+  }
+  *row_h = MAX (omarchy_line_height (t->body_small), *combo_h);
+}
+
+/* Qt's anchors.verticalCenter (alignWhenCentered): an odd height centers on its upper middle. */
+static float
+tooltip_center (float outer, float inner)
+{
+  float a = (int) outer % 2 ? (outer + 1) / 2 : outer / 2;
+  float b = (int) inner % 2 ? (inner + 1) / 2 : inner / 2;
+  return a - b;
+}
+
 static void
 tooltip_measure (GtkWidget *w, GtkOrientation o, int for_size, int *min, int *nat, int *mb, int *nb)
 {
   OmarchyTooltip *self = OMARCHY_TOOLTIP (w);
   const OmarchyTokens *t = omarchy_tokens ();
   OmarchyBorder b = tooltip_border ();
-  if (o == GTK_ORIENTATION_HORIZONTAL) {
-    g_autoptr (PangoLayout) l = omarchy_layout (w, self->text, t->body_small, FALSE);
-    int tw;
-    omarchy_layout_size (l, &tw, NULL);
-    *min = *nat = tw + t->control_padding_x * 2 + (int) (b.widths[1] + b.widths[3]);
-  } else {
-    *min = *nat = omarchy_line_height (t->body_small) + t->control_padding_y * 2 + (int) (b.widths[0] + b.widths[2]);
-  }
+  double tw;
+  int cw, ch, rh;
+  tooltip_row (self, &tw, &cw, &ch, &rh);
+  if (o == GTK_ORIENTATION_HORIZONTAL)
+    *min = *nat = (int) ceil (tw + (self->combo ? t->control_gap + cw : 0) + t->control_padding_x * 2 + b.widths[1] + b.widths[3] - 1e-3);
+  else
+    *min = *nat = rh + t->control_padding_y * 2 + (int) (b.widths[0] + b.widths[2]);
+}
+
+static double
+tooltip_combo_x (OmarchyTooltip *self, double tw)
+{
+  OmarchyBorder b = tooltip_border ();
+  const OmarchyTokens *t = omarchy_tokens ();
+  return b.widths[3] + t->control_padding_x + tw + t->control_gap;
+}
+
+static void
+tooltip_allocate (GtkWidget *w, int width, int height, int baseline)
+{
+  OmarchyTooltip *self = OMARCHY_TOOLTIP (w);
+  if (!self->combo)
+    return;
+  const OmarchyTokens *t = omarchy_tokens ();
+  OmarchyBorder b = tooltip_border ();
+  double tw;
+  int cw, ch, rh;
+  tooltip_row (self, &tw, &cw, &ch, &rh);
+  GtkAllocation a = { (int) floor (tooltip_combo_x (self, tw)),
+                      (int) b.widths[0] + t->control_padding_y + (int) tooltip_center (rh, ch), cw, ch };
+  gtk_widget_size_allocate (self->combo, &a, -1);
 }
 
 static void
@@ -613,21 +670,43 @@ tooltip_snapshot (GtkWidget *w, GtkSnapshot *s)
   OmarchyBorder b = tooltip_border ();
   omarchy_draw_surface (s, &GRAPHENE_RECT_INIT (0, 0, gtk_widget_get_width (w), gtk_widget_get_height (w)), p->radius,
                         &p->tooltip.background, &b);
+  double tw;
+  int cw, ch, rh;
+  tooltip_row (self, &tw, &cw, &ch, &rh);
   g_autoptr (PangoLayout) l = omarchy_layout (w, self->text, p->body_small, FALSE);
-  omarchy_draw_layout (s, l, b.widths[3] + p->control_padding_x, b.widths[0] + p->control_padding_y, &p->tooltip.text);
+  omarchy_draw_layout (s, l, b.widths[3] + p->control_padding_x,
+                       b.widths[0] + p->control_padding_y + tooltip_center (rh, omarchy_line_height (p->body_small)),
+                       &p->tooltip.text);
+  if (self->combo) {
+    /* The keycaps at the text's fractional end, as Qt's Row places them. */
+    double x = tooltip_combo_x (self, tw);
+    gtk_snapshot_save (s);
+    gtk_snapshot_translate (s, &GRAPHENE_POINT_INIT ((float) (x - floor (x)), 0));
+    gtk_widget_snapshot_child (w, self->combo, s);
+    gtk_snapshot_restore (s);
+  }
 }
 
 static void
 omarchy_tooltip_init (OmarchyTooltip *self)
 {
   self->text = g_strdup ("");
+  self->shortcut = g_strdup ("");
   omarchy_widget_follow (GTK_WIDGET (self));
+}
+
+static void
+tooltip_dispose (GObject *o)
+{
+  g_clear_pointer (&OMARCHY_TOOLTIP (o)->combo, gtk_widget_unparent);
+  G_OBJECT_CLASS (omarchy_tooltip_parent_class)->dispose (o);
 }
 
 static void
 tooltip_finalize (GObject *o)
 {
   g_free (OMARCHY_TOOLTIP (o)->text);
+  g_free (OMARCHY_TOOLTIP (o)->shortcut);
   G_OBJECT_CLASS (omarchy_tooltip_parent_class)->finalize (o);
 }
 
@@ -636,6 +715,8 @@ tooltip_set_property (GObject *o, guint id, const GValue *v, GParamSpec *pspec)
 {
   if (id == T_PROP_TEXT)
     omarchy_tooltip_set_text (OMARCHY_TOOLTIP (o), g_value_get_string (v));
+  else if (id == T_PROP_SHORTCUT)
+    omarchy_tooltip_set_shortcut (OMARCHY_TOOLTIP (o), g_value_get_string (v));
   else
     G_OBJECT_WARN_INVALID_PROPERTY_ID (o, id, pspec);
 }
@@ -645,6 +726,8 @@ tooltip_get_property (GObject *o, guint id, GValue *v, GParamSpec *pspec)
 {
   if (id == T_PROP_TEXT)
     g_value_set_string (v, OMARCHY_TOOLTIP (o)->text);
+  else if (id == T_PROP_SHORTCUT)
+    g_value_set_string (v, OMARCHY_TOOLTIP (o)->shortcut);
   else
     G_OBJECT_WARN_INVALID_PROPERTY_ID (o, id, pspec);
 }
@@ -654,12 +737,20 @@ omarchy_tooltip_class_init (OmarchyTooltipClass *klass)
 {
   GObjectClass *oc = G_OBJECT_CLASS (klass);
   GtkWidgetClass *wc = GTK_WIDGET_CLASS (klass);
+  oc->dispose = tooltip_dispose;
   oc->finalize = tooltip_finalize;
   oc->set_property = tooltip_set_property;
   oc->get_property = tooltip_get_property;
   wc->measure = tooltip_measure;
+  wc->size_allocate = tooltip_allocate;
   wc->snapshot = tooltip_snapshot;
   t_props[T_PROP_TEXT] = g_param_spec_string ("text", NULL, NULL, "", G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+  /**
+   * OmarchyTooltip:shortcut:
+   *
+   * A key combination ("Ctrl+S") drawn as keycaps after the text, or "" for none.
+   */
+  t_props[T_PROP_SHORTCUT] = g_param_spec_string ("shortcut", NULL, NULL, "", G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
   g_object_class_install_properties (oc, T_N_PROPS, t_props);
   gtk_widget_class_set_css_name (wc, "omarchy-tooltip");
   gtk_widget_class_set_accessible_role (wc, GTK_ACCESSIBLE_ROLE_TOOLTIP);
@@ -678,6 +769,36 @@ omarchy_tooltip_new (const char *text)
 }
 
 OMARCHY_STRING_ACCESSORS (OmarchyTooltip, tooltip, text, t_props, T_PROP_TEXT, TRUE)
+
+const char *
+omarchy_tooltip_get_shortcut (OmarchyTooltip *self)
+{
+  return self->shortcut;
+}
+
+/**
+ * omarchy_tooltip_set_shortcut:
+ * @self: the tooltip
+ * @shortcut: (nullable): a key combination ("Ctrl+S"), or %NULL or "" for none
+ */
+void
+omarchy_tooltip_set_shortcut (OmarchyTooltip *self, const char *shortcut)
+{
+  if (!g_strcmp0 (self->shortcut, shortcut ? shortcut : ""))
+    return;
+  g_free (self->shortcut);
+  self->shortcut = g_strdup (shortcut ? shortcut : "");
+  if (!*self->shortcut) {
+    g_clear_pointer (&self->combo, gtk_widget_unparent);
+  } else if (self->combo) {
+    omarchy_key_combo_set_keys (OMARCHY_KEY_COMBO (self->combo), self->shortcut);
+  } else {
+    self->combo = omarchy_key_combo_new (self->shortcut);
+    gtk_widget_set_parent (self->combo, GTK_WIDGET (self));
+  }
+  gtk_widget_queue_resize (GTK_WIDGET (self));
+  g_object_notify_by_pspec (G_OBJECT (self), t_props[T_PROP_SHORTCUT]);
+}
 
 /* =============================================================================== Surface === */
 

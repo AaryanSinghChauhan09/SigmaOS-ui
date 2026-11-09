@@ -82,11 +82,15 @@ heading_measure (GtkWidget *w, GtkOrientation o, int for_size, int *min, int *na
   if (o == GTK_ORIENTATION_HORIZONTAL) {
     int ts, ss, a = 0, b = 0;
     heading_sizes (self, &ts, &ss);
+    /* Whole pixels up, so the lines never elide at their natural width. */
+    PangoRectangle r;
     g_autoptr (PangoLayout) l = omarchy_layout (w, self->text, ts, TRUE);
-    omarchy_layout_size (l, &a, NULL);
+    pango_layout_get_extents (l, NULL, &r);
+    a = (int) ceil (r.width / (double) PANGO_SCALE);
     if (has_subtitle (self)) {
       g_autoptr (PangoLayout) s = omarchy_layout (w, self->subtitle, ss, FALSE);
-      omarchy_layout_size (s, &b, NULL);
+      pango_layout_get_extents (s, NULL, &r);
+      b = (int) ceil (r.width / (double) PANGO_SCALE);
     }
     int inset = tw > 0 ? tw + omarchy_tokens ()->control_gap : 0;
     *min = inset;

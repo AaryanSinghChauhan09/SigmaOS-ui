@@ -45,6 +45,8 @@ G_DECLARE_FINAL_TYPE (OmarchyTooltip, omarchy_tooltip, OMARCHY, TOOLTIP, GtkWidg
 GtkWidget *omarchy_tooltip_new (const char *text);
 const char *omarchy_tooltip_get_text (OmarchyTooltip *self);
 void omarchy_tooltip_set_text (OmarchyTooltip *self, const char *text);
+const char *omarchy_tooltip_get_shortcut (OmarchyTooltip *self);
+void omarchy_tooltip_set_shortcut (OmarchyTooltip *self, const char *shortcut);
 
 #define OMARCHY_TYPE_SURFACE (omarchy_surface_get_type ())
 G_DECLARE_FINAL_TYPE (OmarchySurface, omarchy_surface, OMARCHY, SURFACE, GtkWidget)
