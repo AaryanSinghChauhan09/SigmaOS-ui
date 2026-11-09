@@ -370,6 +370,11 @@ QtObject {
   // pointer: it starts at once and settles without a bounce.
   readonly property var easeOut: [0.23, 1.0, 0.32, 1.0, 1.0, 1.0]
 
+  // The theme-switch color fade (spec/following.md): CSS's `ease` over 280 ms, which reads the
+  // same as Rune's color spring. Not in the shell, which doesn't fade theme switches.
+  readonly property int themeFade: 280
+  readonly property var ease: [0.25, 0.1, 0.25, 1.0, 1.0, 1.0]
+
   // Pull typography, bar dimensions, state tokens, and spacing out of the
   // shell.toml dict that Color already parsed. Called by Commons.Color.loadShell so
   // a single parse pass feeds both singletons.

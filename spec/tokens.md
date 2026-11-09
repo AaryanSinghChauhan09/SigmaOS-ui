@@ -147,7 +147,7 @@ Selected labels are bold. Nothing else changes weight.
 
 ## Motion
 
-Short and quiet. `fast` 120 ms for color and state changes, `press` 160 ms for the press give (scale 0.97) on the `easeOut` curve `cubic-bezier(0.23, 1, 0.32, 1)`. With `reduceMotion`, every duration is 0.
+Short and quiet. `fast` 120 ms for color and state changes, `press` 160 ms for the press give (scale 0.97) on the `easeOut` curve `cubic-bezier(0.23, 1, 0.32, 1)`. `theme` 280 ms on the `ease` curve `cubic-bezier(0.25, 0.1, 0.25, 1)` is the theme-switch color fade, which reads the same as Rune's color spring ([`following.md`](following.md)). With `reduceMotion`, every duration is 0.
 
 ## Canonical JSON
 
@@ -179,6 +179,6 @@ Short and quiet. `fast` 120 ms for color and state changes, `press` 160 ms for t
     "notifications": { "...": 0 },
     "polkit":  { "...": 0 }
   },
-  "motion": { "fast": 120, "press": 160, "easeOut": [0.23, 1.0, 0.32, 1.0] }
+  "motion": { "fast": 120, "press": 160, "theme": 280, "easeOut": [0.23, 1.0, 0.32, 1.0], "ease": [0.25, 0.1, 0.25, 1.0] }
 }
 ```

@@ -96,7 +96,11 @@ QtObject {
         notifications: notifications,
         polkit: polkit,
       },
-      motion: { fast: 120, press: 160, easeOut: [S.easeOut[0], S.easeOut[1], S.easeOut[2], S.easeOut[3]] },
+      motion: {
+        fast: 120, press: 160, theme: S.themeFade,
+        easeOut: [S.easeOut[0], S.easeOut[1], S.easeOut[2], S.easeOut[3]],
+        ease: [S.ease[0], S.ease[1], S.ease[2], S.ease[3]],
+      },
     }
   }
 }

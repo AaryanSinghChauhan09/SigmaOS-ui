@@ -229,13 +229,18 @@ pub struct Motion {
     pub fast: u32,
     /// The press give (scale 0.97), in ms.
     pub press: u32,
-    /// `cubic-bezier(x1, y1, x2, y2)`.
+    /// The theme-switch color fade, in ms, on [`Motion::ease`] (`spec/following.md`).
+    pub theme: u32,
+    /// `cubic-bezier(x1, y1, x2, y2)`: the strong ease-out for state changes and presses.
     pub ease_out: [f64; 4],
+    /// `cubic-bezier(x1, y1, x2, y2)`: CSS's `ease`, for the theme-switch fade. At
+    /// [`Motion::theme`] it tracks Rune's color spring (critically damped, 0.3 s).
+    pub ease: [f64; 4],
 }
 
 impl Default for Motion {
     fn default() -> Self {
-        Self { fast: 120, press: 160, ease_out: [0.23, 1.0, 0.32, 1.0] }
+        Self { fast: 120, press: 160, theme: 280, ease_out: [0.23, 1.0, 0.32, 1.0], ease: [0.25, 0.1, 0.25, 1.0] }
     }
 }
 

@@ -24,6 +24,6 @@ If `--check` lists a hand-ported file, port that diff by hand. If a patch stops 
 ## What the hand ports change
 
 - **Color.qml**: `FileView`s for `colors.toml`, `shell.toml` and `~/.config/omarchy/shell.toml` become `ThemeSource.colorsText` / `shellText` / `userShellText`, reloaded on `ThemeSource.themeChanged`. Surface `text` roles go through `flatColor`, so a role name (`foreground`) works where the shell only takes a hex string. Adds `dark`, from `colors.toml`'s `mode`.
-- **Style.qml**: `cornerRadius`, `gapsOut`, `reduceMotion` and `resolvedFontFamily` bind to `ThemeSource` instead of `hyprctl` / `fc-match` processes and Quickshell's Hyprland events. `menuFontFamily` no longer reads `OMARCHY_MENU_FONT`. Adds `windowBorder` (Hyprland's `general:border_size`).
+- **Style.qml**: `cornerRadius`, `gapsOut`, `reduceMotion` and `resolvedFontFamily` bind to `ThemeSource` instead of `hyprctl` / `fc-match` processes and Quickshell's Hyprland events. `menuFontFamily` no longer reads `OMARCHY_MENU_FONT`. Adds `windowBorder` (Hyprland's `general:border_size`). Adds `themeFade` and `ease`, the theme-switch fade's duration and curve.
 - **Util.qml**: drops `execDetached` / `execArgv` (Quickshell processes) and the bar-layout helpers.
 - **I18n.qml**: same interface, backed by `Strings.js` and `~/.config/omarchy/language` instead of the full catalogs; `lookup` lets an app route keys through its own translator.
