@@ -153,8 +153,10 @@ class KitWidget(Widget):
     _kit_refreshing: bool = False
 
     def __init__(self, *children: Widget, name: str | None = None, id: str | None = None,
-                 classes: str | None = None, disabled: bool = False):
+                 classes: str | None = None, disabled: bool = False, focusable: bool | None = None):
         super().__init__(*children, name=name, id=id, classes=classes, disabled=disabled)
+        if focusable is not None:
+            self.can_focus = focusable
         self._place_key = _PlaceKey(self)
         self._frame: _Frame | None = None
         self._frame_size: Size | None = None

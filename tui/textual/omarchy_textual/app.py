@@ -361,9 +361,9 @@ class OmarchyApp(App):
     `self.kit` is the kit (`self.kit.theme`, `self.kit.revision`); handle `OmarchyThemeChanged`
     for the changed hook."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, theme: Theme | None = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        follow(self)
+        follow(self, theme=theme)
 
     @property
     def kit(self) -> Kit:

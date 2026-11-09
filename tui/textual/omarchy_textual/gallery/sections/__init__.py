@@ -27,16 +27,38 @@ SECTIONS: list[tuple[str, str]] = [
     ("tokens", "Tokens"),
 ]
 
-#: The section whose module isn't written yet draws as a placeholder.
-_MODULE = {
+#: The module (gallery/sections/<module>.py) holding each section's `Section` subclass, named
+#: after the section (`Buttons`, `Toggles`, ...).
+MODULE = {
     "buttons": "controls",
     "toggles": "controls",
     "inputs": "controls",
     "slider": "controls",
+    "forms": "forms",
+    "pickers": "forms",
+    "surfaces": "surfaces",
+    "menus": "navigation",
+    "navigation": "navigation",
+    "lists": "lists",
+    "tiles": "lists",
+    "progress": "feedback",
+    "messages": "feedback",
+    "data": "data",
+    "layout": "data",
+    "timeline": "editing",
+    "color": "editing",
+    "composed": "composed",
+    "tokens": "tokens",
 }
 
 
 def section_class(name: str):
-    """The `Section` subclass drawing `name`."""
-    mod = importlib.import_module(f".{_MODULE.get(name, name)}", __name__)
-    return getattr(mod, name.capitalize())
+    """The `Section` subclass drawing `name` (a placeholder while it isn't written)."""
+    try:
+        mod = importlib.import_module(f".{MODULE[name]}", __name__)
+        return getattr(mod, name.capitalize())
+    except (ImportError, AttributeError):
+        from ..page import Placeholder
+
+        title = dict(SECTIONS)[name]
+        return type(name.capitalize(), (Placeholder,), {"NAME": name, "TITLE": title})

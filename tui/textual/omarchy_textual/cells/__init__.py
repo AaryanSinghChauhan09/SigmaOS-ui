@@ -4,7 +4,16 @@ spec/terminal.md maps them (a port of `omarchy-ratatui`'s `ui`, cell for cell). 
 `omarchy_textual.widgets` render through these; an app's own drawing can use them directly.
 """
 
-from .base import Draw, Look, Tone, border_of, g, glyphs, look
-from .buffer import Buffer, Cell, Rect
+from . import paint  # noqa: F401
+from .base import Draw, Look, Tone, border_of, g, glyphs, look  # noqa: F401
+from .buffer import Buffer, Cell, Rect  # noqa: F401
 from .controls import *  # noqa: F401,F403
-from .layout import Blank, Boxed, Col, Custom, Filled, Label, Row, centered, col, custom, filled, label, row, sized
+from .data import *  # noqa: F401,F403
+from .editing import *  # noqa: F401,F403
+from .feedback import *  # noqa: F401,F403
+from .forms import *  # noqa: F401,F403
+from .layout import Blank, Boxed, Col, Custom, Filled, Label, Row, centered, col, custom, filled, label, row, sized  # noqa: F401
+from .lists import *  # noqa: F401,F403
+from .navigation import *  # noqa: F401,F403
+from .search import *  # noqa: F401,F403
+from .surfaces import *  # noqa: F401,F403

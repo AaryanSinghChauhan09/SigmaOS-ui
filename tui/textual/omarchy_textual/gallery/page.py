@@ -25,3 +25,12 @@ class Section(KitWidget):
         header = L.label(self.TITLE, lambda t: Ink(t.dim(), bold=True))
         inner = L.col(1, header, *self.parts())
         return L.col(0, L.Blank(COLS, 1), L.row(0, L.Blank(2, 1), inner), L.Blank(COLS, 1))
+
+
+class Placeholder(Section):
+    """A section not written yet."""
+
+    def component(self) -> Draw:
+        header = L.label(self.TITLE, lambda t: Ink(t.dim(), bold=True))
+        note = L.label("(not ported yet)", lambda t: t.faint())
+        return L.col(0, L.Blank(COLS, 1), L.row(0, L.Blank(2, 1), L.col(1, header, note)), L.Blank(COLS, 1))

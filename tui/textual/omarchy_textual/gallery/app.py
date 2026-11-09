@@ -79,8 +79,8 @@ class GalleryApp(OmarchyApp):
         ("q", "quit", "Quit"),
     ]
 
-    def __init__(self, section: str = "buttons", snap: bool = False):
-        super().__init__()
+    def __init__(self, section: str = "buttons", snap: bool = False, theme=None):
+        super().__init__(theme=theme)
         names = [n for n, _ in SECTIONS]
         self.index = names.index(section) if section in names else 0
         self.snap = snap
