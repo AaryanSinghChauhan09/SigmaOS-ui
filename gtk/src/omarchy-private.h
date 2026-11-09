@@ -15,6 +15,9 @@ const OmarchyTokens *omarchy_paint (void);
 /* I18n.t(key, english) */
 const char *omarchy_t (const char *key, const char *fallback);
 
+/* OMARCHY_GTK_SNAP=out.png: render the first window and exit (omarchy-snap.c). */
+void omarchy_snap_watch (void);
+
 /* CSS (omarchy-css.c) */
 void omarchy_css_install (GdkDisplay *display);
 void omarchy_css_update_structure (const OmarchyTokens *t);

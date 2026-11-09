@@ -259,6 +259,9 @@ structure_css (const OmarchyTokens *t)
   P ("headerbar { background: var(--om-bg); color: var(--om-fg); border-bottom: 1px solid var(--om-track); min-height: %dpx; padding: %dpx %dpx; }\n",
      t->control_height + 2 * t->sm, t->xxs, t->sm);
   P ("headerbar.flat, headerbar:backdrop { background: var(--om-bg); }\n");
+  P ("windowcontrols > button, windowcontrols > button.image-button { min-width: %dpx; min-height: %dpx; padding: 0; margin: 0 %dpx; border-radius: %dpx; }\n",
+     t->control_height - 2 * (int) reserve[0], t->control_height - 2 * (int) reserve[0], t->xxs, r);
+  P ("windowcontrols > button > image { background: none; box-shadow: none; padding: 0; border-radius: 0; }\n");
 
   /* Buttons: foreground glass. Plain (flat, in headerbars and toolbars) is borderless at rest. */
   P ("button { min-height: %dpx; min-width: %dpx; padding: %dpx %dpx; border-radius: %dpx; background: var(--om-normal-fill); color: var(--om-fg); font-weight: normal; %s }\n",

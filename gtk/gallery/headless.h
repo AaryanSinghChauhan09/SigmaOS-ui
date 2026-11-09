@@ -11,6 +11,9 @@ G_BEGIN_DECLS
  * point). FALSE (with a message on stderr) when it can't. */
 gboolean headless_start (int scale);
 void headless_stop (void);
+/* The environment a child process needs to use the display headless_start() made (GDK_BACKEND,
+ * BROADWAY_DISPLAY, and the runtime dir its socket is in). */
+char **headless_child_env (void);
 
 /* Run the main loop for `ms` milliseconds. */
 void headless_wait (guint ms);

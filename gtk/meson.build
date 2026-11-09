@@ -95,6 +95,13 @@ if have_gi
     extra_args: ['-DOMARCHY_GTK_COMPILATION', '--quiet', '--warn-all'],
     dependencies: deps,
     install: true)
+  vapigen = find_program('vapigen', required: false)
+  if vapigen.found()
+    gnome.generate_vapi('omarchy-gtk-' + api,
+      sources: gir[0],
+      packages: ['gtk4'],
+      install: true)
+  endif
 endif
 
 # The gallery, the tests and the live test: build/gtk/omarchy-gtk-*.
@@ -113,7 +120,16 @@ executable('omarchy-gtk-gallery',
   dependencies: [omarchy_gtk_dep, gtk_dep, m_dep],
   include_directories: include_directories('gallery', 'tests'),
   link_with: support,
-  build_rpath: theme_libdir)
+  build_rpath: theme_libdir,
+  install: true)
+
+executable('omarchy-gtk-headless',
+  'gallery/headless-run.c',
+  dependencies: [gtk_dep],
+  include_directories: include_directories('gallery'),
+  link_with: support,
+  build_rpath: theme_libdir,
+  install: true)
 
 executable('omarchy-gtk-tests',
   'tests/main.c', files(list['tests']),

@@ -16,7 +16,9 @@
  *   variables (accent included) among them;
  * - follows the desktop through libomarchy-theme's watch on the main loop, fading colors over
  *   `motion.theme` on a theme switch;
- * - registers the kit's widget types, so GtkBuilder files can name them.
+ * - registers the kit's widget types, so GtkBuilder files can name them;
+ * - with `OMARCHY_GTK_SNAP=out.png` in the environment, renders the app's first window to that
+ *   PNG (at `OMARCHY_GTK_SNAP_SCALE`, default 2) and exits: stills of any app, no app code.
  *
  * Calling it again does nothing more.
  *
@@ -39,6 +41,7 @@ omarchy_gtk_init (void)
   else
     g_warning ("omarchy-gtk: no display; the stock widgets keep their look");
   omarchy_ensure_types ();
+  omarchy_snap_watch ();
   return theme;
 }
 

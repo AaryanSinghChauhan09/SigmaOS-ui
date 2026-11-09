@@ -359,6 +359,14 @@ headless_start (int scale)
   return FALSE;
 }
 
+char **
+headless_child_env (void)
+{
+  char **env = g_get_environ ();
+  env = g_environ_setenv (env, "XDG_RUNTIME_DIR", g_get_user_runtime_dir (), TRUE);
+  return env;
+}
+
 static gboolean
 quit_loop (gpointer loop)
 {
