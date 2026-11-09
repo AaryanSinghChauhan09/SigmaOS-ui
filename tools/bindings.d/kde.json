@@ -15,6 +15,7 @@
   "tests": [
     { "name": "behavior", "run": "build/kde/omarchy-widgets-tests -silent" },
     { "name": "live switch", "run": "tools/live/run build/kde/omarchy-widgets-live-test" },
-    { "name": "live switch, reduced motion", "run": "tools/live/run build/kde/omarchy-widgets-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/kde/omarchy-widgets-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } },
+    { "name": "Kirigami live switch", "run": "if [[ -x build/kde/omarchy-widgets-kirigami-live-test ]]; then tools/live/run build/kde/omarchy-widgets-kirigami-live-test 2>/dev/null; else echo 'skipped (built without KF6 or Qt Quick)'; fi" }
   ]
 }

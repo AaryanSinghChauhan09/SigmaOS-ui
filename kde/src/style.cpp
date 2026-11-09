@@ -110,6 +110,18 @@ void chevron(QPainter *p, const QRectF &r, int dir, const QColor &c) {
   p->restore();
 }
 
+// A label without its mnemonic marks ("&Save" -> "Save", "&&" -> "&"): shortcuts aren't
+// underlined (SH_UnderlineShortcut), as in the rest of Omarchy.
+QString plain(const QString &text) {
+  QString out;
+  out.reserve(text.size());
+  for (int i = 0; i < text.size(); ++i) {
+    if (text[i] == QLatin1Char('&') && i + 1 < text.size()) ++i;
+    out += text[i];
+  }
+  return out;
+}
+
 int controlHeight() { return tk().spacing("controlHeight"); }
 int borderWidth() { return qMax(tk().border(Omarchy::State::Normal).maxWidth(), tk().border(Omarchy::State::Hover).maxWidth()); }
 
@@ -602,7 +614,8 @@ void Style::drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p,
     f.setBold(on || f.bold());
     const QColor c = textColor(opt);
     QRect r = b->rect;
-    const qreal tw = Paint::textWidth(f, b->text);
+    const QString label = plain(b->text);
+    const qreal tw = Paint::textWidth(f, label);
     const int iconW = b->icon.isNull() ? 0 : b->iconSize.width();
     const qreal gap = (iconW && !b->text.isEmpty()) ? t.spacing("controlGap") : 0;
     const qreal rowW = iconW + gap + tw;
@@ -613,7 +626,7 @@ void Style::drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p,
       x += iconW + gap;
     }
     const qreal lh = Paint::lineHeight(f);
-    Paint::text(*p, QPointF(x, r.y() + Paint::centered(r.height(), lh)), f, c, b->text);
+    Paint::text(*p, QPointF(x, r.y() + Paint::centered(r.height(), lh)), f, c, label);
     if (b->features & QStyleOptionButton::HasMenu) chevron(p, QRectF(r.right() - r.height() / 2.0, r.y(), r.height() / 2.0, r.height()), 0, c);
     return;
   }
@@ -622,7 +635,7 @@ void Style::drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p,
     const auto *b = qstyleoption_cast<const QStyleOptionButton *>(opt);
     if (!b) break;
     const QFont f = w ? w->font() : t.font("body");
-    Paint::textIn(*p, QRectF(b->rect), Qt::AlignLeft | Qt::AlignVCenter, f, textColor(opt), b->text);
+    Paint::textIn(*p, QRectF(b->rect), Qt::AlignLeft | Qt::AlignVCenter, f, textColor(opt), plain(b->text));
     return;
   }
   case CE_MenuItem: {
@@ -647,7 +660,7 @@ void Style::drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p,
       p->drawPixmap(QPointF(x, r.y() + Paint::centered(r.height(), s)), pm);
     }
     if (mi->maxIconWidth > 0 || !mi->icon.isNull()) x += box + gap;
-    const QStringList parts = mi->text.split(QLatin1Char('\t'));
+    const QStringList parts = plain(mi->text).split(QLatin1Char('\t'));
     const qreal lh = Paint::lineHeight(f);
     const int markRoom = box + gap;
     Paint::textIn(*p, QRectF(x, r.y() + Paint::centered(r.height(), lh), r.right() - x - pad - markRoom, lh), Qt::AlignLeft | Qt::AlignTop, f, ink, parts.value(0));
@@ -675,8 +688,7 @@ void Style::drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p,
     const bool pressed = mi->state & State_Sunken;
     if (hot || pressed) Paint::surface(*p, QRectF(opt->rect), t.smallRadius(), pressed ? t.fill(Omarchy::State::Pressed) : t.fill(Omarchy::State::Hover));
     const QFont f = w ? w->font() : t.font("body");
-    QString text = mi->text;
-    text.remove(QLatin1Char('&'));
+    const QString text = plain(mi->text);
     Paint::textIn(*p, QRectF(opt->rect), Qt::AlignCenter, f, textColor(opt), text);
     return;
   }
@@ -708,8 +720,7 @@ void Style::drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p,
       p->drawPixmap(QPointF(r.x() + t.spacing("controlPaddingX"), r.y() + Paint::centered(r.height(), s)), pm);
       r.setLeft(r.left() + t.spacing("controlPaddingX") + s);
     }
-    QString text = tab->text;
-    text.remove(QLatin1Char('&'));
+    const QString text = plain(tab->text);
     Paint::textIn(*p, QRectF(r), Qt::AlignCenter, f, c, text);
     return;
   }
@@ -921,7 +932,7 @@ void Style::drawComplexControl(ComplexControl cc, const QStyleOptionComplex *opt
     }
     if (!gb->text.isEmpty()) {
       const QRect label = subControlRect(cc, gb, SC_GroupBoxLabel, w);
-      Paint::text(*p, label.topLeft(), t.font("caption", true), (gb->state & State_Enabled) ? t.textDim() : t.textFaint(), gb->text);
+      Paint::text(*p, label.topLeft(), t.font("caption", true), (gb->state & State_Enabled) ? t.textDim() : t.textFaint(), plain(gb->text));
     }
     return;
   }
