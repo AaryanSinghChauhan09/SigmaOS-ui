@@ -1,6 +1,6 @@
 # Omarchy UI
 
-A cross-framework kit for apps that look and feel like Omarchy. One token contract (`spec/tokens.md`), resolved from the live Omarchy theme, and the same primitives (`spec/components.md`) in every framework. Qt and Rune today.
+A cross-framework kit for apps that look and feel like Omarchy. One token contract (`spec/tokens.md`), resolved from the live Omarchy theme, and the same primitives (`spec/components.md`) in every framework: Qt Quick, Rune, GTK 4, KDE / Qt Widgets, GPUI and Electron / web today, each registered in `tools/bindings.d/`.
 
 ## Building an app with it
 
@@ -8,14 +8,22 @@ Use the kit's components and tokens. Never hard-code a color, radius, font, size
 
 - **Qt Quick** ([`docs/using-qt.md`](docs/using-qt.md)): with the modules installed (`packaging/arch/omarchy-ui`, or `qt/module`), any QML file can `import Omarchy.Theme as Theme` and `import Omarchy.Ui as O`. A vendoring app instead does `include(path/to/omarchy-ui/qt/omarchy-ui.pri)` and calls `OmarchyUi::registerTypes()` before loading QML. Colors are `Theme.Color.*`, structure is `Theme.Style.*`, borders are `Theme.Border.*` specs drawn with `O.BorderSurface`. Qualify the imports (`O.Button`): the kit has `Button`, `TextField` and `Color` like Qt Quick does. Run with `QT_QUICK_CONTROLS_STYLE=Basic`.
 - **Rune** ([`docs/using-rust.md`](docs/using-rust.md)): depend on `omarchy-rune` only and use its `omarchy_rune::rune` / `rune_kit` re-exports. Keep an `omarchy_rune::Theme` in the app state (`Theme::load()`), `impl omarchy_rune::Themed for App` (`theme()`, `theme_mut()`), start with `omarchy_rune::run(AppSpec::new(...))` instead of `rune::run` (it follows the theme, sets the font, applies the theme every frame and keeps your own `setup`/`poll`), and build with `omarchy_rune::ui::*`. `Themed::theme_changed` is the changed hook; `theme.revision()` a cache key. Use rune-kit through `theme.kit()` only when the kit has no Omarchy primitive for the job.
-- **Any other Rust framework (GPUI, iced, egui)**: depend on `omarchy-theme`, map `Tokens` onto the framework's theme, and follow `omarchy_theme::watch`. Then add a binding here (below).
+- **GTK 4 / libadwaita** ([`docs/using-gtk.md`](docs/using-gtk.md)): call `omarchy_gtk_init()` (`Omarchy.init()` through GI) once after GTK starts; it restyles stock widgets and follows the theme. Use the kit's `Omarchy*` widgets for anything in `spec/components.md`. Connect `OmarchyTheme::changed` for anything drawn by hand.
+- **KDE / Qt Widgets / Kirigami** ([`docs/using-kde.md`](docs/using-kde.md)): call `Omarchy::Widgets::apply(app)` once on the `QApplication`; use `Omarchy::*` widgets; `Omarchy::Theme::instance()->changed` for custom painting.
+- **GPUI** ([`docs/using-gpui.md`](docs/using-gpui.md)): depend on `omarchy-gpui` only (it re-exports `gpui`), call `omarchy_gpui::init(cx)` once, build with `omarchy_gpui::ui::*`, and read colors through the `Paint` global so they fade.
+- **Electron / web** ([`docs/using-web.md`](docs/using-web.md)): `followOmarchy()` in main and `omarchyPreload` on every window; `import "@omarchy/ui"` in the renderer; `<omarchy-*>` elements and `var(--omarchy-*)`, never literal colors.
+- **Any other Rust framework (iced, egui)**: depend on `omarchy-theme`, map `Tokens` onto the framework's theme, and follow `omarchy_theme::watch`. Then add a binding here (below).
 - **Any other toolkit or language** ([`docs/using-c.md`](docs/using-c.md)): link `libomarchy-theme` (`pkg-config omarchy-theme`: tokens JSON, a main-loop watch fd, icons, strings), or spawn `omarchy-theme --watch --state` and read a JSON line per change (Node, Electron). Fade colors on a change as [`spec/following.md`](spec/following.md) says.
 
 Look at what you built before calling it done, in more than one theme and rounding:
 
 - Qt: `build/qt/omarchy-qt-gallery --qml view.qml --snap out.png` renders any QML file (an Item or a Window) with the kit, offscreen. Against the installed modules, `QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 qml6 examples/qt-installed/snap.qml -- /abs/view.qml /abs/out.png` does the same for a Window.
 - Rune: every app gets `--snap out.png [--scene name] [--size WxH]` from Rune's own tooling.
-- Either: prefix with `OMARCHY_UI_THEME_DIR=fixtures/themes/catppuccin-latte OMARCHY_UI_ROUNDING=8` to see a light theme with rounded corners, or any fixture under `fixtures/themes/`.
+- GTK: `OMARCHY_GTK_SNAP=out.png OMARCHY_GTK_SNAP_SCALE=2 omarchy-gtk-headless ./app` renders any app that made the one call (a private broadway display, no window shown).
+- KDE / Qt Widgets: `QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2` and `QWidget::grab()`, as `kde/` does; the gallery has `--snap`.
+- GPUI: the `snap` feature's `omarchy_gpui::snap::from_args` gives an app `--snap out.png [--size WxH]` (headless wgpu, no window).
+- Electron / web: `web/bin/omarchy-web-gallery --snap`, or `npm start -- --snap out.png` in `examples/web-electron` (headless Chromium).
+- Any of them: prefix with `OMARCHY_UI_THEME_DIR=fixtures/themes/catppuccin-latte OMARCHY_UI_ROUNDING=8` to see a light theme with rounded corners, or any fixture under `fixtures/themes/`.
 
 What makes it read as Omarchy, in order of how often agents get it wrong:
 

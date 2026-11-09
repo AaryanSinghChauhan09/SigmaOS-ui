@@ -83,7 +83,7 @@ Every binding has an automated test that switches the theme the way Omarchy does
    - the revision is 1.
 6. **Where it fades**, also: a fade ran (a color between the two was on screen, or the binding says it is fading) and landed exactly; under `OMARCHY_UI_REDUCE_MOTION=1` no fade ran.
 
-The tests today: `crates/omarchy-theme/tests/live_switch.rs` (the Rust watch), `crates/omarchy-theme-ffi/tests/live.c` (the C library, both watch forms), `rune/omarchy-rune/tests/live_switch.rs` (Rune, with the transition and reduced motion), `qt/tests-live/tst_follow.qml` (Qt, run with and without `OMARCHY_UI_REDUCE_MOTION=1`).
+The tests today: `crates/omarchy-theme/tests/live_switch.rs` (the Rust watch), `crates/omarchy-theme-ffi/tests/live.c` (the C library, both watch forms), `rune/omarchy-rune/tests/live_switch.rs` (Rune, with the transition and reduced motion), `qt/tests-live/tst_follow.qml` (Qt, run with and without `OMARCHY_UI_REDUCE_MOTION=1`), and each newer binding's `live switch` entries in `tools/bindings.d/` (GTK `build/gtk/omarchy-gtk-live-test`, KDE `build/kde/omarchy-widgets-live-test` and its Kirigami twin, GPUI `omarchy-gpui-live-test`, web `web/test/live.mjs` in Chromium and `web/test/electron-live.mjs` in Electron).
 
 `tools/live/theme-set` is the one simulation every test uses, so they all exercise the same sequence. A binding's registry entry (`tools/bindings.d/<name>.json`) lists its live test with its other tests.
 
@@ -96,3 +96,7 @@ The tests today: `crates/omarchy-theme/tests/live_switch.rs` (the Rust watch), `
 | CLI | `omarchy-theme --watch [--state]` | each line after the first | the line count | none |
 | Rune (`omarchy-rune`) | `omarchy_rune::run` / `app`, or `Theme::follow` + `Theme::poll_tx` | `Themed::theme_changed(&mut self, &Tokens)` | `Theme::revision()` | Rune's color spring, layout instant |
 | Qt Quick (`Omarchy.Theme`) | built in (`ThemeSource`) | `Tokens.changed(tokens)` in QML, `OmarchyUi::Theme::changed(QJsonObject)` in C++ | `Tokens.revision`, `OmarchyUi::Theme::revision()` | `Color.qml`, 280 ms `ease` |
+| GTK 4 (`libomarchy-gtk-1`) | `omarchy_gtk_init()` (the C library's fd on `g_unix_fd_add`) | `OmarchyTheme::changed (GVariant *tokens)` | the `revision` property | the generated CSS and the kit widgets, 280 ms `ease` |
+| KDE / Qt Widgets (`OmarchyWidgets`) | `Omarchy::Widgets::apply(app)` (the fd on a `QSocketNotifier`) | `Omarchy::Theme::changed(QJsonObject)` | `Omarchy::Theme::revision()` | palette, style and KDE color scheme, 280 ms `ease` |
+| GPUI (`omarchy-gpui`) | `omarchy_gpui::init(cx)` (`watch` onto the app thread) | `omarchy_gpui::on_change(cx, f)`, or `cx.observe_global::<Theme>()` | `Theme::get(cx).revision()` | the `Paint` global, 280 ms `ease`, layout instant |
+| Electron / web (`@omarchy/ui`) | `followOmarchy()` in main (the CLI stream), applied on import in the renderer | `omarchy.onChange(cb)` | `omarchy.revision` | `@property` transitions on the `--omarchy-*` colors, 280 ms `ease` |
