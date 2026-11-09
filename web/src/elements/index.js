@@ -10,8 +10,9 @@ import * as feedback from "./feedback.js";
 import * as navigation from "./navigation.js";
 import * as data from "./data.js";
 import * as editing from "./editing.js";
+import * as composed from "./composed.js";
 
-const groups = [controls, surfaces, forms, pickers, lists, feedback, navigation, data, editing];
+const groups = [controls, surfaces, forms, pickers, lists, feedback, navigation, data, editing, composed];
 
 /** Define every <omarchy-*> element (idempotent). `import "@omarchy/ui"` does this. */
 export function defineElements() {
@@ -34,4 +35,5 @@ export * from "./feedback.js";
 export * from "./navigation.js";
 export * from "./data.js";
 export * from "./editing.js";
+export * from "./composed.js";
 export { OmarchyElement } from "./base.js";

@@ -1,0 +1,15 @@
+{
+  "name": "omarchy-web-electron-example",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A tiny Omarchy panel in Electron, following the live theme.",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "snap": "electron . --snap network.png"
+  },
+  "dependencies": {
+    "@omarchy/ui": "file:../../web"
+  }
+}

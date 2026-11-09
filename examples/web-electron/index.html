@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Network</title>
+<link rel="stylesheet" href="./app.css">
+<script type="module" src="./app.js"></script>
+</head>
+<body>
+  <omarchy-pane id="panel" bordered>
+    <omarchy-heading level="heading" text="Network" subtitle="Wi-Fi and saved networks"></omarchy-heading>
+    <omarchy-toggle id="wifi" label="Wi-Fi" description="On" checked></omarchy-toggle>
+    <omarchy-list-row id="basecamp" glyph="&#xF0928;" title="Basecamp" status="Connected" status-tone="success" value="5 GHz" current></omarchy-list-row>
+    <div><omarchy-button bordered text="Forget network"></omarchy-button></div>
+  </omarchy-pane>
+</body>
+</html>

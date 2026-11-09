@@ -1,2 +1,202 @@
-/* placeholder */
-@layer omarchy.restyle {}
+/* Generated from src/restyle.js by web/build. */
+@layer omarchy.restyle {
+:where(html) {
+  background: var(--omarchy-background);
+  color: var(--omarchy-foreground);
+  font-family: var(--omarchy-font-family);
+  font-size: var(--omarchy-font-body);
+  line-height: var(--omarchy-line-body, normal);
+  accent-color: var(--omarchy-accent);
+  caret-color: var(--omarchy-foreground);
+}
+:where(body) { margin: 0; }
+::selection { background: var(--omarchy-control-selection-fill); color: var(--omarchy-foreground); }
+:where(a) { color: var(--omarchy-accent); text-decoration-color: color-mix(in srgb, var(--omarchy-accent) 50%, transparent); }
+:where(a:hover) { text-decoration-color: currentColor; }
+:where(hr) { border: 0; height: 1px; background: var(--omarchy-track); margin: var(--omarchy-space-lg) 0; }
+:where(h1, h2, h3, h4) { font-weight: bold; margin: 0 0 var(--omarchy-space-sm); }
+:where(h1) { font-size: var(--omarchy-font-display); line-height: var(--omarchy-line-display, normal); }
+:where(h2) { font-size: var(--omarchy-font-heading); line-height: var(--omarchy-line-heading, normal); }
+:where(h3) { font-size: var(--omarchy-font-title); line-height: var(--omarchy-line-title, normal); }
+:where(h4) { font-size: var(--omarchy-font-subtitle); line-height: var(--omarchy-line-subtitle, normal); }
+:where(small) { font-size: var(--omarchy-font-caption); color: var(--omarchy-text-dim); }
+:where(code, kbd, pre, samp) { font-family: var(--omarchy-font-family); font-size: 1em; }
+:where(kbd) {
+  display: inline-block; padding: 0 var(--omarchy-space-xs); border-radius: var(--omarchy-radius-small);
+  border: 1px solid var(--omarchy-control-normal-border); background: var(--omarchy-control-normal-fill);
+  font-size: var(--omarchy-font-caption); line-height: var(--omarchy-line-caption, normal);
+}
+:where(fieldset) { border: 1px solid var(--omarchy-track); border-radius: var(--omarchy-radius); padding: var(--omarchy-space-panel-padding); margin: 0; }
+:where(legend) { padding: 0 var(--omarchy-space-sm); color: var(--omarchy-text-dim); font-size: var(--omarchy-font-caption); font-weight: bold; }
+:where(label) { cursor: default; }
+
+/* Buttons: the kit's bordered Button. */
+:where(button, input:is([type="button"], [type="submit"], [type="reset"]), ::file-selector-button) {
+  appearance: none; box-sizing: border-box; margin: 0;
+  font: inherit; font-size: var(--omarchy-font-body); line-height: var(--omarchy-line-body, normal);
+  color: var(--omarchy-foreground);
+  background: transparent;
+  border-style: solid; border-width: var(--omarchy-control-normal-border-width); border-color: var(--omarchy-control-normal-border);
+  border-radius: var(--omarchy-radius);
+  padding: var(--omarchy-space-control-padding-y) var(--omarchy-space-control-padding-x);
+  cursor: pointer; outline: none;
+  transition: background-color var(--omarchy-motion-fast), border-color var(--omarchy-motion-fast), transform var(--omarchy-motion-press) var(--omarchy-ease-out);
+}
+:where(button, input:is([type="button"], [type="submit"], [type="reset"])):where(:hover, [aria-expanded="true"]),
+::file-selector-button:hover {
+  background: var(--omarchy-control-hover-fill); border-color: var(--omarchy-control-hover-border);
+}
+:where(button, input:is([type="button"], [type="submit"], [type="reset"])):focus-visible {
+  background: var(--omarchy-control-focus-fill); border-color: var(--omarchy-control-focus-border);
+}
+:where(button, input:is([type="button"], [type="submit"], [type="reset"])):active:not(:disabled),
+::file-selector-button:active {
+  background: var(--omarchy-control-pressed-fill); transform: scale(0.97);
+}
+:where(button[aria-pressed="true"], button[aria-selected="true"]) {
+  background: var(--omarchy-control-selected-fill); color: var(--omarchy-control-selected-text); font-weight: bold;
+}
+:where(input[type="file"]) { font: inherit; color: var(--omarchy-text-dim); }
+::file-selector-button { margin-right: var(--omarchy-space-control-gap); }
+
+/* Text inputs, textarea, select: the kit's TextField. */
+:where(input:not([type]), input:is([type="text"], [type="search"], [type="email"], [type="password"], [type="url"], [type="tel"], [type="number"], [type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]), textarea, select) {
+  appearance: none; box-sizing: border-box; margin: 0;
+  font: inherit; font-size: var(--omarchy-font-body); line-height: var(--omarchy-line-body, normal);
+  color: var(--omarchy-foreground);
+  background: var(--omarchy-control-normal-fill);
+  border-style: solid; border-width: var(--omarchy-control-normal-border-width); border-color: var(--omarchy-control-normal-border);
+  border-radius: var(--omarchy-radius);
+  padding: var(--omarchy-space-input-padding-y) var(--omarchy-space-control-padding-x);
+  outline: none;
+  transition: background-color var(--omarchy-motion-fast), border-color var(--omarchy-motion-fast);
+}
+:where(input, textarea, select):where(:not([type="checkbox"], [type="radio"], [type="range"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="color"])):hover {
+  background: var(--omarchy-control-hover-fill); border-color: var(--omarchy-control-hover-border);
+}
+:where(input, textarea, select):where(:not([type="checkbox"], [type="radio"], [type="range"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="color"])):focus {
+  background: var(--omarchy-control-focus-fill); border-color: var(--omarchy-control-focus-border);
+}
+:where(input, textarea)::placeholder { color: var(--omarchy-text-faint); opacity: 1; }
+:where(textarea) { resize: vertical; min-height: calc(3 * var(--omarchy-line-body, normal) + 2 * var(--omarchy-space-input-padding-y)); }
+:where(input[type="search"])::-webkit-search-cancel-button { appearance: none; }
+:where(input[type="number"])::-webkit-inner-spin-button { opacity: 0.6; }
+:where(input)::-webkit-calendar-picker-indicator { filter: invert(var(--omarchy-invert, 0)); opacity: 0.6; }
+:root[data-omarchy-mode="dark"] { --omarchy-invert: 1; }
+
+/* select: the kit's Dropdown, with its list on the popups surface where Chromium can draw it. */
+:where(select) {
+  padding-right: calc(var(--omarchy-space-control-gap) + var(--omarchy-font-body) + var(--omarchy-space-md));
+  background-image: linear-gradient(45deg, transparent 50%, var(--omarchy-text-dim) 50%), linear-gradient(135deg, var(--omarchy-text-dim) 50%, transparent 50%);
+  background-size: 4px 4px, 4px 4px;
+  background-position: right calc(var(--omarchy-space-control-gap) + 4px) center, right var(--omarchy-space-control-gap) center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+@supports (appearance: base-select) {
+  :where(select) { appearance: base-select; background-image: none; padding-right: var(--omarchy-space-control-gap); }
+  :where(select)::picker-icon { content: "\F0140"; font-family: var(--omarchy-font-family); color: var(--omarchy-text-dim); }
+  :where(select)::picker(select) {
+    appearance: base-select;
+    background: var(--omarchy-popups-background); color: var(--omarchy-popups-text);
+    border-style: solid; border-width: var(--omarchy-control-normal-border-width); border-color: var(--omarchy-popups-border-solid);
+    border-radius: var(--omarchy-radius); padding: var(--omarchy-space-hairline);
+    margin-top: var(--omarchy-space-xxs); box-shadow: none;
+  }
+  :where(select) :where(option) {
+    min-height: var(--omarchy-space-popup-row-height); padding: 0 var(--omarchy-space-control-padding-x);
+    display: flex; align-items: center; outline: none;
+  }
+  :where(select) :where(option):is(:hover, :focus-visible) { background: var(--omarchy-control-hover-fill); }
+  :where(select) :where(option):checked { color: var(--omarchy-accent); }
+  :where(select) :where(option)::checkmark { display: none; }
+}
+:where(option) { background: var(--omarchy-popups-background); color: var(--omarchy-popups-text); }
+
+/* Checkbox and radio: the kit's Checkbox and Radio box. */
+:where(input:is([type="checkbox"], [type="radio"])) {
+  appearance: none; box-sizing: border-box; margin: 0 var(--omarchy-space-sm) 0 0;
+  width: max(1px, round(calc(16px * var(--omarchy-space-scale, 1)), 1px)); height: max(1px, round(calc(16px * var(--omarchy-space-scale, 1)), 1px)); flex: none; vertical-align: -0.2em;
+  display: inline-grid; place-content: center;
+  background: var(--omarchy-control-normal-fill);
+  border-style: solid; border-width: var(--omarchy-control-normal-border-width); border-color: var(--omarchy-control-normal-border);
+  border-radius: var(--omarchy-radius-small); cursor: pointer; outline: none;
+  transition: background-color var(--omarchy-motion-fast), border-color var(--omarchy-motion-fast);
+}
+:where(input[type="radio"]) { border-radius: 50%; }
+:where(input:is([type="checkbox"], [type="radio"])):checked {
+  background: var(--omarchy-control-selected-fill); border-color: var(--omarchy-control-selected-border);
+}
+:where(input:is([type="checkbox"], [type="radio"])):is(:hover, :focus-visible) {
+  background: var(--omarchy-control-hover-fill); border-color: var(--omarchy-control-hover-border);
+}
+:where(input[type="checkbox"])::before {
+  content: ""; font-family: var(--omarchy-font-family); font-weight: bold; color: var(--omarchy-accent);
+  font-size: round(calc(max(1px, round(calc(16px * var(--omarchy-space-scale, 1)), 1px)) * 0.85), 1px); line-height: 1;
+}
+:where(input[type="checkbox"]):checked::before { content: "\2713"; }
+:where(input[type="checkbox"]):indeterminate::before { content: "\2212"; }
+:where(input[type="radio"])::before {
+  content: ""; width: round(calc(max(1px, round(calc(16px * var(--omarchy-space-scale, 1)), 1px)) / 2), 1px); height: round(calc(max(1px, round(calc(16px * var(--omarchy-space-scale, 1)), 1px)) / 2), 1px); border-radius: 50%; background: transparent;
+}
+:where(input[type="radio"]):checked::before { background: var(--omarchy-accent); }
+
+/* Range: the kit's Slider. */
+:where(input[type="range"]) {
+  appearance: none; background: transparent; margin: 0; cursor: pointer; outline: none;
+  height: max(max(1px, round(calc(22px * var(--omarchy-space-scale, 1)), 1px)), calc(max(14px, round(calc(var(--omarchy-space-control-height) * 0.38), 1px)) + var(--omarchy-space-md)));
+  --knob: max(14px, round(calc(var(--omarchy-space-control-height) * 0.38), 1px));
+  --track: max(4px, round(calc(var(--omarchy-space-control-height) * 0.11), 1px));
+}
+:where(input[type="range"])::-webkit-slider-runnable-track {
+  height: var(--track); border-radius: calc(var(--track) / 2); background: var(--omarchy-control-selected-fill);
+}
+:where(input[type="range"])::-webkit-slider-thumb {
+  appearance: none; box-sizing: border-box; width: var(--knob); height: var(--knob); border-radius: 50%;
+  margin-top: calc((var(--track) - var(--knob)) / 2);
+  background: var(--omarchy-foreground); border: max(1px, round(calc(2px * var(--omarchy-space-scale, 1)), 1px)) solid var(--omarchy-popups-background);
+  transition: transform 110ms;
+}
+:where(input[type="range"]):is(:hover, :focus-visible, :active)::-webkit-slider-thumb { transform: scale(1.15); }
+
+/* Progress and meter: the kit's ProgressBar and Meter. */
+:where(progress, meter) {
+  appearance: none; box-sizing: border-box; vertical-align: middle;
+  width: max(1px, round(calc(160px * var(--omarchy-space-scale, 1)), 1px)); height: var(--omarchy-space-meter-thickness);
+  border: 0; border-radius: var(--omarchy-radius-small); background: var(--omarchy-track); overflow: hidden;
+}
+:where(progress)::-webkit-progress-bar { background: var(--omarchy-track); border-radius: var(--omarchy-radius-small); }
+:where(progress)::-webkit-progress-value { background: var(--omarchy-accent); border-radius: var(--omarchy-radius-small); }
+:where(meter)::-webkit-meter-bar { background: var(--omarchy-track); border: 0; border-radius: var(--omarchy-radius-small); height: 100%; }
+:where(meter)::-webkit-meter-optimum-value { background: var(--omarchy-foreground); }
+:where(meter)::-webkit-meter-suboptimum-value { background: var(--omarchy-warning); }
+:where(meter)::-webkit-meter-even-less-good-value { background: var(--omarchy-urgent); }
+
+/* Dialog: the kit's Dialog card on the scrim. */
+:where(dialog) {
+  box-sizing: border-box; max-width: min(calc(100vw - max(1px, round(calc(32px * var(--omarchy-space-scale, 1)), 1px))), max(1px, round(calc(370px * var(--omarchy-space-scale, 1)), 1px)));
+  padding: max(1px, round(calc(18px * var(--omarchy-space-scale, 1)), 1px));
+  background: var(--omarchy-background); color: var(--omarchy-foreground);
+  border: var(--omarchy-control-normal-border-top) solid var(--omarchy-menu-selected-text);
+  border-radius: var(--omarchy-radius); box-shadow: none;
+}
+:where(dialog)::backdrop { background: var(--omarchy-scrim); }
+
+/* Popovers: the popups surface. */
+:where([popover]:not([class*="omarchy"])) {
+  background: var(--omarchy-popups-background); color: var(--omarchy-popups-text);
+  border-style: solid; border-width: var(--omarchy-control-normal-border-width); border-color: var(--omarchy-popups-border-solid);
+  border-radius: var(--omarchy-radius); padding: var(--omarchy-space-popup-padding);
+}
+
+/* Scrollbars: the kit's ScrollArea bar. */
+:where(html) { scrollbar-color: var(--omarchy-control-normal-border) transparent; scrollbar-width: thin; }
+@supports not (scrollbar-color: red blue) {
+  ::-webkit-scrollbar { width: var(--omarchy-space-scrollbar-thickness); height: var(--omarchy-space-scrollbar-thickness); }
+  ::-webkit-scrollbar-track { background: var(--omarchy-track); }
+  ::-webkit-scrollbar-thumb { background: var(--omarchy-control-normal-border); border-radius: var(--omarchy-radius-small); }
+}
+
+:where(:disabled) { opacity: 0.5; cursor: default; }
+:where(:focus-visible) { outline: none; }
+}

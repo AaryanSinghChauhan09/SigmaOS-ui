@@ -9,7 +9,7 @@
 // <omarchy-*> element. A theme switch fades the colors and then runs omarchy.onChange hooks.
 
 import { omarchyApi, applyState, connectOmarchy, setOmarchyState, fading } from "./runtime.js";
-import restyle from "./restyle.css" with { type: "css" };
+import { restyleSheet, restyleCss } from "./restyle.js";
 import { defineElements } from "./elements/index.js";
 
 /** The page's omarchy: tokens, revision, onChange, string, icon(s). Also `window.omarchy`. */
@@ -18,12 +18,14 @@ export const omarchy = omarchyApi();
 const skipRestyle =
   typeof document !== "undefined" &&
   document.querySelector('meta[name="omarchy-ui"][content~="no-restyle"]');
-if (!skipRestyle && !document.adoptedStyleSheets.includes(restyle)) {
-  document.adoptedStyleSheets = [...document.adoptedStyleSheets, restyle];
+if (!skipRestyle) {
+  // Before the tokens' sheet, in its own layer: the page's own rules win over both.
+  const restyle = restyleSheet();
+  if (!document.adoptedStyleSheets.includes(restyle)) document.adoptedStyleSheets = [restyle, ...document.adoptedStyleSheets];
 }
 
 defineElements();
 
-export { applyState, connectOmarchy, setOmarchyState, fading, defineElements };
+export { applyState, connectOmarchy, setOmarchyState, fading, defineElements, restyleCss };
 export { tokensToCss, tokensToCssText, borderGradient } from "./tokens.js";
 export * from "./elements/index.js";

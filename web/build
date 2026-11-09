@@ -20,5 +20,9 @@ done < <(find "$WEB" -path "$WEB/node_modules" -prune -o \( -name '*.js' -o -nam
 node --check "$WEB/bin/omarchy-web-gallery"
 node --check "$WEB/bin/omarchy-web-css"
 node "$WEB/tools/sync-preload.mjs" --check >/dev/null
+# src/restyle.css, for a <link>, from src/restyle.js (the one source).
+node --input-type=module -e "import { restyleCss } from '$WEB/src/restyle.js'; process.stdout.write('/* Generated from src/restyle.js by web/build. */\n' + restyleCss)" >"$WEB/src/restyle.css"
+# src/elements/index.d.ts, the elements' TypeScript declarations, from their sources.
+node "$WEB/tools/gen-types.mjs" >/dev/null
 [[ $("$WEB/bin/omarchy-web-gallery" --list-sections | wc -l) -gt 0 ]]
 echo "web/bin/omarchy-web-gallery"

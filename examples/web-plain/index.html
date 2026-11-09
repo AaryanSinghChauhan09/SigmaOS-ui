@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>Display settings</title>
+<!--
+  A plain page, no framework, no bundler: its own HTML controls take the Omarchy look from the
+  restyle, and two kit elements sit among them. Outside Electron it follows the theme through the
+  dev helper's event stream:
+
+    node web/dev/serve.js --root .          then open http://127.0.0.1:7357/examples/web-plain/
+
+  (Opened as a file, it has no transport and shows unthemed defaults; see docs/using-web.md for the
+  static snapshot instead.)
+-->
+<meta name="omarchy-events" content="/omarchy/events">
+<script type="module" src="../../web/src/index.js"></script>
+<style>
+  /* Layout only: every color, size and font comes from the restyle and the tokens. */
+  body { padding: var(--omarchy-space-panel-padding); max-width: 420px; }
+  form { display: flex; flex-direction: column; gap: var(--omarchy-space-panel-gap); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: var(--omarchy-space-xxl); }
+  .row > label { flex: 1; }
+  .row input[type="range"] { width: 140px; }
+  .actions { display: flex; justify-content: flex-end; gap: var(--omarchy-space-md); }
+  p { margin: 0; color: var(--omarchy-text-dim); font-size: var(--omarchy-font-caption); }
+</style>
+</head>
+<body>
+  <form onsubmit="event.preventDefault()">
+    <omarchy-heading level="heading" text="Display" subtitle="Plain HTML, restyled"></omarchy-heading>
+    <div class="row"><label for="name">Name</label><input id="name" value="Built-in display"></div>
+    <div class="row"><label for="scale">Scale</label>
+      <select id="scale"><option>100%</option><option selected>125%</option><option>150%</option><option>200%</option></select></div>
+    <div class="row"><label for="bright">Brightness</label><input id="bright" type="range" min="0" max="100" value="60"></div>
+    <div class="row"><label><input type="checkbox" checked> Night light</label><label><input type="radio" name="o" checked> Landscape</label><label><input type="radio" name="o"> Portrait</label></div>
+    <div class="row"><label for="sync">Syncing colors</label><progress id="sync" value="0.4"></progress></div>
+    <textarea placeholder="Notes"></textarea>
+    <omarchy-toggle label="Variable refresh rate" description="Up to 120 Hz" checked style="width: auto"></omarchy-toggle>
+    <p>Changes apply to every window.</p>
+    <div class="actions"><button type="reset">Cancel</button><button type="submit" aria-pressed="true">Apply</button></div>
+  </form>
+</body>
+</html>
