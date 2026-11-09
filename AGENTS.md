@@ -1,6 +1,6 @@
 # Omarchy UI
 
-A cross-framework kit for apps that look and feel like Omarchy. One token contract (`spec/tokens.md`), resolved from the live Omarchy theme, and the same primitives (`spec/components.md`) in every framework: Qt Quick, Rune, GTK 4, KDE / Qt Widgets, GPUI, Electron / web and Tauri today, and Ratatui in the terminal ([`spec/terminal.md`](spec/terminal.md)), each registered in `tools/bindings.d/`.
+A cross-framework kit for apps that look and feel like Omarchy. One token contract (`spec/tokens.md`), resolved from the live Omarchy theme, and the same primitives (`spec/components.md`) in every framework: Qt Quick, Rune, GTK 4, KDE / Qt Widgets, GPUI, Electron / web and Tauri today, and Ratatui, Bubble Tea and Textual in the terminal ([`spec/terminal.md`](spec/terminal.md)), each registered in `tools/bindings.d/`.
 
 ## Building an app with it
 
