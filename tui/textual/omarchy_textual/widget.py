@@ -255,6 +255,11 @@ class KitWidget(Widget):
             return None
         return rgba
 
+    def base_buffer(self, width: int, height: int) -> Buffer | None:
+        """What a root draws over: None for a blank page; a modal overrides it with the cells of the
+        screen under it (its scrim then composites over them)."""
+        return None
+
     def kit_frame(self) -> _Frame:
         """The root's composed buffer (drawn now if anything changed)."""
         root = self.kit_root
@@ -265,7 +270,7 @@ class KitWidget(Widget):
             return self._frame
         t = self.theme_
         w, h = size.width, size.height
-        buf = Buffer(Rect(0, 0, w, h), bg=self._base_bg())
+        buf = self.base_buffer(w, h) or Buffer(Rect(0, 0, w, h), bg=self._base_bg())
         saved = t.hits
         t.clear_hits()
         Placed(self, self.component()).draw(t, Rect(0, 0, w, h), buf)
@@ -416,3 +421,43 @@ def kit_reactive(default, layout: bool = True, **kw):
     from textual.reactive import reactive
 
     return reactive(default, layout=layout, **kw)
+
+
+def buffer_of_strips(strips, width: int, height: int) -> Buffer:
+    """Composed Textual lines (another screen's) as a cell buffer, truecolor colors as `Rgba`
+    (an index or the default stays as it is), so a modal's scrim can composite over them."""
+    from rich.color import ColorType
+
+    def color(c):
+        if c is None or c.type == ColorType.DEFAULT:
+            return None
+        if c.type == ColorType.TRUECOLOR:
+            t = c.triplet
+            return Rgba(t.red, t.green, t.blue)
+        return c.number
+
+    buf = Buffer(Rect(0, 0, width, height))
+    for y, strip in enumerate(strips[:height]):
+        x = 0
+        for seg in strip:
+            st = seg.style
+            fg = color(st.color) if st is not None else None
+            bg = color(st.bgcolor) if st is not None else None
+            mod = 0
+            if st is not None:
+                mod = ((BOLD if st.bold else 0) | (DIM if st.dim else 0) | (ITALIC if st.italic else 0)
+                       | (UNDERLINE if st.underline else 0) | (REVERSE if st.reverse else 0) | (CROSSED if st.strike else 0))
+            for ch in seg.text:
+                w = char_width(ch)
+                if w == 0:
+                    continue
+                c = buf.cell(x, y)
+                if c is None:
+                    break
+                c.sym, c.fg, c.bg, c.mod = ch, fg, bg, mod
+                if w == 2:
+                    n = buf.cell(x + 1, y)
+                    if n is not None:
+                        n.sym, n.fg, n.bg, n.mod = " ", fg, bg, mod
+                x += w
+    return buf

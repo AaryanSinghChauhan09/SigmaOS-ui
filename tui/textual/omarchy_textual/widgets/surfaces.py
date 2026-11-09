@@ -9,6 +9,7 @@ from typing import Iterable
 
 from textual import events
 from textual.message import Message
+from textual.screen import ModalScreen
 from textual.widget import Widget
 
 from .. import cells as C
@@ -20,6 +21,7 @@ __all__ = [
     "Card",
     "ConfirmDialog",
     "Dialog",
+    "DialogScreen",
     "Heading",
     "HeadingLevel",
     "MenuRow",
@@ -246,3 +248,57 @@ class ConfirmDialog(Dialog):
 
     def __init__(self, message: str, *, labels: tuple[str, str] = ("", ""), selected: int = 1, width: int = 46, **kw):
         super().__init__("", message, labels=labels, destructive=True, selected=selected, width=width, **kw)
+
+
+class _ScreenDialog(Dialog):
+    """A Dialog over the whole screen, its scrim composited on the screen under it."""
+
+    DEFAULT_CSS = """
+    _ScreenDialog { width: 1fr; height: 1fr; }
+    """
+
+    def base_buffer(self, width: int, height: int):
+        from ..widget import buffer_of_strips
+
+        stack = self.app.screen_stack
+        below = stack[-2] if len(stack) > 1 and stack[-1] is self.screen else None
+        if below is None:
+            return None
+        return buffer_of_strips(below._compositor.render_strips(), width, height)
+
+    def get_content_width(self, container, viewport) -> int:
+        return container.width
+
+    def get_content_height(self, container, viewport, width: int) -> int:
+        return container.height
+
+
+class DialogScreen(ModalScreen[int]):
+    """A Dialog as a Textual modal screen: the scrim over everything under it, the card centered;
+    Left/Right (h/l) move the selection, Enter chooses, Escape cancels, a click chooses a button.
+    Dismisses with the choice (0 the secondary, 1 the primary):
+
+        self.push_screen(DialogScreen("Discard changes?", "Your edits will be lost.",
+                                      labels=("Keep editing", "Discard"), destructive=True),
+                         lambda choice: ...)
+    """
+
+    DEFAULT_CSS = """
+    DialogScreen { background: transparent; align: left top; }
+    """
+
+    def __init__(self, title: str = "", message: str = "", *, labels: tuple[str, str] = ("", ""),
+                 destructive: bool = False, selected: int = 1, width: int = 46, **kw):
+        super().__init__(**kw)
+        self._dialog = _ScreenDialog(title, message, labels=labels, destructive=destructive, selected=selected,
+                                     width=width)
+
+    def compose(self):
+        yield self._dialog
+
+    def on_mount(self) -> None:
+        self._dialog.focus()
+
+    def on_dialog_chosen(self, event: Dialog.Chosen) -> None:
+        event.stop()
+        self.dismiss(event.index)
