@@ -1,0 +1,17 @@
+/* The gallery page, laid out as Qt's (qt/gallery/Main.qml, Section.qml): panelPadding around the
+   page, sections huge × 2 apart, each a caption then its specimens xxl apart. */
+html, body { margin: 0; }
+body { background: var(--omarchy-background); min-height: 100vh; }
+#page {
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: calc(var(--omarchy-space-huge) * 2);
+  padding: var(--omarchy-space-panel-padding);
+}
+.section { display: flex; flex-direction: column; align-items: stretch; gap: var(--omarchy-space-lg); }
+.section > .body { display: flex; flex-direction: column; align-items: flex-start; gap: var(--omarchy-space-xxl); }
+/* RowLayout centers its items vertically; ColumnLayout puts them at the left. */
+.row { display: flex; flex-direction: row; align-items: center; }
+.col { display: flex; flex-direction: column; align-items: flex-start; }
+.top { align-items: flex-start; }
+.fill { align-self: stretch; }
+.text { font-family: var(--omarchy-font-family); color: var(--omarchy-foreground); white-space: pre; line-height: normal; }

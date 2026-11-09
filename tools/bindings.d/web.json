@@ -1,0 +1,26 @@
+{
+  "name": "web",
+  "title": "Electron / web",
+  "order": 60,
+  "docs": "docs/using-web.md",
+  "available": {
+    "commands": ["node"],
+    "check": "command -v chromium >/dev/null || test -x \"${OMARCHY_WEB_CHROMIUM:-}\"",
+    "reason": "no chromium for the headless gallery and tests"
+  },
+  "build": "web/build",
+  "gallery": {
+    "sections": "web/bin/omarchy-web-gallery --list-sections",
+    "snap": "web/bin/omarchy-web-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
+    "window": "web/bin/omarchy-web-gallery"
+  },
+  "tokens": "core",
+  "icons": "core",
+  "tests": [
+    { "name": "unit", "run": "node web/test/unit.mjs" },
+    { "name": "live switch", "run": "tools/live/run node web/test/live.mjs" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run node web/test/live.mjs", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } },
+    { "name": "Electron live switch", "run": "tools/live/run node web/test/electron-live.mjs" },
+    { "name": "Electron live switch, reduced motion", "run": "tools/live/run node web/test/electron-live.mjs", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}

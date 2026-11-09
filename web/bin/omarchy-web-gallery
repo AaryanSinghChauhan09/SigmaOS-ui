@@ -1,0 +1,91 @@
+#!/usr/bin/env node
+// The web gallery (spec/gallery.md), for bin/review and by hand:
+//
+//   omarchy-web-gallery                         a window following the desktop (Electron; else Chromium
+//                                               on the dev helper's event stream)
+//   omarchy-web-gallery --list-sections         the sections, one per line, in order
+//   omarchy-web-gallery --snap out.png --section buttons --size 760x400 --scale 2
+//                                               render one section headless to a PNG (no window)
+//   omarchy-web-gallery --dump-state            the state the page gets (omarchy-theme --state)
+//
+// The page gets its tokens from the core's CLI under whatever OMARCHY_UI_* overrides are set, so
+// OMARCHY_UI_THEME_DIR=fixtures/themes/nord OMARCHY_UI_ROUNDING=8 renders that theme and rounding.
+
+import { spawn } from "node:child_process";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { lookupIconUrls, readState } from "../lib/core.js";
+import { bridgePage, launch } from "../lib/cdp.js";
+import { findElectron } from "../lib/electron.js";
+import { ORDER } from "../gallery/order.js";
+
+const web = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const args = process.argv.slice(2);
+const flag = (name) => args.includes(name);
+const value = (name, fallback) => {
+  const i = args.indexOf(name);
+  return i >= 0 && i + 1 < args.length ? args[i + 1] : fallback;
+};
+
+async function snap() {
+  const out = resolve(value("--snap"));
+  const section = value("--section", "");
+  const [w, h] = value("--size", "760x0").split("x").map(Number);
+  const scale = Number(value("--scale", "2")) || 2;
+  if (section && !ORDER.includes(section)) throw new Error(`no section ${section} (--list-sections)`);
+  const state = readState();
+  const browser = await launch();
+  try {
+    const height = h > 0 ? h : 2000;
+    const page = await browser.newPage({ width: w || 760, height, scale });
+    await bridgePage(page, state, async (size, names) => lookupIconUrls(size, names));
+    const url = pathToFileURL(join(web, "gallery/index.html"));
+    if (section) url.searchParams.set("section", section);
+    await page.goto(url.href);
+    await page.waitFor("window.__galleryReady || window.__galleryError", { timeout: 20000 });
+    const err = await page.eval("window.__galleryError || ''");
+    if (err) throw new Error(err);
+    if (page.errors.length) throw new Error(page.errors.join("\n"));
+    let hh = h;
+    if (!(hh > 0)) {
+      // Size to the content, as Qt's window does (at least 200 tall).
+      hh = await page.eval(`Math.max(200, Math.ceil(document.getElementById("page").getBoundingClientRect().height))`);
+      await page.send("Emulation.setDeviceMetricsOverride", { width: w || 760, height: hh, deviceScaleFactor: scale, mobile: false });
+      await page.eval("new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))");
+    }
+    await page.screenshot(out);
+  } finally {
+    await browser.close();
+  }
+}
+
+function window() {
+  const electron = findElectron();
+  if (electron) {
+    const child = spawn(electron, [join(web, "gallery/electron-main.js")], { stdio: "inherit" });
+    child.on("exit", (code) => process.exit(code ?? 0));
+    return;
+  }
+  // No Electron: the dev helper serves the gallery and the event stream; Chromium shows it.
+  const child = spawn(process.execPath, [join(web, "dev/serve.js"), "--open", "/web/gallery/"], { stdio: "inherit" });
+  child.on("exit", (code) => process.exit(code ?? 0));
+}
+
+try {
+  if (flag("--help") || flag("-h")) {
+    console.log(
+      "usage: omarchy-web-gallery [--list-sections | --dump-state | --snap OUT [--section NAME] [--size WxH] [--scale N]]",
+    );
+  } else if (flag("--list-sections")) {
+    console.log(ORDER.join("\n"));
+  } else if (flag("--dump-state")) {
+    console.log(JSON.stringify(readState()));
+  } else if (flag("--snap")) {
+    await snap();
+  } else {
+    window();
+  }
+} catch (e) {
+  console.error(`omarchy-web-gallery: ${e.message}`);
+  process.exit(1);
+}

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Build the Electron / web binding (tools/bindings.d/web.json). It is plain ES modules with no
+# runtime dependencies, so "building" is checking: every module parses, the preload's copy of
+# createOmarchy matches src/api.js, the gallery lists its sections, and the core's CLI is there
+# for the gallery and the Electron main process to spawn.
+
+set -euo pipefail
+
+WEB="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$WEB/.." && pwd)"
+
+command -v node >/dev/null || { echo "web: no node" >&2; exit 1; }
+[[ -x $ROOT/target/release/omarchy-theme || -n ${OMARCHY_THEME_BIN:-} ]] || command -v omarchy-theme >/dev/null ||
+  { echo "web: no omarchy-theme CLI (bin/build core)" >&2; exit 1; }
+
+while IFS= read -r -d '' f; do
+  node --check "$f"
+done < <(find "$WEB" -path "$WEB/node_modules" -prune -o \( -name '*.js' -o -name '*.mjs' -o -name '*.cjs' \) -print0)
+node --check "$WEB/bin/omarchy-web-gallery"
+node --check "$WEB/bin/omarchy-web-css"
+node "$WEB/tools/sync-preload.mjs" --check >/dev/null
+[[ $("$WEB/bin/omarchy-web-gallery" --list-sections | wc -l) -gt 0 ]]
+echo "web/bin/omarchy-web-gallery"

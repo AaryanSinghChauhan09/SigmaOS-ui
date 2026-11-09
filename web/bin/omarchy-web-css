@@ -1,0 +1,22 @@
+#!/usr/bin/env node
+// A static snapshot of the Omarchy theme for a page that can't follow it live (a static site, a
+// shell with no Node): the core's tokens now, as CSS custom properties or as an embeddable state.
+//
+//   omarchy-web-css > omarchy-theme.css         :root { --omarchy-background: #1a1b26ff; … }
+//   omarchy-web-css --state > state.json        the core's state (for setOmarchyState)
+//   omarchy-web-css --html                      <script type="application/json" id="omarchy-state">…
+//                                               (@omarchy/ui picks it up on import)
+
+import { readState } from "../lib/core.js";
+import { tokensToCssText } from "../src/tokens.js";
+
+const state = readState();
+const a = process.argv.slice(2);
+if (a.includes("--state")) {
+  console.log(JSON.stringify(state));
+} else if (a.includes("--html")) {
+  console.log(`<script type="application/json" id="omarchy-state">${JSON.stringify(state).replace(/</g, "\\u003c")}</script>`);
+} else {
+  process.stdout.write(`/* omarchy-web-css: the "${state.theme}" Omarchy theme, a snapshot (it won't follow a switch). */\n`);
+  process.stdout.write(tokensToCssText(state.tokens));
+}

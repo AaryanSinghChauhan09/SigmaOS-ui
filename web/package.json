@@ -1,0 +1,26 @@
+{
+  "name": "@omarchy/ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Omarchy UI for Electron and the web: the live Omarchy theme as CSS custom properties, and the component kit as custom elements.",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": { "types": "./src/index.d.ts", "default": "./src/index.js" },
+    "./tokens": { "types": "./src/tokens.d.ts", "default": "./src/tokens.js" },
+    "./restyle.css": "./src/restyle.css",
+    "./electron": { "types": "./electron/main.d.ts", "default": "./electron/main.js" },
+    "./electron/preload": "./electron/preload.cjs",
+    "./dev-server": { "types": "./dev/serve.d.ts", "default": "./dev/serve.js" },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "omarchy-web-gallery": "./bin/omarchy-web-gallery",
+    "omarchy-web-css": "./bin/omarchy-web-css",
+    "omarchy-web-serve": "./dev/serve.js"
+  },
+  "files": ["src", "electron", "lib", "dev", "bin", "gallery"],
+  "engines": { "node": ">=22" },
+  "license": "MIT"
+}
