@@ -31,6 +31,9 @@
 //!   their trait and [`Draw::with`] makes any of them a Ratatui `Widget`.
 //! - [`paint`] is the cell painting they share (alpha compositing, control edges, box corners).
 
+// Painting helpers take a cell's position, size and state: many plain arguments.
+#![allow(clippy::too_many_arguments)]
+
 mod depth;
 mod fade;
 pub mod layout;

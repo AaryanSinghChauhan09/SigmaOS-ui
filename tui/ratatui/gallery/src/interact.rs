@@ -147,7 +147,7 @@ pub fn key(s: &mut State, k: &KeyEvent) -> bool {
             let i = s.tile_cursor.unwrap_or(0);
             s.tile_cursor = Some(match k.code {
                 KeyCode::Right | KeyCode::Char('l') if i % 4 < 3 => (i + 1).min(7),
-                KeyCode::Left | KeyCode::Char('h') if i % 4 > 0 => i - 1,
+                KeyCode::Left | KeyCode::Char('h') if !i.is_multiple_of(4) => i - 1,
                 KeyCode::Down | KeyCode::Char('j') => (i + 4).min(7),
                 KeyCode::Up | KeyCode::Char('k') => i.saturating_sub(4),
                 _ => return false,

@@ -96,7 +96,7 @@ impl Table {
     pub fn widths(&self, total: u16) -> Vec<u16> {
         let fixed: u16 = self.columns.iter().filter_map(|c| c.width).sum();
         let flex = self.columns.iter().filter(|c| c.width.is_none()).count() as u16;
-        let share = if flex > 0 { total.saturating_sub(fixed) / flex } else { 0 };
+        let share = total.saturating_sub(fixed).checked_div(flex).unwrap_or(0);
         self.columns.iter().map(|c| c.width.unwrap_or(share)).collect()
     }
     /// Up/Down/k/j, Home/End, Page Up/Down move `cursor` among `count` rows; true when handled.
@@ -347,7 +347,7 @@ impl Draw for SplitView {
         let handles = panes.len().saturating_sub(1) as u16;
         let fixed: u16 = panes.iter().filter_map(|p| p.size.map(|s| s.max(p.min))).sum();
         let flex = panes.iter().filter(|p| p.size.is_none()).count() as u16;
-        let share = if flex > 0 { area.width.saturating_sub(fixed + handles) / flex } else { 0 };
+        let share = area.width.saturating_sub(fixed + handles).checked_div(flex).unwrap_or(0);
         let mut x = area.x;
         for (i, p) in panes.iter().enumerate() {
             let w = p.size.map(|s| s.max(p.min)).unwrap_or(share);
