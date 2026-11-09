@@ -217,8 +217,9 @@ export class ButtonGroup extends OmarchyElement {
   }
   update() {
     const opts = this.options;
-    if (this._rendered !== opts) {
-      this._rendered = opts;
+    const key = JSON.stringify(opts);
+    if (this._rendered !== key) {
+      this._rendered = key;
       this.shadowRoot.innerHTML = opts
         .map((o) => `<omarchy-button nofocus bordered data-value="${esc(optionValue(o))}" text="${esc(optionLabel(o))}" icon="${esc(optionIcon(o))}" tooltip="${esc(o && o.tooltip ? o.tooltip : "")}"></omarchy-button>`)
         .join("");

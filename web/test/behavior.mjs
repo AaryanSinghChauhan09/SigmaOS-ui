@@ -9,9 +9,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { bridgePage, launch, sleep, SHIFT } from "../lib/cdp.js";
 import { readState, REPO } from "../lib/core.js";
-import { tests } from "./behavior-cases.js";
+import { readdirSync } from "node:fs";
 
 const here = dirname(fileURLToPath(import.meta.url));
+// Every file under test/cases/ exports `tests`: { name: async (t) => … }.
+const tests = {};
+for (const f of readdirSync(join(here, "cases")).filter((f) => f.endsWith(".js")).sort()) {
+  Object.assign(tests, (await import(pathToFileURL(join(here, "cases", f)).href)).tests);
+}
 const filter = process.argv[2] || "";
 const env = { ...process.env, OMARCHY_UI_THEME_DIR: join(REPO, "fixtures/themes/tokyo-night"), OMARCHY_UI_ROUNDING: "0", OMARCHY_UI_REDUCE_MOTION: "1" };
 const state = readState({ env });

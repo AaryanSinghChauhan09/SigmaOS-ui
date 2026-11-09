@@ -9,7 +9,7 @@
   window.kit = kit;
   // Every event an element emits, for the tests: window.events = [[tag, type, detail], …]
   window.events = [];
-  for (const type of ["change", "input", "click", "trigger", "accept", "reject", "activate", "toggle", "pick", "select", "delete", "close", "open", "action", "sort", "expand", "collapse", "dismiss", "navigate", "seek", "trim", "move", "drop", "crop", "query"])
+  for (const type of ["change", "input", "click", "trigger", "accept", "reject", "activate", "toggle", "pick", "select", "delete", "close", "open", "action", "sort", "expand", "collapse", "dismiss", "navigate", "seek", "trim", "move", "drop", "crop", "query", "overflow", "resize", "month", "press", "release", "nudge", "move-request", "clip-press", "view-change"])
     document.addEventListener(type, (e) => {
       const t = e.target;
       if (t && t.tagName && t.tagName.startsWith("OMARCHY-")) window.events.push([t.tagName.toLowerCase(), type, e.detail ?? null]);

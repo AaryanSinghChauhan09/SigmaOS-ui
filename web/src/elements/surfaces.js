@@ -192,7 +192,7 @@ omarchy-key-combo:not([keys]), omarchy-key-combo[keys=""] { display: none; }
 export const DIALOG_CSS = `
 :host { position: absolute; inset: 0; display: none; z-index: 10; outline: none; }
 :host([open]) { display: block; }
-.scrim { position: absolute; inset: 0; background: ${alpha("var(--omarchy-background)", 0.7)}; }
+.scrim { position: absolute; inset: 0; background: var(--omarchy-scrim); }
 .card {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(calc(100% - ${space(32)}), ${space(370)});
@@ -289,6 +289,7 @@ export class ConfirmDialog extends Dialog {
     selectedIndex: ["number", 1],
   };
   static css = `${DIALOG_CSS}
+.scrim { background: ${alpha("var(--omarchy-background)", 0.7)}; }
 .message { font-size: var(--omarchy-font-title); line-height: var(--omarchy-line-title, normal); }
 .buttons { margin-top: ${space(20)}; }
 .btn { border-radius: 0; }
