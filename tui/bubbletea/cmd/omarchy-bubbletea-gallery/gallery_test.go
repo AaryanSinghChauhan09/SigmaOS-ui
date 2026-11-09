@@ -722,3 +722,35 @@ func TestScrubberKnobIsNeverBold(t *testing.T) {
 		t.Errorf("knob at %d is bold or missing", i)
 	}
 }
+
+// reversedCells are the reverse-video cells of the section as drawn now, relative to the keyed
+// part's origin.
+func (r *rt) reversedCells(key string) [][2]int {
+	r.t.ClearHits()
+	buf := drawPage(&r.s, r.t, r.section)
+	a := r.find(key)
+	var out [][2]int
+	for i, c := range buf.Cells {
+		if c.Attrs&o.Reverse != 0 {
+			out = append(out, [2]int{buf.Area.X + i%buf.Area.W - a.X, buf.Area.Y + i/buf.Area.W - a.Y})
+		}
+	}
+	return out
+}
+
+// A PasswordField is a TextField: focused, it shows the caret after its dots (the lock at column
+// 2, the dots from 4), and only then.
+func TestPasswordFieldShowsItsCaretWhileFocused(t *testing.T) {
+	r := newRT(t, "forms")
+	if got := r.reversedCells("password"); len(got) != 0 {
+		t.Errorf("unfocused: %v", got)
+	}
+	r.focus("password")
+	if got := r.reversedCells("password"); !slices.Equal(got, [][2]int{{4 + 8, 0}}) {
+		t.Errorf("focused: %v, want after the eight dots of hunter22", got)
+	}
+	r.key("!")
+	if got := r.reversedCells("password"); !slices.Equal(got, [][2]int{{4 + 9, 0}}) {
+		t.Errorf("after typing: %v", got)
+	}
+}

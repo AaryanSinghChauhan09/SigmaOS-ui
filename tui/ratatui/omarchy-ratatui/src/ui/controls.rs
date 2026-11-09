@@ -381,13 +381,15 @@ impl Draw for TextField {
     }
 }
 
-/// A TextField for secrets: a lock before the text, dots for it, an optional eye at the end, and
-/// with an error the urgent edges and the message on the row under it.
+/// A TextField for secrets: a lock before the text, dots for it (and TextField's caret while
+/// focused), an optional eye at the end, and with an error the urgent edges and the message on the
+/// row under it.
 pub struct PasswordField {
     text: String,
     placeholder: String,
     width: u16,
     cursor: bool,
+    caret: Option<usize>,
     revealable: bool,
     revealed: bool,
     error: String,
@@ -396,7 +398,7 @@ pub struct PasswordField {
 
 impl PasswordField {
     pub fn new(text: impl Into<String>) -> Self {
-        PasswordField { text: text.into(), placeholder: String::new(), width: 28, cursor: false, revealable: false, revealed: false, error: String::new(), key: None }
+        PasswordField { text: text.into(), placeholder: String::new(), width: 28, cursor: false, caret: None, revealable: false, revealed: false, error: String::new(), key: None }
     }
     pub fn placeholder(mut self, p: impl Into<String>) -> Self {
         self.placeholder = p.into();
@@ -408,6 +410,11 @@ impl PasswordField {
     }
     pub fn cursor(mut self, on: bool) -> Self {
         self.cursor = on;
+        self
+    }
+    /// Show the caret (reverse video) before this char index: the field has keyboard focus.
+    pub fn caret(mut self, at: Option<usize>) -> Self {
+        self.caret = at;
         self
     }
     pub fn revealable(mut self, on: bool) -> Self {
@@ -445,7 +452,7 @@ impl Draw for PasswordField {
         let eye = if self.revealable { 2 } else { 0 };
         let w = area.width.saturating_sub(6 + eye);
         let shown: String = if self.revealed { self.text.clone() } else { "•".repeat(self.text.chars().count()) };
-        field_text(t, buf, area.x + 4, area.y, w, &shown, &self.placeholder, None, t.fg());
+        field_text(t, buf, area.x + 4, area.y, w, &shown, &self.placeholder, self.caret, t.fg());
         if self.revealable {
             put(t, buf, area.right().saturating_sub(3), area.y, if self.revealed { "\u{f0209}" } else { "\u{f0208}" }, t.dim());
         }

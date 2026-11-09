@@ -14,6 +14,19 @@ def focus_order(app) -> list[str]:
     return [w.id for w in app.screen.focus_chain]
 
 
+def reversed_cells(app, widget) -> list[tuple[int, int]]:
+    """The screen's reverse-video cells, relative to `widget`'s origin."""
+    out = []
+    for y, strip in enumerate(app.screen._compositor.render_strips()):
+        x = 0
+        for seg in strip:
+            for _ in seg.text:
+                if seg.style is not None and seg.style.reverse:
+                    out.append((x - widget.region.x, y - widget.region.y))
+                x += 1
+    return out
+
+
 class Forms(unittest.IsolatedAsyncioTestCase):
     async def test_forms_check_and_choose(self):
         async with gallery("forms") as (app, pilot):
@@ -48,6 +61,19 @@ class Forms(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(pw.revealed, "the eye flips it")
             await pilot.press("backspace", "backspace", "4", "2")
             self.assertEqual(pw.value, "hunter42")
+
+    async def test_password_field_shows_its_caret_while_focused(self):
+        """A PasswordField is a TextField: focused, it shows the caret after its dots (the lock at
+        column 2, the dots from 4), and only then."""
+        async with gallery("forms") as (app, pilot):
+            pw = app.query_one("#password", PasswordField)
+            self.assertEqual(reversed_cells(app, pw), [])
+            pw.focus()
+            await pilot.pause()
+            self.assertEqual(reversed_cells(app, pw), [(4 + 8, 0)], "after the eight dots of hunter22")
+            await pilot.press("!")
+            await pilot.pause()
+            self.assertEqual(reversed_cells(app, pw), [(4 + 9, 0)])
 
 
 class Pickers(unittest.IsolatedAsyncioTestCase):

@@ -300,20 +300,24 @@ func (f TextField) Draw(t *Theme, area Rect, buf *Buffer) {
 	}
 }
 
-// PasswordField is a TextField for secrets: a lock before the text, dots for it, an optional eye
-// at the end, and with an error the urgent edges and the message on the row under it.
+// PasswordField is a TextField for secrets: a lock before the text, dots for it (and TextField's
+// caret while focused), an optional eye at the end, and with an error the urgent edges and the
+// message on the row under it.
 type PasswordField struct {
 	text, placeholder, err       string
-	width                        int
+	width, caret                 int
 	cursor, revealable, revealed bool
 	key                          string
 }
 
-func NewPasswordField(text string) PasswordField { return PasswordField{text: text, width: 28} }
+func NewPasswordField(text string) PasswordField {
+	return PasswordField{text: text, width: 28, caret: None}
+}
 
 func (f PasswordField) Placeholder(p string) PasswordField { f.placeholder = p; return f }
 func (f PasswordField) Width(w int) PasswordField          { f.width = w; return f }
 func (f PasswordField) Cursor(on bool) PasswordField       { f.cursor = on; return f }
+func (f PasswordField) Caret(at int) PasswordField         { f.caret = at; return f }
 func (f PasswordField) Revealable(on bool) PasswordField   { f.revealable = on; return f }
 func (f PasswordField) Revealed(on bool) PasswordField     { f.revealed = on; return f }
 func (f PasswordField) Error(msg string) PasswordField     { f.err = msg; return f }
@@ -348,7 +352,7 @@ func (f PasswordField) Draw(t *Theme, area Rect, buf *Buffer) {
 	if !f.revealed {
 		shown = strings.Repeat("•", len([]rune(f.text)))
 	}
-	fieldText(t, buf, area.X+4, area.Y, w, shown, f.placeholder, None, t.Fg())
+	fieldText(t, buf, area.X+4, area.Y, w, shown, f.placeholder, f.caret, t.Fg())
 	if f.revealable {
 		g := "\U000f0208"
 		if f.revealed {

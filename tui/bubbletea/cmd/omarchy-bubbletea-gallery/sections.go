@@ -387,7 +387,7 @@ func forms(s *State) o.Component {
 	radios := ui.NewRadioGroup([]ui.Option{{Value: "top", Label: "Top"}, {Value: "bottom", Label: "Bottom"}, {Value: "hidden", Label: "Hidden"}}, s.position).Cursor(ui.If(s.hot("radio"), pos)).Key("radio")
 	passwords := o.Line(1,
 		ui.NewPasswordField("").Placeholder("Password").Width(28),
-		ui.NewPasswordField(s.password.Value()).Revealable(true).Revealed(s.revealed).Cursor(s.hot("password")).Width(28).Key("password"),
+		ui.NewPasswordField(s.password.Value()).Revealable(true).Revealed(s.revealed).Cursor(s.hot("password")).Caret(s.caret("password", s.password.Position())).Width(28).Key("password"),
 		ui.NewPasswordField("letmein").Error("Wrong password, try again").Width(28),
 	)
 	return o.Column(1,

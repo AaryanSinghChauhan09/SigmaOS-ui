@@ -86,6 +86,11 @@ fn hot(s: &State, key: &str) -> bool {
     s.focus == Some(key)
 }
 
+/// The caret of a focused text field: at the end of its text (the gallery's fields edit there).
+fn caret(s: &State, key: &str, text: &str) -> Option<usize> {
+    hot(s, key).then(|| text.chars().count())
+}
+
 fn buttons(s: &State) -> Col {
     col(1)
         .child(
@@ -114,12 +119,11 @@ fn toggles(s: &State) -> Col {
 }
 
 fn inputs(s: &State) -> Col {
-    let caret = |k: &str, text: &str| hot(s, k).then(|| text.chars().count());
     col(1)
         .child(
             row(1)
-                .child(TextField::new(s.search.clone()).placeholder("Search…").width(28).cursor(hot(s, "search")).caret(caret("search", &s.search)).key("search"))
-                .child(TextField::new(s.name.clone()).width(28).cursor(hot(s, "name")).caret(caret("name", &s.name)).key("name"))
+                .child(TextField::new(s.search.clone()).placeholder("Search…").width(28).cursor(hot(s, "search")).caret(caret(s, "search", &s.search)).key("search"))
+                .child(TextField::new(s.name.clone()).width(28).cursor(hot(s, "name")).caret(caret(s, "name", &s.name)).key("name"))
                 .child(TextField::new("Hovered").width(28).cursor(true)),
         )
         .child(
@@ -376,7 +380,7 @@ fn forms(s: &State) -> Col {
     let radios = RadioGroup::new([("top", "Top"), ("bottom", "Bottom"), ("hidden", "Hidden")], s.position.clone()).cursor(hot(s, "radio").then(|| ["top", "bottom", "hidden"].iter().position(|v| *v == s.position).unwrap_or(0))).key("radio");
     let passwords = row(1)
         .child(PasswordField::new("").placeholder("Password").width(28))
-        .child(PasswordField::new(s.password.clone()).revealable(true).revealed(s.revealed).cursor(hot(s, "password")).width(28).key("password"))
+        .child(PasswordField::new(s.password.clone()).revealable(true).revealed(s.revealed).cursor(hot(s, "password")).caret(caret(s, "password", &s.password)).width(28).key("password"))
         .child(PasswordField::new("letmein").error("Wrong password, try again").width(28));
     col(1)
         .child(settings)

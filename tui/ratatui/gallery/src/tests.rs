@@ -473,3 +473,25 @@ fn scrubber_knob_is_never_bold() {
     let knob = (0..45).map(|x| &buf[(x, 0)]).find(|c| c.symbol() == "●").expect("a knob");
     assert!(!knob.modifier.contains(Modifier::BOLD));
 }
+
+/// The reverse-video cells of a section as drawn now, relative to the keyed part's origin.
+fn reversed_cells(rt: &Rt, key: &str) -> Vec<(u16, u16)> {
+    use omarchy_ratatui::ratatui::style::Modifier;
+    rt.t.clear_hits();
+    let buf = draw_page(&rt.s, &rt.t, rt.section);
+    let r = rt.find(key);
+    let a = buf.area;
+    (a.y..a.bottom()).flat_map(|y| (a.x..a.right()).map(move |x| (x, y))).filter(|p| buf[*p].modifier.contains(Modifier::REVERSED)).map(|(x, y)| (x - r.x, y - r.y)).collect()
+}
+
+/// A PasswordField is a TextField: focused, it shows the caret after its dots (the lock at column
+/// 2, the dots from 4), and only then.
+#[test]
+fn password_field_shows_its_caret_while_focused() {
+    let mut rt = Rt::new("forms");
+    assert_eq!(reversed_cells(&rt, "password"), vec![]);
+    rt.focus("password");
+    assert_eq!(reversed_cells(&rt, "password"), vec![(4 + 8, 0)], "after the eight dots of hunter22");
+    rt.key("!");
+    assert_eq!(reversed_cells(&rt, "password"), vec![(4 + 9, 0)]);
+}
