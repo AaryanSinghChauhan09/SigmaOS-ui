@@ -5,8 +5,8 @@ import "BorderGeometry.js" as Geometry
 
 // Ported from the Omarchy shell's shell/Commons/Color.qml (see qt/HARVEST.md): file loading moved
 // to the C++ ThemeSource, and surface text roles resolve through flatColor so a role name such as
-// `foreground` works there too. The changed hook (spec/following.md, "Following" at the bottom)
-// is the kit's own. Everything else is the shell's logic, unchanged.
+// `foreground` works there too. The theme-switch fade and the changed hook (spec/following.md,
+// "Following" at the bottom) are the kit's own. Everything else is the shell's logic, unchanged.
 //
 // Color surfaces for the shell. Foundational palette (foreground, background,
 // accent, urgent) comes from theme/colors.toml. Per-surface roles come from
@@ -33,9 +33,9 @@ QtObject {
   // darker would mean stronger, so a mix a third / a half of the way to the background instead.
   property string darkForeground: ""
   property bool mutedNamed: false
-  readonly property color textDim: darkForeground !== "" ? darkForeground
+  readonly property color textDim: fading ? fadeAt("textDim", fadeProgress) : darkForeground !== "" ? darkForeground
     : dark ? Qt.darker(foreground, 1.5) : mixColor(foreground, background, 1 / 3)
-  readonly property color textFaint: mutedNamed ? muted
+  readonly property color textFaint: fading ? fadeAt("textFaint", fadeProgress) : mutedNamed ? muted
     : dark ? Qt.darker(foreground, 2.0) : mixColor(foreground, background, 1 / 2)
   readonly property color track: Qt.rgba(foreground.r, foreground.g, foreground.b, 0.12)
   readonly property color scrim: menu.scrim
@@ -85,7 +85,7 @@ QtObject {
 
     var color = Geometry.canonicalColor(token, 1)
     if (typeof color === "string" && color === token && token.charAt(0) !== "#") return fallback
-    return color
+    return tracked(color)
   }
 
   // Compose a color from a base-color key and its `-alpha` companion. If the
@@ -275,13 +275,120 @@ QtObject {
   // ---------------------------------------------------------------- following
   //
   // The kit's own (spec/following.md); not in the shell. A theme switch re-resolves everything
-  // at once, then Tokens announces the new tokens (the changed hook).
+  // at once, exactly, and Tokens announces the new tokens (the changed hook); only then do the
+  // colors ease from the old theme to the new over Style.themeFade on Style.ease. Rounding,
+  // sizes and fonts aren't touched by the fade, so they switch at once. No fade on the first
+  // load or under reduced motion, so stills and token dumps are always exact.
+  //
+  // The fade drives one progress value. The palette properties take the mix of old and new at
+  // each step, and a literal color in shell.toml that names a palette color (the generated
+  // shell.toml writes `#a9b1d6`, not `foreground`) is tracked to it while fading (tracked(), used
+  // by flatColor, Style.resolveStateColor and Border.cssColor), so surfaces, state fills and
+  // borders fade with the palette instead of jumping. When the fade lands, the colors are
+  // re-read and every binding is back on its exact path.
+  readonly property var fadeKeys: ["foreground", "background", "accent", "urgent", "muted", "success", "warning"]
+  property bool fading: false
+  property real fadeProgress: 1
+  property var fadeFrom: ({})
+  property var fadeTo: ({})
+  // The colors on screen before a switch, until ThemeSource.settled starts the fade from them.
+  property var pendingFade: null
+  property bool loaded: false
+
+  function copyColor(c) { return Qt.rgba(c.r, c.g, c.b, c.a) }
+
+  function fadeSnapshot() {
+    var out = {}
+    for (var i = 0; i < fadeKeys.length; i++) out[fadeKeys[i]] = copyColor(root[fadeKeys[i]])
+    out.textDim = copyColor(textDim)
+    out.textFaint = copyColor(textFaint)
+    return out
+  }
+
+  function sameColor8(a, b) {
+    return Math.round(a.r * 255) === Math.round(b.r * 255) && Math.round(a.g * 255) === Math.round(b.g * 255)
+      && Math.round(a.b * 255) === Math.round(b.b * 255) && Math.round(a.a * 255) === Math.round(b.a * 255)
+  }
+
+  // Key `k` part way (`t`, already eased) from the old theme's color to the new one's.
+  function fadeAt(k, t) {
+    var a = fadeFrom[k], b = fadeTo[k]
+    if (!a || !b) return b || a || "transparent"
+    return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t)
+  }
+
+  // While fading, a color equal to one of the new theme's (by its RGB) follows that color's
+  // fade, keeping its own alpha. Otherwise `c` itself.
+  function tracked(c) {
+    if (!fading) return c
+    var q = typeof c === "string" ? Qt.color(c) : c
+    if (!q || q.r === undefined) return c
+    for (var k in fadeTo) {
+      var t = fadeTo[k]
+      if (Math.round(q.r * 255) === Math.round(t.r * 255) && Math.round(q.g * 255) === Math.round(t.g * 255)
+          && Math.round(q.b * 255) === Math.round(t.b * 255)) {
+        var live = fadeAt(k, fadeProgress)
+        return Qt.rgba(live.r, live.g, live.b, q.a)
+      }
+    }
+    return c
+  }
+
+  onFadeProgressChanged: {
+    if (!fading) return
+    for (var i = 0; i < fadeKeys.length; i++) root[fadeKeys[i]] = fadeAt(fadeKeys[i], fadeProgress)
+  }
+
+  property NumberAnimation fade: NumberAnimation {
+    target: root
+    property: "fadeProgress"
+    from: 0
+    to: 1
+    duration: Style.themeFade
+    easing.type: Easing.Bezier
+    easing.bezierCurve: Style.ease
+    onFinished: root.landFade()
+  }
+
+  function startFade(from) {
+    var to = fadeSnapshot()
+    var differs = false
+    for (var k in to) if (!sameColor8(from[k], to[k])) differs = true
+    if (!differs) return
+    fadeFrom = from
+    fadeTo = to
+    fadeProgress = 0
+    fading = true
+    for (var i = 0; i < fadeKeys.length; i++) root[fadeKeys[i]] = from[fadeKeys[i]]
+    fade.restart()
+  }
+
+  function landFade() {
+    if (!fading) return
+    fading = false
+    fadeFrom = ({})
+    fadeTo = ({})
+    // Back to the exact colors, as colors.toml has them.
+    loadColors(ThemeSource.colorsText)
+  }
+
   function followSwitch() {
+    // What is on screen now, mid-fade included, is where the next fade starts.
+    var from = loaded ? fadeSnapshot() : null
+    if (fading) {
+      fade.stop()
+      fading = false
+    }
     reloadFromSource()
+    if (from) pendingFade = from
   }
 
   function followSettled() {
+    // Everything has re-resolved, exactly: announce it (the changed hook), then fade.
     Tokens.settle()
+    var from = pendingFade
+    pendingFade = null
+    if (from && !Style.reduceMotion) startFade(from)
   }
 
   property Connections source: Connections {
@@ -292,6 +399,7 @@ QtObject {
 
   Component.onCompleted: {
     reloadFromSource()
+    loaded = true
     Tokens.begin()
   }
 }

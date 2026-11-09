@@ -127,7 +127,8 @@ QtObject {
     if (role === "urgent") return urgent || Commons.Color.urgent
     if (role === "background") return Commons.Color.background
     if (role === "transparent") return Qt.rgba(0, 0, 0, 0)
-    return colorFromHex(s, fb)
+    // A literal naming a palette color fades with it on a theme switch (Color.track).
+    return Commons.Color.tracked(colorFromHex(s, fb))
   }
 
   function normalStateColor(foreground, accent, urgent) {

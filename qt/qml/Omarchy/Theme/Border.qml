@@ -74,7 +74,7 @@ QtObject {
     if (role === "urgent") return cssColor(Commons.Color.urgent, a)
     if (role === "background") return cssColor(Commons.Color.background, a)
     if (role === "transparent") return "transparent"
-    return Geometry.canonicalColor(s, a)
+    return Commons.Color.tracked(Geometry.canonicalColor(s, a))
   }
 
   function resolvedGradient(raw, fallbackColor, opacity) {

@@ -1,0 +1,14 @@
+A literal color in a border token fades with the palette color it names on a theme switch
+(Color.tracked, spec/following.md), as surface and state colors do, instead of jumping.
+
+--- a/qt/qml/Omarchy/Theme/Border.qml
++++ b/qt/qml/Omarchy/Theme/Border.qml
+@@ -74,7 +74,7 @@ QtObject {
+     if (role === "urgent") return cssColor(Commons.Color.urgent, a)
+     if (role === "background") return cssColor(Commons.Color.background, a)
+     if (role === "transparent") return "transparent"
+-    return Geometry.canonicalColor(s, a)
++    return Commons.Color.tracked(Geometry.canonicalColor(s, a))
+   }
+ 
+   function resolvedGradient(raw, fallbackColor, opacity) {
