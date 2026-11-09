@@ -240,7 +240,7 @@ Every component of `components.md` and `components/*.md`, under the same names. 
 
 | Component | Cells |
 |---|---|
-| SearchList | w × h: a box in `menu.border.color`, padding 2 × 1; the query (`menu.text`) or the placeholder (`textDim`); a blank row; the body: ListRows (1 row each) in a ScrollArea; with the detail pane the list is `floor(55% × body)` wide, then 2 columns, a `│` `track` rule, 3 columns, the pane: the cursor item's title bold over its detail wrapped in `textDim`. No items: the overlay EmptyState (`󰍉` and "No matches for “query”") centered in the body. |
+| SearchList | w × h: a box in `menu.border.color`, padding 2 × 1; the query (`menu.text`) or the placeholder (`textDim`); a blank row; the body: ListRows (1 row each) in a ScrollArea; with the detail pane the list is `floor(55% × body)` wide, then 2 blank columns, a `│` `track` rule down the body, 2 blank columns, and the pane to the body's end (the rule at the list's end + 2, the pane at the rule + 3): the cursor item's title bold over its detail wrapped in `textDim`. No items: the overlay EmptyState (`󰍉` and "No matches for “query”") centered in the body. |
 
 ## Gallery
 
