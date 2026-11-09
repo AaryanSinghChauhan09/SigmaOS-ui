@@ -1,5 +1,7 @@
 #include "themesource.h"
 
+#include "omarchyui.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -93,27 +95,43 @@ ThemeSource *ThemeSource::instance() {
 ThemeSource *ThemeSource::create(QQmlEngine *, QJSEngine *) { return instance(); }
 
 void ThemeSource::reload() {
+  bool any = false;
   const QString colors = m_colors, shell = m_shell, user = m_userShell, name = m_themeName, icons = m_iconTheme;
   readFiles();
-  if (colors != m_colors || shell != m_shell || user != m_userShell || name != m_themeName || icons != m_iconTheme)
+  if (colors != m_colors || shell != m_shell || user != m_userShell || name != m_themeName || icons != m_iconTheme) {
+    any = true;
     emit themeChanged();
+  }
 
   const int rounding = m_rounding, border = m_borderSize;
   const double gaps = m_gapsOut;
   const bool animations = m_animations;
   readHyprland();
-  if (rounding != m_rounding || gaps != m_gapsOut || animations != m_animations || border != m_borderSize)
+  if (rounding != m_rounding || gaps != m_gapsOut || animations != m_animations || border != m_borderSize) {
+    any = true;
     emit hyprlandChanged();
+  }
 
   const QString language = m_language;
   m_language = readText(languagePath()).trimmed();
-  if (language != m_language) emit languageChanged();
+  if (language != m_language) {
+    any = true;
+    emit languageChanged();
+  }
 
   const QString font = m_resolvedFontFamily;
   readFont();
-  if (font != m_resolvedFontFamily) emit fontChanged();
+  if (font != m_resolvedFontFamily) {
+    any = true;
+    emit fontChanged();
+  }
 
   armWatcher();
+  if (any) emit settled();
+}
+
+void ThemeSource::publishTokens(const QJsonObject &tokens, int revision, bool change) {
+  OmarchyUi::Theme::instance()->publish(tokens, revision, change);
 }
 
 void ThemeSource::readFiles() {

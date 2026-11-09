@@ -5,7 +5,7 @@
 //   omarchy-qt-gallery --snap out.png           render offscreen to a PNG and exit
 //   omarchy-qt-gallery --dump-tokens            print the canonical token JSON and exit
 //   omarchy-qt-gallery --qml view.qml --snap out.png   render any QML file with the kit (an Item or a Window)
-//   omarchy-qt-gallery --watch-tokens           print it again on every theme, font or Hyprland change
+//   omarchy-qt-gallery --watch-tokens           print it on one line, then a line per change (Tokens.changed)
 //   omarchy-qt-gallery --icon firefox --icon-size 96   print the file an icon name resolves to
 //   OMARCHY_UI_THEME_DIR=fixtures/themes/nord omarchy-qt-gallery --snap nord.png
 
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
   args.addOption({"scale", "Device pixel ratio for --snap (default 2).", "n", "2"});
   args.addOption({"width", "Window width in points (default 760).", "n", "760"});
   args.addOption({"dump-tokens", "Print the resolved tokens as canonical JSON and exit."});
-  args.addOption({"watch-tokens", "Print the resolved tokens, then again whenever they change."});
+  args.addOption({"watch-tokens", "Print the resolved tokens on one line, then a line per change (the changed hook)."});
   args.addOption({"icon", "Print the file this icon name resolves to in the icon theme (empty if none) and exit.", "name"});
   args.addOption({"icon-size", "Size in pixels for --icon (default 48).", "n", "48"});
   args.process(app);
@@ -96,20 +96,21 @@ int main(int argc, char **argv) {
       fprintf(stderr, "%s\n", qPrintable(dumper.errorString()));
       return 1;
     }
-    auto print = [obj] {
-      QVariant out;
-      QMetaObject::invokeMethod(obj, "dump", Q_RETURN_ARG(QVariant, out));
-      const QJsonDocument doc = QJsonDocument::fromJson(out.toString().toUtf8());
+    QVariant out;
+    QMetaObject::invokeMethod(obj, "dump", Q_RETURN_ARG(QVariant, out));
+    const QJsonDocument doc = QJsonDocument::fromJson(out.toString().toUtf8());
+    if (!args.isSet("watch-tokens")) {
       printf("%s", doc.toJson(QJsonDocument::Indented).constData());
+      return 0;
+    }
+    // As `omarchy-theme --watch` prints them: one compact line now, then one per change, from
+    // the C++ changed hook (the same moment and tokens as QML's Tokens.changed).
+    printf("%s\n", doc.toJson(QJsonDocument::Compact).constData());
+    fflush(stdout);
+    QObject::connect(OmarchyUi::Theme::instance(), &OmarchyUi::Theme::changed, &app, [](const QJsonObject &tokens) {
+      printf("%s\n", QJsonDocument(tokens).toJson(QJsonDocument::Compact).constData());
       fflush(stdout);
-    };
-    print();
-    if (!args.isSet("watch-tokens")) return 0;
-    // The singletons connected to ThemeSource when the first dump created them, so by the time
-    // these run they have already reloaded.
-    ThemeSource *source = ThemeSource::instance();
-    for (auto signal : {&ThemeSource::themeChanged, &ThemeSource::hyprlandChanged, &ThemeSource::fontChanged})
-      QObject::connect(source, signal, &app, print);
+    });
     return app.exec();
   }
 

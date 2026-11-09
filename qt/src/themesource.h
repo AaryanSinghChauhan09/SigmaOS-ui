@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QFileSystemWatcher>
+#include <QJsonObject>
 #include <QLocalSocket>
 #include <QObject>
 #include <QString>
@@ -69,11 +70,18 @@ public:
   // Re-read everything now. Changes arrive on their own; this is for tests.
   Q_INVOKABLE void reload();
 
+  // Tokens.qml hands each resolved token set to OmarchyUi::Theme, the C++ changed hook: the
+  // initial load (`change` false), then each real change.
+  Q_INVOKABLE void publishTokens(const QJsonObject &tokens, int revision, bool change);
+
 signals:
   void themeChanged();
   void hyprlandChanged();
   void fontChanged();
   void languageChanged();
+  // After a reload() that changed anything, once every signal above has been handled, so the
+  // Color and Style singletons have re-resolved: Tokens.qml compares and announces from here.
+  void settled();
 
 private:
   void readFiles();

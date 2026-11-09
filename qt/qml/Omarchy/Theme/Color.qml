@@ -5,7 +5,8 @@ import "BorderGeometry.js" as Geometry
 
 // Ported from the Omarchy shell's shell/Commons/Color.qml (see qt/HARVEST.md): file loading moved
 // to the C++ ThemeSource, and surface text roles resolve through flatColor so a role name such as
-// `foreground` works there too. Everything else is the shell's logic, unchanged.
+// `foreground` works there too. The changed hook (spec/following.md, "Following" at the bottom)
+// is the kit's own. Everything else is the shell's logic, unchanged.
 //
 // Color surfaces for the shell. Foundational palette (foreground, background,
 // accent, urgent) comes from theme/colors.toml. Per-surface roles come from
@@ -271,10 +272,26 @@ QtObject {
     mergeShell()
   }
 
-  property Connections source: Connections {
-    target: ThemeSource
-    function onThemeChanged() { root.reloadFromSource() }
+  // ---------------------------------------------------------------- following
+  //
+  // The kit's own (spec/following.md); not in the shell. A theme switch re-resolves everything
+  // at once, then Tokens announces the new tokens (the changed hook).
+  function followSwitch() {
+    reloadFromSource()
   }
 
-  Component.onCompleted: reloadFromSource()
+  function followSettled() {
+    Tokens.settle()
+  }
+
+  property Connections source: Connections {
+    target: ThemeSource
+    function onThemeChanged() { root.followSwitch() }
+    function onSettled() { root.followSettled() }
+  }
+
+  Component.onCompleted: {
+    reloadFromSource()
+    Tokens.begin()
+  }
 }

@@ -1,12 +1,59 @@
 pragma Singleton
 import QtQuick
 import Omarchy.Theme as Commons
+import Omarchy.Theme.Native
 
 // The resolved tokens as the canonical JSON in spec/tokens.md, read back from the live Color,
 // Style and Border singletons. bin/review compares this with the Rust resolver's output for
 // every fixture theme, so the two bindings can't drift apart unnoticed.
+//
+// It is also the theme's changed hook (spec/following.md), for what bindings can't reach:
+//
+//   import Omarchy.Theme as Theme
+//   Connections {
+//     target: Theme.Tokens
+//     function onChanged(tokens) { chart.recolor(tokens.palette.accent) }   // "#rrggbbaa"
+//   }
+//
+// - changed(tokens): once per change that alters the tokens (a theme switch, `omarchy font set`,
+//   a text size, a Hyprland reload, the language or icon theme), on the GUI thread, after Color
+//   and Style have re-resolved (they already read the new values), before the color fade
+//   starts; never for the initial load. `tokens` is canonical(): the new values, not a frame
+//   of the fade.
+// - revision: 0 for the initial load, plus one per change. A cache key.
+// - current: the tokens in effect, as canonical() last returned them.
+// C++ gets the same through OmarchyUi::Theme (qt/src/omarchyui.h).
 QtObject {
   id: root
+
+  signal changed(var tokens)
+  property int revision: 0
+  property var current: ({})
+  // What a change is compared on: the canonical JSON, plus what's exposed beside it.
+  property string lastKey: ""
+
+  function keyOf(tokens) {
+    return JSON.stringify(tokens) + "\n" + ThemeSource.iconTheme + "\n" + ThemeSource.languageText + "\n" + ThemeSource.themeName
+  }
+
+  // Color calls these: begin() once the theme first loads, settle() after each reload settles.
+  function begin() {
+    var t = canonical()
+    lastKey = keyOf(t)
+    current = t
+    ThemeSource.publishTokens(t, 0, false)
+  }
+
+  function settle() {
+    var t = canonical()
+    var k = keyOf(t)
+    if (k === lastKey) return
+    lastKey = k
+    current = t
+    revision = revision + 1
+    ThemeSource.publishTokens(t, revision, true)
+    changed(t)
+  }
 
   function hex(c) {
     var q = typeof c === "string" ? Qt.color(c) : c
