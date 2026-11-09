@@ -14,4 +14,4 @@ body { background: var(--omarchy-background); min-height: 100vh; }
 .col { display: flex; flex-direction: column; align-items: flex-start; }
 .top { align-items: flex-start; }
 .fill { align-self: stretch; }
-.text { font-family: var(--omarchy-font-family); color: var(--omarchy-foreground); white-space: pre; line-height: normal; }
+.text { font-family: var(--omarchy-font-family); font-size: var(--omarchy-font-body); line-height: var(--omarchy-line-body, normal); color: var(--omarchy-foreground); white-space: pre; }

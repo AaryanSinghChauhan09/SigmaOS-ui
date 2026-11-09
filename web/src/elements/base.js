@@ -22,13 +22,13 @@ export const BASE_CSS = `
 :host {
   box-sizing: border-box;
   font-family: var(--omarchy-font-family);
-  font-size: var(--omarchy-font-body);
+  font-size: var(--omarchy-font-body); line-height: var(--omarchy-line-body, normal);
   color: var(--omarchy-foreground);
   -webkit-tap-highlight-color: transparent;
 }
 :host([hidden]) { display: none !important; }
 *, *::before, *::after { box-sizing: border-box; }
-.glyph { font-family: var(--omarchy-font-family); line-height: normal; white-space: pre; }
+.glyph { font-family: var(--omarchy-font-family); white-space: pre; }
 .label { white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 /* A border drawn from a border token (color + 4 widths); a gradient border (surfaces only) draws as
    an overlay masked to the border ring, so corners round with it. */

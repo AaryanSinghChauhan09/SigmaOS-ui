@@ -90,6 +90,8 @@ export function tokensToCss(tokens) {
   const radius = Number(tokens.radius) || 0;
   out[p("radius")] = `${radius}px`;
   out[p("radius-small")] = `${Math.min(4, radius)}px`;
+  // 1 when corners are rounded, 0 when sharp: switches are pills only when radius > 0.
+  out[p("rounded")] = radius > 0 ? "1" : "0";
   out[p("gaps-out")] = `${Number(tokens.gapsOut) || 0}px`;
   out[p("mode")] = tokens.mode === "light" ? "light" : "dark";
 

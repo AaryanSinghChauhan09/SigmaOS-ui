@@ -33,12 +33,43 @@ function adopt(sheet) {
   }
 }
 
+// Line heights as Qt lays text out (a Text's height is ceil(size × (ascent + descent)), where
+// Chromium's line-height: normal rounds ascent and descent apart, a pixel short at most sizes), from
+// the resolved font's own metrics. Measured once per family; the sizes are the core's.
+const metrics = new Map();
+function fontRatio(family) {
+  if (metrics.has(family)) return metrics.get(family);
+  let ratio = 0;
+  try {
+    const c = document.createElement("canvas").getContext("2d");
+    c.font = `1000px ${family}`;
+    const m = c.measureText("Ag");
+    ratio = (m.fontBoundingBoxAscent + m.fontBoundingBoxDescent) / 1000;
+  } catch {
+    ratio = 0;
+  }
+  if (ratio > 0) metrics.set(family, ratio);
+  return ratio;
+}
+
+function lineHeights(props) {
+  const ratio = fontRatio(props["--omarchy-font-family"]);
+  if (!ratio) return [];
+  const out = [];
+  for (const [k, v] of Object.entries(props)) {
+    const m = /^--omarchy-font-(.+)$/.exec(k);
+    if (!m || m[1] === "family" || m[1] === "base-size" || !v.endsWith("px")) continue;
+    out.push(`--omarchy-line-${m[1]}: ${Math.ceil(parseFloat(v) * ratio - 1e-6)}px;`);
+  }
+  return out;
+}
+
 /** The tokens' rule: every custom property on :root, and the theme-switch fade on its colors. */
 function tokenRule(tokens) {
   const { props, colors } = tokensToCss(tokens);
   register(colors);
   lastColors = colors;
-  const decls = Object.entries(props).map(([k, v]) => `${k}: ${v};`).join("\n    ");
+  const decls = [...Object.entries(props).map(([k, v]) => `${k}: ${v};`), ...lineHeights(props)].join("\n    ");
   return `@layer omarchy.tokens {
   :root {
     color-scheme: ${tokens.mode === "light" ? "light" : "dark"};
