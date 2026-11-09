@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Build the Bubble Tea binding's gallery and live-switch test (tools/bindings.d/bubbletea.json's
+# build step; bin/build bubbletea runs it) into build/bubbletea. The module pins its Go modules
+# (go.mod, go.sum).
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+OUT="$ROOT/build/bubbletea"
+mkdir -p "$OUT"
+cd "$ROOT/tui/bubbletea"
+go build -o "$OUT/" ./cmd/omarchy-bubbletea-gallery ./cmd/omarchy-bubbletea-live-test
+echo "build/bubbletea/omarchy-bubbletea-gallery"
+echo "build/bubbletea/omarchy-bubbletea-live-test"
