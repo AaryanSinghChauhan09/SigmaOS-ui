@@ -1,7 +1,7 @@
 # The GPUI binding, in a workspace of its own so GPUI's tree stays out of omarchy-ui's.
 [workspace]
 resolver = "3"
-members = ["omarchy-gpui"]
+members = ["omarchy-gpui", "gallery"]
 
 [workspace.package]
 edition = "2024"

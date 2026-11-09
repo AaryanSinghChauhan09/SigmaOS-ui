@@ -20,7 +20,7 @@
 mod fade;
 mod font;
 mod theme;
-
+pub mod ui;
 #[cfg(feature = "gpui-component")]
 pub mod component;
 
