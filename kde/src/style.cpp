@@ -308,7 +308,9 @@ QRect Style::subElementRect(SubElement se, const QStyleOption *opt, const QWidge
   const Tokens &t = tk();
   const int bw = borderWidth();
   switch (se) {
-  case SE_LineEditContents: return opt->rect.adjusted(bw + t.spacing("controlPaddingX"), bw, -(bw + t.spacing("controlPaddingX")), -bw);
+  case SE_LineEditContents:
+    if (const auto *f = qstyleoption_cast<const QStyleOptionFrame *>(opt); f && f->lineWidth <= 0) return opt->rect;
+    return opt->rect.adjusted(bw + t.spacing("controlPaddingX"), bw, -(bw + t.spacing("controlPaddingX")), -bw);
   case SE_PushButtonContents: return opt->rect.adjusted(bw + t.spacing("controlPaddingX"), bw, -(bw + t.spacing("controlPaddingX")), -bw);
   case SE_PushButtonFocusRect: return QRect();
   case SE_ProgressBarGroove:

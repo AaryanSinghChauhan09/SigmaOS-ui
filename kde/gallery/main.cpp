@@ -59,6 +59,27 @@ Column *column(BoxLayout *into, QWidget *parent, int spacing, Qt::Alignment alig
 
 QString glyph(uint cp) { return QString::fromUcs4(reinterpret_cast<const char32_t *>(&cp), 1); }
 
+namespace {
+class Painted : public QWidget {
+public:
+  Painted(QSize size, std::function<void(QPainter &, const QRect &)> paint, QWidget *parent) : QWidget(parent), m_paint(std::move(paint)) {
+    setFixedSize(size);
+    follow(this);
+  }
+
+protected:
+  void paintEvent(QPaintEvent *) override {
+    QPainter p(this);
+    m_paint(p, rect());
+  }
+
+private:
+  std::function<void(QPainter &, const QRect &)> m_paint;
+};
+}  // namespace
+
+QWidget *painted(QSize size, std::function<void(QPainter &, const QRect &)> paint, QWidget *parent) { return new Painted(size, std::move(paint), parent); }
+
 int sp(const char *name) { return shown().spacing(name); }
 
 }  // namespace Gallery

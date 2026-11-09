@@ -23,6 +23,13 @@
 #include "Omarchy/Inputs.h"
 #include "Omarchy/Slider.h"
 #include "Omarchy/Surfaces.h"
+#include "Omarchy/Lists.h"
+#include "Omarchy/Feedback.h"
+#include "Omarchy/Navigation.h"
+#include "Omarchy/Forms.h"
+#include "Omarchy/Data.h"
+#include "Omarchy/Editing.h"
+#include "Omarchy/Composed.h"
 
 namespace Omarchy {
 
