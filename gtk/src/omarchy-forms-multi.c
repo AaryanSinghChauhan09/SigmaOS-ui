@@ -959,6 +959,7 @@ omarchy_multi_select_class_init (OmarchyMultiSelectClass *klass)
   g_object_class_install_properties (oc, N_PROPS, props);
   /**
    * OmarchyMultiSelect::changed:
+   * @self: the multiselect
    * @values: (array zero-terminated=1): the chosen values now
    *
    * A click or a key toggled an option.
@@ -967,6 +968,7 @@ omarchy_multi_select_class_init (OmarchyMultiSelectClass *klass)
                                    G_TYPE_NONE, 1, G_TYPE_STRV);
   /**
    * OmarchyMultiSelect::hovered:
+   * @self: the multiselect
    * @hovered: the pointer is over it
    */
   signals[HOVERED] = g_signal_new ("hovered", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,

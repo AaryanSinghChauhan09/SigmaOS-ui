@@ -625,6 +625,7 @@ omarchy_number_field_class_init (OmarchyNumberFieldClass *klass)
   g_object_class_install_properties (oc, N_N_PROPS, n_props);
   /**
    * OmarchyNumberField::modified:
+   * @self: the numberfield
    * @value: the new value
    *
    * The user stepped or typed a new value (not when the app sets one).
@@ -1094,6 +1095,7 @@ omarchy_dropdown_class_init (OmarchyDropdownClass *klass)
   g_object_class_install_properties (oc, D_N_PROPS, d_props);
   /**
    * OmarchyDropdown::changed:
+   * @self: the dropdown
    * @value: the chosen option's value
    */
   d_signals[D_CHANGED] = g_signal_new ("changed", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,

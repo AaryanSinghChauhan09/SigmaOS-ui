@@ -212,6 +212,7 @@ omarchy_color_well_class_init (OmarchyColorWellClass *klass)
                                        G_TYPE_NONE, 0);
   /**
    * OmarchyColorWell::hovered:
+   * @self: the colorwell
    * @hovered: the pointer is over it
    */
   w_signals[W_HOVERED] = g_signal_new ("hovered", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
@@ -526,6 +527,7 @@ omarchy_swatch_strip_class_init (OmarchySwatchStripClass *klass)
   g_object_class_install_properties (oc, S_N_PROPS, s_props);
   /**
    * OmarchySwatchStrip::picked:
+   * @self: the swatchstrip
    * @index: the chosen color
    *
    * A click or Space/Return picked a color.

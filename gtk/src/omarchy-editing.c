@@ -398,13 +398,13 @@ omarchy_trim_handle_class_init (OmarchyTrimHandleClass *klass)
    */
   t_props[T_PROP_DRAGGING] = g_param_spec_boolean ("dragging", NULL, NULL, FALSE, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
   /**
-   * OmarchyTrimHandle:color: (nullable)
+   * OmarchyTrimHandle:color:
    *
    * Its color; %NULL for the accent.
    */
   t_props[T_PROP_COLOR] = g_param_spec_boxed ("color", NULL, NULL, GDK_TYPE_RGBA, f);
   /**
-   * OmarchyTrimHandle:grip-color: (nullable)
+   * OmarchyTrimHandle:grip-color:
    *
    * The grip line cut into a trim cap; %NULL for the background.
    */

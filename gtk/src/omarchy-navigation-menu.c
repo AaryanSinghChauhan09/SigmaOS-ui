@@ -574,6 +574,7 @@ omarchy_menu_class_init (OmarchyMenuClass *klass)
   g_object_class_install_properties (oc, MN_N_PROPS, mn_props);
   /**
    * OmarchyMenu::triggered:
+   * @self: the menu
    * @item: the row that ran
    *
    * A row ran, in this menu or one of its submenus. The menu has closed itself unless held.

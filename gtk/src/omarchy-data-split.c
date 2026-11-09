@@ -338,6 +338,7 @@ omarchy_split_view_class_init (OmarchySplitViewClass *klass)
   g_object_class_override_property (oc, SV_PROP_ORIENTATION, "orientation");
   /**
    * OmarchySplitView::resized:
+   * @self: the splitview
    * @view: the split view
    * @pane: the index of the pane a handle resized (hidden panes count)
    * @size: its new size along the split
@@ -969,6 +970,7 @@ omarchy_sidebar_class_init (OmarchySidebarClass *klass)
   g_object_class_install_properties (oc, SB_N_PROPS, sb_props);
   /**
    * OmarchySidebar::activated:
+   * @self: the sidebar
    * @sidebar: the sidebar
    * @id: the row chosen (now #OmarchySidebar:selected-id)
    */

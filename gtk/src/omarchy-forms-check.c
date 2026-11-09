@@ -339,6 +339,7 @@ omarchy_checkbox_class_init (OmarchyCheckboxClass *klass)
                                        G_TYPE_NONE, 0);
   /**
    * OmarchyCheckbox::hovered:
+   * @self: the checkbox
    * @hovered: the pointer is over it
    */
   c_signals[C_HOVERED] = g_signal_new ("hovered", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
@@ -650,6 +651,7 @@ omarchy_radio_group_class_init (OmarchyRadioGroupClass *klass)
   g_object_class_install_properties (oc, RG_N_PROPS, rg_props);
   /**
    * OmarchyRadioGroup::changed:
+   * @self: the radiogroup
    * @value: the chosen option's value
    *
    * A click or a key picked another option.

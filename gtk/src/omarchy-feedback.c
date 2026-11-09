@@ -859,7 +859,7 @@ omarchy_spinner_class_init (OmarchySpinnerClass *klass)
    */
   s_props[S_PROP_RUNNING] = g_param_spec_boolean ("running", NULL, NULL, TRUE, f);
   /**
-   * OmarchySpinner:color: (nullable)
+   * OmarchySpinner:color:
    *
    * The glyph's color; %NULL for the foreground (following the theme).
    */

@@ -4,7 +4,7 @@
 #include <adwaita.h>
 
 /**
- * omarchy_gtk_init: (rename-to init)
+ * omarchy_gtk_init:
  *
  * Adopt Omarchy's look and follow the theme live, in one call. After gtk_init() (it calls it
  * when GTK isn't initialized yet), before the first window shows:
@@ -54,4 +54,18 @@ const char *
 omarchy_get_version (void)
 {
   return OMARCHY_GTK_VERSION;
+}
+
+/**
+ * omarchy_init:
+ *
+ * [func@Omarchy.gtk_init] under the name bindings call it by: `Omarchy.init()` in Python and
+ * GJS, `Omarchy.init ()` in Vala.
+ *
+ * Returns: (transfer none): the theme
+ */
+OmarchyTheme *
+omarchy_init (void)
+{
+  return omarchy_gtk_init ();
 }

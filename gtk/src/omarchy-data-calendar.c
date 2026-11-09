@@ -460,6 +460,7 @@ omarchy_calendar_class_init (OmarchyCalendarClass *klass)
   g_object_class_install_properties (oc, CA_N_PROPS, ca_props);
   /**
    * OmarchyCalendar::picked:
+   * @self: the calendar
    * @calendar: the calendar
    * @date: the day picked, "YYYY-MM-DD" (now #OmarchyCalendar:selected)
    */

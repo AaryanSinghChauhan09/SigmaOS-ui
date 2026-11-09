@@ -475,6 +475,7 @@ omarchy_table_class_init (OmarchyTableClass *klass)
   g_object_class_install_properties (oc, TB_N_PROPS, tb_props);
   /**
    * OmarchyTable::row-activated:
+   * @self: the table
    * @table: the table
    * @row: the row chosen with a click or Return/Space (now #OmarchyTable:selected-row)
    */
@@ -482,6 +483,7 @@ omarchy_table_class_init (OmarchyTableClass *klass)
                                                NULL, NULL, G_TYPE_NONE, 1, G_TYPE_INT);
   /**
    * OmarchyTable::sort-requested:
+   * @self: the table
    * @table: the table
    * @column: the header clicked; #OmarchyTable:sort-column and #OmarchyTable:sort-ascending
    *   already show the order asked for, and the app reorders the rows
@@ -1019,6 +1021,7 @@ omarchy_tree_class_init (OmarchyTreeClass *klass)
   g_object_class_install_properties (oc, TR_N_PROPS, tr_props);
   /**
    * OmarchyTree::toggled:
+   * @self: the tree
    * @tree: the tree
    * @id: the branch folded or unfolded (#OmarchyTree:expanded already says which)
    */
@@ -1026,6 +1029,7 @@ omarchy_tree_class_init (OmarchyTreeClass *klass)
                                          G_TYPE_NONE, 1, G_TYPE_STRING);
   /**
    * OmarchyTree::activated:
+   * @self: the tree
    * @tree: the tree
    * @id: the row chosen (now #OmarchyTree:selected-id)
    */

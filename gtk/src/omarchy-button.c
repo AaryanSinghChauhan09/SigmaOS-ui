@@ -763,6 +763,7 @@ omarchy_button_group_class_init (OmarchyButtonGroupClass *klass)
   g_object_class_install_properties (oc, G_N_PROPS, g_props);
   /**
    * OmarchyButtonGroup::changed:
+   * @self: the buttongroup
    * @value: the chosen option's value
    */
   g_signals[G_CHANGED] = g_signal_new ("changed", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,

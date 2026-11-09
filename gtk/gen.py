@@ -44,7 +44,7 @@ def main():
                  "#pragma once", "", "#define OMARCHY_GTK_INSIDE", "#include <gtk/gtk.h>", "",
                  '#include "omarchy-version.h"']
         lines += [f'#include "{Path(h).name}"' for h in sorted(headers, key=lambda h: Path(h).name)]
-        lines += ["", "G_BEGIN_DECLS", "OmarchyTheme *omarchy_gtk_init (void);", "const char *omarchy_get_version (void);",
+        lines += ["", "G_BEGIN_DECLS", "OmarchyTheme *omarchy_gtk_init (void);", "OmarchyTheme *omarchy_init (void);", "const char *omarchy_get_version (void);",
                   "void omarchy_ensure_types (void);", "G_END_DECLS", "#undef OMARCHY_GTK_INSIDE", ""]
         Path(out).write_text("\n".join(lines))
     elif cmd == "types":

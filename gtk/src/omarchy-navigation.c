@@ -1319,6 +1319,7 @@ omarchy_tabs_class_init (OmarchyTabsClass *klass)
   g_object_class_install_properties (oc, TA_N_PROPS, ta_props);
   /**
    * OmarchyTabs::activated:
+   * @self: the tabs
    * @index: the tab chosen
    *
    * A click or a key chose another tab.
@@ -1674,6 +1675,7 @@ omarchy_icon_rail_class_init (OmarchyIconRailClass *klass)
   g_object_class_install_properties (oc, IR_N_PROPS, ir_props);
   /**
    * OmarchyIconRail::activated:
+   * @self: the iconrail
    * @index: the item chosen
    *
    * A click or a key chose another item.
