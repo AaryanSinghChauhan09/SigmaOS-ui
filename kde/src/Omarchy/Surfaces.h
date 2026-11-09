@@ -199,21 +199,21 @@ private:
   bool m_checked = false, m_highlighted = false;
 };
 
-// The tooltip surface with bodySmall text, as a still widget (TooltipFrame) or shown at a point
-// (Tooltip::showText). Stock QToolTips draw the same way under Omarchy's style.
+// The tooltip surface with bodySmall text, as a still widget. Omarchy::Tooltip (Navigation.h) is
+// the tooltip that shows on hover, with a shortcut in keycaps; stock QToolTips draw this surface
+// under Omarchy::Style.
 class OMARCHY_EXPORT TooltipFrame : public QWidget {
   Q_OBJECT
 public:
   explicit TooltipFrame(const QString &text = QString(), QWidget *parent = nullptr);
   void setText(const QString &t);
-  void setShortcut(const QString &shortcut);
   QSize sizeHint() const override;
 
 protected:
   void paintEvent(QPaintEvent *) override;
 
 private:
-  QString m_text, m_shortcut;
+  QString m_text;
 };
 
 // A modal confirmation: a message, Cancel, and a destructive Confirm in urgent, in a card over a

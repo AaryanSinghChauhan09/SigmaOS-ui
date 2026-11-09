@@ -158,7 +158,7 @@ void Button::paintEvent(QPaintEvent *) {
   const QColor textColor = m_selected ? tk.selectedText(fore) : fore;
   const QFont label = tk.fontPx(fontPx(), m_selected);
   const QFont icon = tk.font("icon");
-  const QSizeF is = m_icon.isEmpty() ? QSizeF() : Paint::textSize(icon, m_icon);
+  const QSizeF is = m_icon.isEmpty() ? QSizeF(0, 0) : Paint::textSize(icon, m_icon);
   const qreal gap = (!m_icon.isEmpty() && !m_text.isEmpty()) ? tk.spacing("controlGap") : 0;
   const QMargins r = reserved();
   const qreal labelRoom = qMax<qreal>(0, box.width() - hpad() - r.left() - r.right() - is.width() - gap);

@@ -422,18 +422,11 @@ void TooltipFrame::setText(const QString &t) {
   update();
 }
 
-void TooltipFrame::setShortcut(const QString &shortcut) {
-  m_shortcut = shortcut;
-  updateGeometry();
-  update();
-}
-
 QSize TooltipFrame::sizeHint() const {
   const Tokens &tk = shown();
   const Border b = tk.border(QStringLiteral("surfaces.tooltip.border"));
   const QSizeF s = Paint::textSize(tk.font("bodySmall"), m_text);
-  qreal w = s.width();
-  if (!m_shortcut.isEmpty()) w += tk.spacing("controlGap") + Paint::textWidth(tk.font("caption"), m_shortcut);
+  const qreal w = s.width();
   return QSize(ceilPx(w + b.left + b.right + 2 * tk.spacing("controlPaddingX")),
                ceilPx(s.height() + b.top + b.bottom + 2 * tk.spacing("controlPaddingY")));
 }
@@ -446,11 +439,6 @@ void TooltipFrame::paintEvent(QPaintEvent *) {
   const QPointF at(b.left + tk.spacing("controlPaddingX"), b.top + tk.spacing("controlPaddingY"));
   const QFont f = tk.font("bodySmall");
   Paint::text(p, at, f, tk.color(QStringLiteral("surfaces.tooltip.text")), m_text);
-  if (!m_shortcut.isEmpty()) {
-    const QFont c = tk.font("caption");
-    const qreal x = width() - b.right - tk.spacing("controlPaddingX") - Paint::textWidth(c, m_shortcut);
-    Paint::text(p, QPointF(x, at.y() + Paint::centered(Paint::lineHeight(f), Paint::lineHeight(c))), c, tk.textDim(), m_shortcut);
-  }
 }
 
 // --------------------------------------------------------------------------------- ConfirmDialog
