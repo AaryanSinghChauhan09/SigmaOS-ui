@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Build examples/gpui (a crate outside every workspace, with a path dependency on omarchy-gpui)
+# and render it once, offscreen, in a fixture theme, to gpui/target/examples/gpui.png. It shares
+# the binding's target directory, so GPUI compiles once.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="$ROOT/gpui/target/examples"
+mkdir -p "$OUT"
+export CARGO_TARGET_DIR="$ROOT/gpui/target"
+cargo build -q --release --manifest-path "$ROOT/examples/gpui/Cargo.toml" --features snap
+png="$OUT/gpui.png"
+rm -f "$png"
+OMARCHY_UI_THEME_DIR="$ROOT/fixtures/themes/tokyo-night" OMARCHY_UI_ROUNDING=0 \
+  "$CARGO_TARGET_DIR/release/omarchy-ui-example-gpui" --snap "$png"
+[[ -s $png ]] && file -b "$png" | grep -q "^PNG image"
+echo "example: examples/gpui rendered to ${png#"$ROOT"/}"

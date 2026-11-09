@@ -10,9 +10,5 @@ name = "omarchy-gpui-gallery"
 path = "src/main.rs"
 
 [dependencies]
-omarchy-gpui = { path = "../omarchy-gpui", features = ["gpui-component", "test-support"] }
-gpui_platform.workspace = true
-gpui_wgpu.workspace = true
+omarchy-gpui = { path = "../omarchy-gpui", features = ["gpui-component", "snap"] }
 gpui-component.workspace = true
-image = { version = "0.25", default-features = false, features = ["png"] }
-anyhow = "1"

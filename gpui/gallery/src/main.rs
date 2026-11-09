@@ -8,14 +8,12 @@
 //!   omarchy-gpui-gallery --list-sections                   the sections, in order
 //!   omarchy-gpui-gallery --dump-tokens                     the core's tokens as canonical JSON
 //!
-//! `--snap` renders with GPUI's headless app context: the test platform's windows (never on
+//! `--snap` renders with `omarchy_gpui::snap`: GPUI's headless app context, the test platform's windows (never on
 //! screen), Linux's real text system and the wgpu headless renderer reading the frame back, so
 //! stills need a GPU adapter (any Vulkan or GL driver, llvmpipe included) but no display.
 //!
 //! Each section is `sections/<name>.rs` with `pub fn build(g, window, cx) -> Vec<AnyElement>`.
 //! Adding one: write the module and list it in `gallery!` below, under the Qt section's name.
-
-use std::sync::Arc;
 
 use omarchy_gpui::gpui::{prelude::*, *};
 use omarchy_gpui::ui::{TextInput, section_header};
@@ -161,24 +159,6 @@ fn section_arg() -> Option<&'static str> {
     }
 }
 
-/// Render one section (or all) to `out` at `w`×`h` points, 2× (GPUI's test windows are 2×), with
-/// no window on screen.
-fn snap(out: &str, section: Option<&'static str>, w: f32, h: f32) -> anyhow::Result<()> {
-    let text = Arc::new(gpui_wgpu::CosmicTextSystem::new("IBM Plex Sans"));
-    let mut cx = HeadlessAppContext::with_platform(text, Arc::new(()), || {
-        gpui_wgpu::WgpuHeadlessRenderer::new().map(|r| Some(Box::new(r) as Box<dyn PlatformHeadlessRenderer>))
-    });
-    cx.update(|cx| omarchy_gpui::install(cx, omarchy_theme::load()));
-    let window = cx.open_window(size(px(w), px(h)), |_, cx| cx.new(|cx| Gallery::new(section, cx)))?;
-    cx.run_until_parked();
-    // A second frame, for anything laid out from the first (anchored popups, measured text).
-    cx.update_window(window.into(), |_, window, _| window.refresh())?;
-    cx.run_until_parked();
-    let img = cx.capture_screenshot(window.into())?;
-    img.save(out)?;
-    Ok(())
-}
-
 use omarchy_gpui::omarchy_theme;
 
 fn main() {
@@ -199,13 +179,13 @@ fn main() {
         if arg("--scale").is_some_and(|s| s != "2") {
             eprintln!("omarchy-gpui-gallery: --snap renders at 2x (GPUI's test windows); --scale is ignored");
         }
-        if let Err(e) = snap(&out, section, w, h) {
+        if let Err(e) = omarchy_gpui::snap::render(std::path::Path::new(&out), (w, h), |_, cx| Gallery::new(section, cx)) {
             eprintln!("omarchy-gpui-gallery: {e:#}");
             std::process::exit(1);
         }
         return;
     }
-    gpui_platform::application().run(move |cx| {
+    omarchy_gpui::gpui_platform::application().run(move |cx| {
         gpui_component::init(cx);
         omarchy_gpui::init(cx);
         let bounds = Bounds::centered(None, size(px(WIDTH), px(900.0)), cx);

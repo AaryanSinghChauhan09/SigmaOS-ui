@@ -1,0 +1,23 @@
+# A GPUI app outside any omarchy-ui workspace, the way an app in its own repository depends on the
+# kit. Only omarchy-gpui is a dependency: GPUI comes through its re-exports (omarchy_gpui::gpui,
+# omarchy_gpui::gpui_platform), at the kit's pinned version.
+#
+# From another repository, as a git dependency instead (<omarchy-ui-repo>: see docs/using-gpui.md):
+#
+#   omarchy-gpui = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+
+[package]
+name = "omarchy-ui-example-gpui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Its own workspace: it sits inside omarchy-ui's directory without being a member.
+[workspace]
+
+[features]
+# `--snap out.png`: render the panel offscreen and exit (gpui/test-example builds with it).
+snap = ["omarchy-gpui/snap"]
+
+[dependencies]
+omarchy-gpui = { path = "../../gpui/omarchy-gpui" }

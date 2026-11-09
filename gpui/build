@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Build the GPUI binding's gallery and live-switch test (tools/bindings.d/gpui.json's build step;
+# bin/build gpui runs it) into gpui/target/release. GPUI's tree lives in gpui/'s own workspace.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cargo build -q --release --manifest-path "$ROOT/gpui/Cargo.toml" -p omarchy-gpui-gallery
+echo "gpui/target/release/omarchy-gpui-gallery"
+echo "gpui/target/release/omarchy-gpui-live-test"

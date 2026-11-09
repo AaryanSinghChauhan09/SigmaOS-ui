@@ -1,0 +1,21 @@
+{
+  "name": "gpui",
+  "title": "GPUI",
+  "order": 50,
+  "docs": "docs/using-gpui.md",
+  "available": { "commands": ["cargo"] },
+  "build": "gpui/build",
+  "gallery": {
+    "sections": "gpui/target/release/omarchy-gpui-gallery --list-sections",
+    "snap": "gpui/target/release/omarchy-gpui-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
+    "window": "gpui/target/release/omarchy-gpui-gallery"
+  },
+  "tokens": "core",
+  "icons": "core",
+  "tests": [
+    { "name": "behavior", "run": "cargo test -q --manifest-path gpui/Cargo.toml -p omarchy-gpui" },
+    { "name": "live switch", "run": "tools/live/run gpui/target/release/omarchy-gpui-live-test" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run gpui/target/release/omarchy-gpui-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } },
+    { "name": "example", "run": "gpui/test-example" }
+  ]
+}

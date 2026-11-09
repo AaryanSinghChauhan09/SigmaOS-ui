@@ -9,13 +9,18 @@ description = "Omarchy's look, live theme-following and component kit for GPUI a
 default = []
 # Map the tokens onto gpui-component's Theme too, so its widgets look Omarchy.
 gpui-component = ["dep:gpui-component"]
-# GPUI's test platform: TestAppContext, and the headless renderer `snap` uses.
+# GPUI's test platform (TestAppContext, the headless app context).
 test-support = ["gpui/test-support", "gpui_platform/test-support"]
+# `omarchy_gpui::snap`: render a view to a PNG offscreen (`--snap out.png`), with no window.
+snap = ["test-support", "dep:gpui_wgpu", "dep:image", "dep:anyhow"]
 
 [dependencies]
 gpui.workspace = true
 gpui_platform.workspace = true
 gpui-component = { workspace = true, optional = true }
+gpui_wgpu = { workspace = true, optional = true }
+image = { version = "0.25", default-features = false, features = ["png"], optional = true }
+anyhow = { version = "1", optional = true }
 omarchy-theme.workspace = true
 futures = "0.3"
 unicode-segmentation = "1"

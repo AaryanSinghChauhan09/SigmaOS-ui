@@ -23,11 +23,16 @@ mod theme;
 pub mod ui;
 #[cfg(feature = "gpui-component")]
 pub mod component;
+#[cfg(feature = "snap")]
+pub mod snap;
 
 pub use fade::{cubic_bezier, mix_tokens};
 pub use theme::{Paint, Theme, color, install, on_change, set_tokens};
 
 pub use gpui;
+/// The platform crate GPUI apps start from (`gpui_platform::application()`), the one this kit is
+/// built against.
+pub use gpui_platform;
 pub use omarchy_theme;
 pub use omarchy_theme::Tokens;
 
