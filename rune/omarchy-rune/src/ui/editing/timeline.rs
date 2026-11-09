@@ -53,7 +53,8 @@ impl TimelineView {
     }
 }
 
-type Seek = Rc<dyn Fn(El, TimelineView, f32) -> El>;
+/// Attaches the scrubbing handlers: the element, the view, the playhead and the ruler's labeled step.
+type Seek = Rc<dyn Fn(El, TimelineView, f32, f32) -> El>;
 type Select = Rc<dyn Fn(El, usize, usize) -> El>;
 type Trim = Rc<dyn Fn(TrimHandle, usize, usize, Edge, f32, TimelineView) -> TrimHandle>;
 type ViewFn = Rc<dyn Fn(El, TimelineView, f32) -> El>;
@@ -136,11 +137,10 @@ impl Timeline {
     /// Scrubbing: the time under the pointer on the ruler or an empty lane, or a key's step.
     pub fn on_seek<S: 'static>(mut self, f: impl Fn(&mut S, f32) + 'static) -> Self {
         let f = Rc::new(f);
-        self.seek = Some(Rc::new(move |e: El, view: TimelineView, position: f32| {
+        self.seek = Some(Rc::new(move |e: El, view: TimelineView, position: f32, major: f32| {
             let drag = f.clone();
             let key = f.clone();
             e.on_drag(move |s: &mut S, d: &mut Drag, _tx| drag(s, view.time_at(d.x))).on_key(move |s: &mut S, k, _tx: &mut Tx| {
-                let major = tick_step(view.pixels_per_second(), 1.0);
                 let step = if k.mods.shift { major } else { 1.0 };
                 let to = match k.key {
                     Key::Left => position - step,
@@ -313,7 +313,8 @@ impl Timeline {
         }
 
         if let Some(seek) = &self.seek {
-            e = seek(e, view, self.position);
+            // Shift+arrow steps by the labeled ruler step, as Qt's tickStep.
+            e = seek(e, view, self.position, tick_step(view.pixels_per_second(), t.space(90.0)));
         }
         if let Some(v) = &self.view {
             e = v(e, view, self.max_zoom);
