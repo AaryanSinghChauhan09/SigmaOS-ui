@@ -16,7 +16,7 @@
 //!
 //! `app --snap out.png [--size WxH] [--scale N]` then waits for the first window's page (loaded,
 //! fonts in, and `window.omarchySnapReady` settled when the page defines it), sets the window to
-//! `WxH` points (default: as created), and writes the page at device scale `N` (default 2).
+//! `WxH` points (default: its size in tauri.conf.json), and writes the page at device scale `N` (default 2).
 //!
 //! How: a GTK 3 broadway display of its own ([`display`]), WebKit's software path, and
 //! `webkit_web_view_get_snapshot`, which has the web process paint the page into a bitmap at the
@@ -157,9 +157,16 @@ impl Snap {
         let (w, h) = match self.size {
             Some(s) => s,
             None => {
-                let v = eval(webview, "[innerWidth, innerHeight]")?;
-                let v: Vec<f64> = serde_json::from_str(&v).map_err(|e| e.to_string())?;
-                (v[0], v[1])
+                // The window's size in tauri.conf.json, else what the page has now.
+                let label = webview.window().label().to_string();
+                match webview.config().app.windows.iter().find(|w| w.label == label) {
+                    Some(w) => (w.width, w.height),
+                    None => {
+                        let v = eval(webview, "[innerWidth, innerHeight]")?;
+                        let v: Vec<f64> = serde_json::from_str(&v).map_err(|e| e.to_string())?;
+                        (v[0], v[1])
+                    }
+                }
             }
         };
         let h = match (&self.content_height, h > 0.0) {
