@@ -32,15 +32,30 @@ fi
 
 open=0
 args=()
+only=""
+prev=""
 for arg in "$@"; do
   if [[ $arg == "--open" ]]; then
     open=1
   else
     args+=("$arg")
   fi
+  if [[ $prev == "--bindings" ]]; then
+    only="$arg"
+  elif [[ $arg == --bindings=* ]]; then
+    only="${arg#--bindings=}"
+  fi
+  prev="$arg"
 done
 
-"$ROOT/bin/build" >/dev/null
+# With --bindings, build only the reference and those, so a half-built binding elsewhere in the
+# registry doesn't stop the review.
+if [[ -n $only ]]; then
+  reference="$(python3 "$ROOT/tools/bindings.py" list 2>/dev/null | head -n1)"
+  "$ROOT/bin/build" core ${reference:+"$reference"} ${only//,/ } >/dev/null
+else
+  "$ROOT/bin/build" >/dev/null
+fi
 python3 "$ROOT/tools/review.py" "${args[@]}"
 
 if (( open )); then
