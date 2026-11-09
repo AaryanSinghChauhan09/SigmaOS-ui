@@ -15,11 +15,13 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 core() {
   # The resolver for everything that isn't Rust: the CLI, and the C library staged as a package
   # lays it out (lib, include, pkgconfig), so PKG_CONFIG_PATH=build/ffi/lib/pkgconfig finds it.
-  cargo build -q --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-theme -p omarchy-theme-ffi
+  # And omarchy-ansi, which bin/review renders and diffs the terminal bindings' snapshots with.
+  cargo build -q --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-theme -p omarchy-theme-ffi -p omarchy-ansi
   rm -rf "$ROOT/build/ffi"
   "$ROOT/crates/omarchy-theme-ffi/stage" "$ROOT/target/release/libomarchy_theme_ffi.so" "" "$ROOT/build/ffi"
   echo "target/release/omarchy-theme"
   echo "build/ffi/lib/libomarchy-theme.so"
+  echo "target/release/omarchy-ansi"
 }
 
 if (( $# == 0 )); then
