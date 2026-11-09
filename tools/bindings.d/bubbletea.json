@@ -1,0 +1,22 @@
+{
+  "name": "bubbletea",
+  "title": "Bubble Tea",
+  "family": "terminal",
+  "order": 120,
+  "docs": "docs/using-bubbletea.md",
+  "available": { "commands": ["go"] },
+  "build": "tui/bubbletea/build",
+  "gallery": {
+    "sections": "build/bubbletea/omarchy-bubbletea-gallery --list-sections",
+    "snap": "build/bubbletea/omarchy-bubbletea-gallery --snap {out} --section {section} --size {width}x{height}",
+    "window": "tools/terminal-window build/bubbletea/omarchy-bubbletea-gallery"
+  },
+  "tokens": "core",
+  "icons": "none",
+  "tests": [
+    { "name": "kit and gallery tests", "run": "go -C tui/bubbletea test -count=1 ./..." },
+    { "name": "window in a pty", "run": "tui/bubbletea/pty-test" },
+    { "name": "live switch", "run": "tools/live/run build/bubbletea/omarchy-bubbletea-live-test" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/bubbletea/omarchy-bubbletea-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}
