@@ -93,7 +93,7 @@ class GalleryApp(OmarchyApp):
             yield self.make_section()
             return
         yield Header(self.index, id="header")
-        with VerticalScroll(id="body"):
+        with VerticalScroll(id="body", can_focus=False):
             yield self.make_section()
         yield Footer(id="footer")
 
