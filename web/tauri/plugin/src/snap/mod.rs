@@ -174,11 +174,18 @@ impl Snap {
 }
 
 /// What a headless GTK lacks, set once GTK runs: broadway has no screen resolution (-1), and
-/// WebKit scales pages by it over 96, so give it a 96 dpi screen as a display would.
+/// WebKit scales pages by it over 96, so give it a 96 dpi screen as a display would; and no
+/// desktop font settings.
 pub fn headless_gtk() {
     use gtk::prelude::GtkSettingsExt;
     if let Some(s) = gtk::Settings::default() {
         s.set_gtk_xft_dpi(96 * 1024);
+        // Text as Omarchy sets it up (slight hinting, grayscale antialiasing), not GTK's
+        // fallback of full hinting, which rounds every glyph advance to a whole device pixel.
+        s.set_gtk_xft_hinting(1);
+        s.set_gtk_xft_hintstyle(Some("hintslight"));
+        s.set_gtk_xft_antialias(1);
+        s.set_gtk_xft_rgba(Some("none"));
     }
 }
 
