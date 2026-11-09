@@ -10,7 +10,7 @@ Prints the live Omarchy theme resolved as Omarchy UI tokens (spec/tokens.md).
 
   (none)                 the canonical token JSON, indented
   --compact              the canonical token JSON on one line
-  --state                one line: {schema, revision, theme, iconTheme, language, tokens, strings}
+  --state                one line: {schema, revision, theme, iconTheme, language, tokens, colors, strings}
   --watch                print once, then one line per change (spec/following.md); with --state,
                          state lines, else compact token lines. Runs until stdout closes.
   --strings              the kit's strings in the display language: {language, strings}

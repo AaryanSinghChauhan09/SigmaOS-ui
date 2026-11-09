@@ -717,14 +717,13 @@ export function hsvToRgb(h, s, v) {
 
 const hex2 = (n) => (n < 16 ? "0" : "") + n.toString(16);
 
-// The theme's named colors the palette row can show. The core's state carries only the palette
-// roles, so a name maps to the role that comes from it (red → urgent, green → success, yellow →
-// warning) until the state carries every named color (tokens.palette.named, when it does).
+// The theme's named colors the palette row can show: the state's `colors` (every key of
+// colors.toml). A state without them (an old CLI) maps a name to the role that comes from it.
 const NAMED_ROLES = { red: "urgent", green: "success", yellow: "warning", foreground: "foreground", background: "background", accent: "accent", muted: "muted" };
 function namedColor(name) {
   const t = tok();
   if (!t) return null;
-  const named = t.palette && t.palette.named;
+  const named = omarchyApi().colors;
   const v = named && named[name] ? named[name] : NAMED_ROLES[name] ? t.palette[NAMED_ROLES[name]] : null;
   return v ? String(v).slice(0, 7).toLowerCase() : null;
 }

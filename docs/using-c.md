@@ -187,7 +187,7 @@ const readline = require("node:readline");
 
 const theme = spawn("omarchy-theme", ["--watch", "--state"], { stdio: ["ignore", "pipe", "inherit"] });
 readline.createInterface({ input: theme.stdout }).on("line", line => {
-  const state = JSON.parse(line);            // { revision, theme, iconTheme, language, tokens, strings }
+  const state = JSON.parse(line);            // { revision, theme, iconTheme, language, tokens, colors, strings }
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send("omarchy-theme", state);
 });
 app.on("will-quit", () => theme.kill());

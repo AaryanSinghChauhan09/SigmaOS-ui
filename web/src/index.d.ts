@@ -14,6 +14,8 @@ export interface Omarchy {
   readonly theme: string;
   readonly iconTheme: string;
   readonly language: string;
+  /** Every color in the theme's colors.toml by its key (`red`, `bright_blue`, …), as `#rrggbbaa`. */
+  readonly colors: Record<string, string>;
   readonly strings: Record<string, string>;
   /** One of the kit's strings in the display language, %1… filled in. */
   string(key: string, fallback?: string, ...args: unknown[]): string;

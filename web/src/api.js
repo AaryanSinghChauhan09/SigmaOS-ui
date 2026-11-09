@@ -22,7 +22,7 @@ export function createOmarchy() {
     String(text).replace(/%(\d+)/g, (m, n) => (args[n - 1] === undefined ? m : String(args[n - 1])));
 
   const api = {
-    /** The whole state: { theme, iconTheme, language, tokens, strings }, or null before the first. */
+    /** The whole state: { theme, iconTheme, language, tokens, colors, strings }, or null before the first. */
     get state() { return state; },
     /** The canonical tokens (spec/tokens.md): `omarchy.tokens.palette.background` is "#1a1b26ff". */
     get tokens() { return state ? state.tokens : null; },
@@ -31,6 +31,8 @@ export function createOmarchy() {
     get theme() { return state ? state.theme : ""; },
     get iconTheme() { return state ? state.iconTheme : ""; },
     get language() { return state ? state.language : "en"; },
+    /** Every color in the theme's colors.toml by its key (`red`, `bright_blue`, …), as `#rrggbbaa`. */
+    get colors() { return (state && state.colors) || {}; },
     get strings() { return (state && state.strings) || {}; },
 
     /** One of the kit's strings in the display language, `%1`… filled from `args`. */

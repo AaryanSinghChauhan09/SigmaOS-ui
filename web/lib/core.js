@@ -28,7 +28,7 @@ export function findThemeBin(env = process.env) {
   );
 }
 
-/** The state now, once: { schema, revision, theme, iconTheme, language, tokens, strings }. */
+/** The state now, once: { schema, revision, theme, iconTheme, language, tokens, colors, strings }. */
 export function readState({ bin = findThemeBin(), env = process.env } = {}) {
   return JSON.parse(execFileSync(bin, ["--state"], { env, encoding: "utf8", maxBuffer: 16 << 20 }));
 }

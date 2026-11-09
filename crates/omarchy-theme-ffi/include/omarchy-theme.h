@@ -40,7 +40,7 @@ void omarchy_theme_free(char *s);
 char *omarchy_theme_tokens_json(void);
 
 /* Everything at once, on one line: {"schema":1,"revision":0,"theme":"tokyo-night",
- * "iconTheme":"Yaru-blue","language":"en","tokens":{...},"strings":{...}}. */
+ * "iconTheme":"Yaru-blue","language":"en","tokens":{...},"colors":{"red":"#f7768eff",...},"strings":{...}}. */
 char *omarchy_theme_state_json(void);
 
 /* The theme's name ("tokyo-night"). */

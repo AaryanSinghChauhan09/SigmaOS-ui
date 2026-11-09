@@ -345,6 +345,9 @@ impl Tokens {
             "iconTheme": self.icon_theme,
             "language": self.language,
             "tokens": self.canonical_value(),
+            // Every color in colors.toml by its key, for pickers and syntax colors; outside the
+            // canonical tokens, which only carry what the components draw with.
+            "colors": self.palette.named.iter().map(|(k, c)| (k.clone(), serde_json::Value::from(c.hex()))).collect::<serde_json::Map<_, _>>(),
             "strings": crate::strings::table(&self.language),
         })
         .to_string()
