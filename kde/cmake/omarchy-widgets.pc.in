@@ -1,0 +1,11 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/OmarchyWidgets
+
+Name: omarchy-widgets
+Description: Omarchy UI for Qt Widgets and KDE apps: the live Omarchy theme as a QStyle and palette, and the component kit as widgets
+Version: @PROJECT_VERSION@
+Requires: Qt6Widgets
+Requires.private: omarchy-theme
+Libs: -L${libdir} -lOmarchyWidgets
+Cflags: -I${includedir}

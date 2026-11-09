@@ -1,0 +1,19 @@
+{
+  "name": "kde",
+  "title": "KDE / Qt Widgets",
+  "order": 40,
+  "docs": "docs/using-kde.md",
+  "available": { "commands": ["cmake", "ninja", "pkg-config"], "check": "pkg-config --exists Qt6Widgets && test -e build/ffi/lib/pkgconfig/omarchy-theme.pc", "reason": "no Qt6Widgets development files, or no build/ffi (bin/build core)" },
+  "build": "kde/build",
+  "gallery": {
+    "sections": "build/kde/omarchy-widgets-gallery --list-sections",
+    "snap": "build/kde/omarchy-widgets-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
+    "window": "build/kde/omarchy-widgets-gallery"
+  },
+  "tokens": "core",
+  "icons": "core",
+  "tests": [
+    { "name": "live switch", "run": "tools/live/run build/kde/omarchy-widgets-live-test" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/kde/omarchy-widgets-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}
