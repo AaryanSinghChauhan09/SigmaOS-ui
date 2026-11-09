@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: omarchy-theme
+Description: The live Omarchy theme as Omarchy UI design tokens, with a main-loop watch
+URL: https://omarchy.org
+Version: @VERSION@
+Libs: -L${libdir} -lomarchy-theme
+Cflags: -I${includedir}

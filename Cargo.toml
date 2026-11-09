@@ -2,6 +2,7 @@
 resolver = "3"
 members = [
     "crates/omarchy-theme",
+    "crates/omarchy-theme-ffi",
     "rune/omarchy-rune",
     "rune/gallery",
 ]

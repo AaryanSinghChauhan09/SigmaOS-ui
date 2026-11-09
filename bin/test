@@ -43,6 +43,21 @@ for name in utilities-terminal org.gnome.Nautilus firefox chromium btop steam zo
   done
 done
 
+# The C library (build/ffi), built against through pkg-config as an app would, then a live switch
+# under a HOME of its own (spec/following.md).
+if command -v cc >/dev/null && command -v pkg-config >/dev/null; then
+  mkdir -p "$ROOT/build/ffi-test"
+  if cc -Wall -Wextra -Werror -o "$ROOT/build/ffi-test/live" "$ROOT/crates/omarchy-theme-ffi/tests/live.c" \
+    $(PKG_CONFIG_PATH="$ROOT/build/ffi/lib/pkgconfig" pkg-config --cflags --libs omarchy-theme) -lpthread; then
+    env "${export_icons[@]}" LD_LIBRARY_PATH="$ROOT/build/ffi/lib" "$ROOT/tools/live/run" "$ROOT/build/ffi-test/live" || fail=1
+  else
+    echo "c library: the test didn't build against omarchy-theme.pc"
+    fail=1
+  fi
+else
+  echo "c library: skipped (no cc or pkg-config)"
+fi
+
 # Each way of using the kit from an app (examples/), built and rendered once.
 "$ROOT/bin/test-examples" || fail=1
 

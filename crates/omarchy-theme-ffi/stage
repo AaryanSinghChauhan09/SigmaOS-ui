@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Install the C library the way a package lays it out:
+#
+#   crates/omarchy-theme-ffi/stage CDYLIB DESTDIR PREFIX [LIBDIR]
+#
+#   CDYLIB  the built libomarchy_theme_ffi.so (cargo build --release -p omarchy-theme-ffi)
+#   DESTDIR where to write ("" to write straight under PREFIX)
+#   PREFIX  what the .pc file says (/usr for a package; bin/build uses build/ffi)
+#   LIBDIR  default PREFIX/lib
+#
+# Writes LIBDIR/libomarchy-theme.so.VERSION, the .so.0 (soname) and .so (link) symlinks,
+# PREFIX/include/omarchy-theme.h and LIBDIR/pkgconfig/omarchy-theme.pc.
+
+set -euo pipefail
+
+here="$(cd "$(dirname "$0")" && pwd)"
+cdylib="${1:?usage: stage CDYLIB DESTDIR PREFIX [LIBDIR]}"
+destdir="${2-}"
+prefix="${3:?usage: stage CDYLIB DESTDIR PREFIX [LIBDIR]}"
+libdir="${4:-$prefix/lib}"
+version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$here/Cargo.toml" | head -1)"
+major=0
+
+install -Dm755 "$cdylib" "$destdir$libdir/libomarchy-theme.so.$version"
+ln -sf "libomarchy-theme.so.$version" "$destdir$libdir/libomarchy-theme.so.$major"
+ln -sf "libomarchy-theme.so.$major" "$destdir$libdir/libomarchy-theme.so"
+install -Dm644 "$here/include/omarchy-theme.h" "$destdir$prefix/include/omarchy-theme.h"
+mkdir -p "$destdir$libdir/pkgconfig"
+sed -e "s|@PREFIX@|$prefix|" -e "s|@LIBDIR@|$libdir|" -e "s|@INCLUDEDIR@|$prefix/include|" -e "s|@VERSION@|$version|" \
+  "$here/omarchy-theme.pc.in" >"$destdir$libdir/pkgconfig/omarchy-theme.pc"

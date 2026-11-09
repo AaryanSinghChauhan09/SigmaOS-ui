@@ -1,0 +1,15 @@
+[package]
+name = "omarchy-theme-ffi"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "libomarchy-theme: the Omarchy theme resolver and live watch as a C library."
+publish = false
+
+[lib]
+# Installed as libomarchy-theme.so.0 (the soname build.rs sets) by ./stage, with
+# include/omarchy-theme.h and omarchy-theme.pc.
+crate-type = ["cdylib"]
+
+[dependencies]
+omarchy-theme.workspace = true

@@ -1,6 +1,8 @@
 # Omarchy UI for any app on the system: the Qt Quick modules (`import Omarchy.Theme`,
-# `import Omarchy.Ui`) installed into Qt's QML directory, and the omarchy-theme token CLI. Built
-# from this checkout, as Omarchy's own apps package themselves (source=(), $startdir):
+# `import Omarchy.Ui`) installed into Qt's QML directory, the omarchy-theme token CLI, and
+# libomarchy-theme, the same resolver and live watch as a C library (omarchy-theme.h,
+# `pkg-config omarchy-theme`) for toolkits without a binding. Built from this checkout, as
+# Omarchy's own apps package themselves (source=(), $startdir):
 #
 #   cd packaging/arch/omarchy-ui && makepkg -fsi
 #
@@ -13,13 +15,15 @@ pkgname=omarchy-ui
 # rather than in pkgver(), which would rewrite this line in the checkout on every build.
 pkgver=0.1.0.r$(git -C "$_root" rev-list --count HEAD).g$(git -C "$_root" rev-parse --short=7 HEAD)
 pkgrel=1
-pkgdesc='Omarchy UI kit: Qt Quick modules that follow the live Omarchy theme, and the omarchy-theme token CLI'
+pkgdesc='Omarchy UI kit: Qt Quick modules that follow the live Omarchy theme, the omarchy-theme token CLI and C library'
 arch=('x86_64' 'aarch64')
 license=('MIT')
 # The plugin is built against the installed Qt and loads into that version or a newer 6.x:
 # rebuild it when Qt updates, like any package with a QML plugin.
 depends=('qt6-base' 'qt6-declarative')
 makedepends=('gcc' 'make' 'cargo' 'git')
+# makepkg turns this into the soname's versioned provide (libomarchy-theme.so=0-64).
+provides=('libomarchy-theme.so')
 source=()
 sha256sums=()
 
@@ -31,12 +35,15 @@ build() {
   make
 
   cd "$_root"
-  cargo build --release --locked -p omarchy-theme --target-dir "$srcdir/target"
+  cargo build --release --locked -p omarchy-theme -p omarchy-theme-ffi --target-dir "$srcdir/target"
 }
 
 package() {
   make -C "$srcdir/qt-module" install INSTALL_ROOT="$pkgdir"
   install -Dm755 "$srcdir/target/release/omarchy-theme" "$pkgdir/usr/bin/omarchy-theme"
+  # /usr/lib/libomarchy-theme.so.0 (+ the .so link), /usr/include/omarchy-theme.h,
+  # /usr/lib/pkgconfig/omarchy-theme.pc (docs/using-c.md).
+  "$_root/crates/omarchy-theme-ffi/stage" "$srcdir/target/release/libomarchy_theme_ffi.so" "$pkgdir" /usr
 
   cd "$_root"
   # snap.qml renders any QML window to a PNG with the qml tool (docs/using-qt.md).

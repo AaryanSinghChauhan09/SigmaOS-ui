@@ -5,6 +5,7 @@
 #   bin/build          # everything
 #   bin/build qt       # just the Qt gallery, its tests and the installable QML module
 #   bin/build rune     # just the Rune gallery and omarchy-theme
+#   bin/build core     # the omarchy-theme CLI and the C library (build/ffi)
 
 set -euo pipefail
 
@@ -25,6 +26,16 @@ if [[ $what == "all" || $what == "qt" ]]; then
   (cd "$ROOT/build/qt-module" && qmake6 "$ROOT/qt/module/module.pro" >/dev/null && make -s -j"$(nproc)" 2>&1 | grep -v "^make" || true)
   [[ -f $ROOT/build/qt-module/libomarchyuiplugin.so ]] || { echo "Qt module failed to build" >&2; exit 1; }
   echo "build/qt-module/libomarchyuiplugin.so"
+fi
+
+if [[ $what == "all" || $what == "core" ]]; then
+  # The resolver for everything that isn't Rust: the CLI, and the C library staged as a package
+  # lays it out (lib, include, pkgconfig), so PKG_CONFIG_PATH=build/ffi/lib/pkgconfig finds it.
+  cargo build -q --release --manifest-path "$ROOT/Cargo.toml" -p omarchy-theme -p omarchy-theme-ffi
+  rm -rf "$ROOT/build/ffi"
+  "$ROOT/crates/omarchy-theme-ffi/stage" "$ROOT/target/release/libomarchy_theme_ffi.so" "" "$ROOT/build/ffi"
+  echo "target/release/omarchy-theme"
+  echo "build/ffi/lib/libomarchy-theme.so"
 fi
 
 if [[ $what == "all" || $what == "rune" ]]; then
