@@ -1,6 +1,8 @@
 package omarchy
 
 import (
+	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -113,4 +115,35 @@ func (t *Theme) RenderSnapshot(c Component, cols, rows int) string {
 	c.Draw(t, area, buf)
 	t.Finish(buf)
 	return Snapshot(buf)
+}
+
+// SnapFromArgs gives any app `--snap out.ans [--size COLSxROWS]`: when the command line asks for
+// it, it renders c with t and writes the snapshot, returning true (the app then exits instead of
+// running). Width defaults to 96 columns, rows to c's natural height.
+func SnapFromArgs(t *Theme, c Component) (bool, error) {
+	args := os.Args[1:]
+	out := ""
+	cols, rows := 96, 0
+	for i, a := range args {
+		if i+1 >= len(args) {
+			break
+		}
+		switch a {
+		case "--snap":
+			out = args[i+1]
+		case "--size":
+			if cs, rs, ok := strings.Cut(args[i+1], "x"); ok {
+				cn, err1 := strconv.Atoi(cs)
+				rn, err2 := strconv.Atoi(rs)
+				if err1 != nil || err2 != nil {
+					return false, fmt.Errorf("--size %s: want COLSxROWS", args[i+1])
+				}
+				cols, rows = cn, rn
+			}
+		}
+	}
+	if out == "" {
+		return false, nil
+	}
+	return true, os.WriteFile(out, []byte(t.RenderSnapshot(c, cols, rows)), 0o644)
 }
