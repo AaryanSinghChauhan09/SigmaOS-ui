@@ -1,0 +1,45 @@
+# Omarchy UI for Qt Widgets and KDE apps: libOmarchyWidgets (the live Omarchy theme as a Qt
+# palette, a QProxyStyle and the font in one call, KDE's color scheme and Kirigami kept in step,
+# and the component kit as widgets), its headers, CMake package (find_package(OmarchyWidgets))
+# and pkg-config file (omarchy-widgets), and the omarchy-widgets-gallery. Built from this
+# checkout, as packaging/arch/omarchy-ui is (source=(), $startdir):
+#
+#   cd packaging/arch/omarchy-ui && makepkg -fsi        # first: libomarchy-theme
+#   cd packaging/arch/omarchy-ui-kde && makepkg -fsi
+#
+# docs/using-kde.md has the rest.
+
+_root="$startdir/../../.."
+
+pkgname=omarchy-ui-kde
+# 0.1.0.r<commits>.g<hash>, the commit it was built from, as omarchy-ui names its version.
+pkgver=0.1.0.r$(git -C "$_root" rev-list --count HEAD).g$(git -C "$_root" rev-parse --short=7 HEAD)
+pkgrel=1
+pkgdesc='Omarchy UI for Qt Widgets and KDE apps: the live Omarchy theme as a Qt style and palette in one call, and the component kit as widgets'
+arch=('x86_64' 'aarch64')
+license=('MIT')
+# libomarchy-theme (the token resolver and live watch) comes from omarchy-ui. KColorScheme and
+# KConfig keep KDE apps' color scheme and Kirigami on the theme.
+depends=('omarchy-ui' 'qt6-base' 'kcolorscheme' 'kconfig')
+makedepends=('cmake' 'ninja' 'git')
+optdepends=('kirigami: Kirigami apps following the theme'
+            'qqc2-desktop-style: Qt Quick Controls drawn by the Omarchy style in Kirigami apps')
+source=()
+sha256sums=()
+
+build() {
+  cmake -S "$_root/kde" -B "$srcdir/build" -G Ninja \
+    -DCMAKE_BUILD_TYPE=None \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DOMARCHY_WIDGETS_KF6=ON \
+    -DOMARCHY_WIDGETS_TESTS=OFF
+  cmake --build "$srcdir/build"
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install "$srcdir/build"
+  install -Dm644 "$_root/docs/using-kde.md" "$pkgdir/usr/share/doc/omarchy-ui-kde/using-kde.md"
+  for dir in "$_root"/examples/kde-*/; do
+    install -Dm644 -t "$pkgdir/usr/share/omarchy-ui-kde/examples/$(basename "$dir")" "$dir"*
+  done
+}
