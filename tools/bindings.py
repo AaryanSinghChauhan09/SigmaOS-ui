@@ -4,7 +4,11 @@
 bin/build, bin/test, bin/review and tools/review.py read it, so a new binding plugs in by adding
 its file, without editing them. AGENTS.md ("A new framework") documents the format.
 
-    tools/bindings.py list              the available bindings, reference first (skips to stderr)
+    tools/bindings.py list              the available bindings, reference first (skips to stderr):
+                                        the gui family, then the terminal family
+    tools/bindings.py references [NAME...]
+                                        the references NAMEs need beside them: the gui reference
+                                        always, the terminal one when any NAME is a terminal binding
     tools/bindings.py build [NAME...]   each binding's build step
     tools/bindings.py test [NAME...]    each binding's tests
     tools/bindings.py parity            token and icon parity with the core, for every binding
@@ -33,6 +37,9 @@ FIXTURES = ROOT / "fixtures/themes"
 ICONS = ROOT / "fixtures/icons"
 # The gallery width every snap starts from (spec/gallery.md); others match the reference's size.
 GALLERY_WIDTH = 760
+# The terminal family's gallery width in cells (spec/terminal.md); the reference sizes its rows.
+TERMINAL_COLS = 96
+FAMILIES = ("gui", "terminal")
 REQUIRED = ("name", "title", "build", "gallery", "tokens", "tests")
 
 
@@ -45,7 +52,16 @@ class Binding(dict):
 
     @property
     def reference(self):
+        """The reference of its family: Qt for gui, Ratatui for terminal."""
         return bool(self.get("reference"))
+
+    @property
+    def family(self):
+        return self.get("family", "gui")
+
+    @property
+    def terminal(self):
+        return self.family == "terminal"
 
     def availability(self):
         """(True, "") or (False, why): its commands are on PATH and its check passes."""
@@ -65,7 +81,11 @@ class Binding(dict):
 
     def own_icons(self):
         i = self.get("icons", "core")
-        return None if i in (None, "core") else i["lookup"]
+        return None if i in (None, "core", "none") else i["lookup"]
+
+    def no_icons(self):
+        """True for a binding that draws no icons by name (a terminal)."""
+        return self.get("icons") == "none"
 
     def sections(self, env=None):
         r = run(self["gallery"]["sections"], env=env, capture=True)
@@ -90,8 +110,12 @@ def load(names=None):
         for k in ("snap", "sections"):
             if k not in b["gallery"]:
                 sys.exit(f"{path.relative_to(ROOT)}: gallery needs {k}")
+        if b.family not in FAMILIES:
+            sys.exit(f"{path.relative_to(ROOT)}: family is {' or '.join(FAMILIES)}, not {b.family}")
         out.append(b)
-    out.sort(key=lambda b: (not b.reference, b.get("order", 100), b.name))
+    # The gui family first (so the first entry is always its reference), then the terminal family;
+    # each with its reference first.
+    out.sort(key=lambda b: (FAMILIES.index(b.family), not b.reference, b.get("order", 100), b.name))
     if names:
         unknown = set(names) - {b.name for b in out}
         if unknown:
@@ -197,6 +221,16 @@ def cmd_list(args):
         print(b.name)
 
 
+def cmd_references(args):
+    """The references the named bindings are compared against (built beside them by bin/review)."""
+    every = load()
+    named = load(args) if args else []
+    families = {"gui"} | {b.family for b in named}
+    for b in available(every, quiet=True):
+        if b.reference and b.family in families:
+            print(b.name)
+
+
 def cmd_build(args):
     failed = False
     for b in available(load(args)):
@@ -238,7 +272,9 @@ def cmd_parity(args):
         elif not b.own_tokens():
             print(f"token parity: {b.name} reads the core's tokens directly")
     for b in bindings:
-        if b.own_icons():
+        if b.no_icons():
+            print(f"icon parity: {b.name} draws no icons by name ({b.family})")
+        elif b.own_icons():
             diffs = icon_diffs(b)
             for d in diffs:
                 print(f"icon parity: {d}")
@@ -260,9 +296,9 @@ def main():
         print(__doc__.strip())
         return 0
     cmd, args = sys.argv[1], sys.argv[2:]
-    handler = {"list": cmd_list, "build": cmd_build, "test": cmd_test, "parity": cmd_parity, "windows": cmd_windows}.get(cmd)
+    handler = {"list": cmd_list, "references": cmd_references, "build": cmd_build, "test": cmd_test, "parity": cmd_parity, "windows": cmd_windows}.get(cmd)
     if not handler:
-        sys.exit(f"unknown command {cmd} (list, build, test, parity, windows)")
+        sys.exit(f"unknown command {cmd} (list, references, build, test, parity, windows)")
     return handler(args) or 0
 
 

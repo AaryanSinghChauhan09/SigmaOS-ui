@@ -53,6 +53,11 @@
   .diffbg { background: repeating-conic-gradient(#0000 0 25%, #8881 0 50%) 0 / 16px 16px; }
   .err { color: var(--bad); white-space: pre-wrap; }
   .empty { color: var(--dim); padding: 24px; text-align: center; }
+  .term { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .term figure { margin: 0; }
+  .term > h3 { font-size: 13px; margin: 0 0 8px; font-weight: 700; }
+  .term > h3 span { color: var(--dim); font-weight: 400; }
+  .note { color: var(--dim); margin-bottom: 8px; }
   @media (max-width: 720px) { .pair { grid-template-columns: 1fr; } input[type=range] { width: 160px; } }
 </style>
 </head>
@@ -65,6 +70,7 @@
     <div class="group" id="f-section"><b>section</b></div>
     <div class="group" id="f-mode"><b>view</b></div>
     <div class="group" id="f-against"><b>against</b></div>
+    <div class="group" id="f-tagainst"><b>against (terminal)</b></div>
   </div>
 </header>
 <main id="main"></main>
@@ -76,10 +82,17 @@ const REF = DATA.bindings[0];
 const OTHERS = DATA.bindings.slice(1);
 const TITLE = Object.fromEntries(DATA.bindings.map(b => [b.name, b.title]));
 const MODES = [["side", "side by side"], ["overlay", "overlay"], ["swipe", "swipe"], ["diff", "diff"]];
-const state = { theme: DATA.themes[0], radius: String(DATA.radii[0]), section: "all", mode: "side", against: OTHERS.length ? OTHERS[0].name : "" };
+// The terminal family (spec/terminal.md), when the registry has one: its reference (Ratatui) first.
+// Its bindings are compared only with each other; Qt is shown beside them to eyeball.
+const TERM = DATA.terminal || [];
+const TREF = TERM.length ? TERM[0] : null;
+const TOTHERS = TERM.slice(1);
+const TTITLE = Object.fromEntries(TERM.map(b => [b.name, b.title]));
+const state = { theme: DATA.themes[0], radius: String(DATA.radii[0]), section: "all", mode: "side", against: OTHERS.length ? OTHERS[0].name : "", tagainst: TOTHERS.length ? TOTHERS[0].name : "" };
 try { Object.assign(state, JSON.parse(localStorage.getItem("omarchy-ui-review") || "{}")); } catch (e) {}
 if (!DATA.themes.includes(state.theme)) state.theme = DATA.themes[0];
 if (!OTHERS.some(b => b.name === state.against)) state.against = OTHERS.length ? OTHERS[0].name : "";
+if (!TOTHERS.some(b => b.name === state.tagainst)) state.tagainst = TOTHERS.length ? TOTHERS[0].name : "";
 
 function save() { try { localStorage.setItem("omarchy-ui-review", JSON.stringify(state)); } catch (e) {} }
 
@@ -157,8 +170,83 @@ function view(row) {
   return el("div", {}, el("label", { class: "slider" }, REF.title + " ◀", range, "▶ " + TITLE[against]), stage);
 }
 
+// The terminal family's block under the GUI view: Qt to eyeball beside every terminal binding, or
+// overlay / swipe / diff of a terminal binding against the terminal reference.
+function tsrc(row, key) { return row.term.images[key] ? row.path + "/" + row.term.images[key] : null; }
+
+function tscore(d) { return d.cells == null ? `${d.pixels}% pixels` : `${d.cells}% cells · ${d.pixels}% pixels`; }
+
+function tcell(row, name) {
+  const s = tsrc(row, name);
+  if (s) return img(s, row.term.w);
+  if (row.term.missing.includes(name)) return el("div", { class: "missing" }, "not in this binding");
+  return el("div", { class: "err" }, row.term.errors[name] || "not rendered");
+}
+
+function termView(row) {
+  const t = row.term;
+  const head = el("h3", {}, "Terminal ", el("span", {}, t.cols ? `${t.cols} × ${t.rows} cells` : ""));
+  if (t.errors[TREF.name]) return el("div", { class: "term" }, head, el("div", { class: "err" }, t.errors[TREF.name]));
+  if (state.mode === "side") {
+    const pair = el("div", { class: "pair" });
+    pair.style.setProperty("--cols", String(TERM.length + 1));
+    const qt = src(row, REF.name);
+    pair.append(el("figure", {}, el("figcaption", {}, `${REF.title} (for reference)`), qt ? img(qt, row.w) : cell(row, REF.name)));
+    for (const b of TERM) {
+      const d = t.diffs[b.name];
+      const cap = el("figcaption", {}, b.title);
+      if (!b.reference && d) cap.append(el("span", { class: "score " + scoreClass(d.cells ?? d.pixels) }, `${tscore(d)} vs ${TREF.title}`));
+      pair.append(el("figure", {}, cap, tcell(row, b.name)));
+    }
+    return el("div", { class: "term" }, head, pair);
+  }
+  const ref = tsrc(row, TREF.name);
+  if (!TOTHERS.length) return el("div", { class: "term" }, head, el("div", { class: "note" }, "no other terminal binding to compare"), img(ref, t.w));
+  const against = state.tagainst, other = tsrc(row, against);
+  if (!other) return el("div", { class: "term" }, head, el("figcaption", {}, TTITLE[against]), tcell(row, against));
+  const d = t.diffs[against] || {};
+  if (state.mode === "diff") {
+    const cells = tsrc(row, "diffcells-" + against);
+    return el("div", { class: "term" }, head, el("figure", {}, el("figcaption", {}, `${TTITLE[against]}: cells that differ from ${TREF.title} (${d.cells}% of cells, ${d.pixels}% of pixels), over ${TREF.title}`),
+      el("div", { class: "stage" }, img(ref, t.w), cells ? img(cells, t.w, "top") : "")));
+  }
+  const stage = el("div", { class: "stage" }, img(ref, t.w));
+  const range = el("input", { type: "range", min: "0", max: "100", value: "50" });
+  if (state.mode === "overlay") {
+    const top = img(other, t.w, "top");
+    top.style.opacity = 0.5;
+    stage.append(top);
+    range.oninput = () => { top.style.opacity = range.value / 100; };
+    return el("div", { class: "term" }, head, el("label", { class: "slider" }, TREF.title, range, TTITLE[against]), stage);
+  }
+  const clip = el("div", { class: "clip" }, img(other, t.w));
+  const rule = el("div", { class: "rule" });
+  const set = () => { clip.style.clipPath = `inset(0 0 0 ${range.value}%)`; rule.style.left = range.value + "%"; };
+  range.oninput = set;
+  set();
+  stage.append(clip, rule);
+  return el("div", { class: "term" }, head, el("label", { class: "slider" }, TREF.title + " ◀", range, "▶ " + TTITLE[against]), stage);
+}
+
+// The terminal family's part of the header score, when it has diffs.
+function termScore(row) {
+  if (!row.term) return "";
+  const errs = Object.keys(row.term.errors);
+  if (errs.length) return "terminal failed: " + errs.map(n => TTITLE[n]).join(", ");
+  const parts = TOTHERS.filter(b => row.term.diffs[b.name]);
+  if (!parts.length) return "";
+  return parts.map(b => `${b.title} ${tscore(row.term.diffs[b.name])}`).join(" · ") + ` vs ${TREF.title}`;
+}
+
 // The header's score: the one other binding's share as before, or each binding's.
 function score(row) {
+  const s = guiScore(row);
+  const t = termScore(row);
+  if (t) s.textContent = s.textContent ? `${s.textContent} · ${t}` : t;
+  return s;
+}
+
+function guiScore(row) {
   const errs = Object.keys(row.errors);
   if (errs.length) return el("span", { class: "score high" }, "failed: " + errs.map(n => TITLE[n]).join(", "));
   const parts = OTHERS.filter(b => row.diffs[b.name] != null);
@@ -201,7 +289,9 @@ function render() {
   chips("f-section", "section", [["all", "all"], ...DATA.sections.map(s => [s, s])]);
   chips("f-mode", "mode", MODES);
   chips("f-against", "against", state.mode !== "side" && OTHERS.length > 1 ? OTHERS.map(b => [b.name, b.title]) : []);
-  document.getElementById("sub").textContent = `· ${DATA.rev} · ` + DATA.bindings.map(b => b.title).join(" vs ");
+  chips("f-tagainst", "tagainst", state.mode !== "side" && TOTHERS.length > 1 ? TOTHERS.map(b => [b.name, b.title]) : []);
+  document.getElementById("sub").textContent = `· ${DATA.rev} · ` + DATA.bindings.map(b => b.title).join(" vs ")
+    + (TERM.length ? " · terminal: " + TERM.map(b => b.title).join(" vs ") : "");
 
   const main = document.getElementById("main");
   main.replaceChildren();
@@ -212,6 +302,7 @@ function render() {
   for (const row of rows) {
     const head = el("h2", {}, row.section, el("span", { class: "meta" }, `${row.theme} · radius ${row.radius}`), score(row));
     const body = el("div", { class: "body" }, row.errors[REF.name] ? el("div", { class: "err" }, row.errors[REF.name]) : view(row));
+    if (TREF && row.term) body.append(termView(row));
     main.append(el("section", { class: "card" }, head, body));
   }
 }
@@ -224,6 +315,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "s") cycle("section", ["all", ...DATA.sections]);
   if (e.key === "v") cycle("mode", MODES.map(m => m[0]));
   if (e.key === "a") cycle("against", OTHERS.map(b => b.name));
+  if (e.key === "A") cycle("tagainst", TOTHERS.map(b => b.name));
 });
 
 render();

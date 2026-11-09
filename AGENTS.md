@@ -93,14 +93,17 @@ A binding (GTK, Qt Widgets, GPUI, Electron, ...) is a directory of its own plus 
 |---|---|
 | `name`, `title` | Registry name (= the file name; `bin/build gtk`) and the column title on the review page |
 | `order` | Column order after the reference (Qt is 10, Rune 20) |
-| `reference` | `true` only for Qt: every other binding is diffed against it and renders at its size |
+| `family` | `"gui"` (the default) or `"terminal"` ([`spec/terminal.md`](spec/terminal.md)). Bindings are only diffed within their family |
+| `reference` | `true` for the reference of its family: Qt (gui), Ratatui (terminal). Every other binding of the family is diffed against it and renders at its size |
 | `available` | `commands` that must be on `PATH`, and an optional shell `check` (exit 0 = available) with a `reason`. When it fails the binding is skipped with a message, never failed. |
 | `build` | Shell command from the repository root that builds everything below |
 | `gallery.sections` | Prints the gallery's sections, one per line |
-| `gallery.snap` | Renders `{section}` to the PNG `{out}` at `{width}`×`{height}` points and device scale `{scale}` (2), offscreen, under whatever `OMARCHY_UI_*` the caller set. The reference gets `{width}` 760 and sizes itself; the rest get the reference's size. |
+| `gallery.snap` | Renders `{section}` to the PNG `{out}` at `{width}`×`{height}` points and device scale `{scale}` (2), offscreen, under whatever `OMARCHY_UI_*` the caller set. The reference gets `{width}` 760 and sizes itself; the rest get the reference's size. A terminal binding writes an ANSI snapshot instead (below). |
 | `gallery.window` | The gallery as a window following the desktop (`bin/review --live`) |
 | `tokens` | `"core"` when the binding reads the core's tokens directly (Rust crate, C library, CLI), or `{ "dump": "<command printing canonical JSON>" }` for a resolver of its own; a dump is compared with the core for every fixture at radius 0 and 8 |
-| `icons` | `"core"`, or `{ "lookup": "<command printing the path for {name} at {size}>" }`, compared with the core on `fixtures/icons` |
+| `icons` | `"core"`, or `{ "lookup": "<command printing the path for {name} at {size}>" }`, compared with the core on `fixtures/icons`, or `"none"` for a binding that draws no icons by name (a terminal) |
 | `tests` | Each `{ name, run, env? }` runs from the repository root; exit 0 passes and its last output line is shown |
+
+**A terminal binding** (`"family": "terminal"`) follows [`spec/terminal.md`](spec/terminal.md). Its `gallery.snap` writes `{section}` as an ANSI snapshot (`.ans`: UTF-8, truecolor SGR, exactly `{width}` columns × `{height}` rows; `--size COLSxROWS`, rows 0 = the section's natural height). The reference (Ratatui) gets 96 columns and 0 rows; the rest get its size. `bin/review` renders every terminal snapshot through one rasterizer (`target/release/omarchy-ansi png`, the core's font and colors), diffs each against Ratatui by cells (`omarchy-ansi diff`) and pixels, and shows Qt beside them to eyeball. `gallery.window` opens it in a terminal: `tools/terminal-window <gallery>`.
 
 Placeholders are shell-quoted when filled in. `tools/bindings.d/qt.json` and `rune.json` are working entries. `tools/bindings.py list` shows what's available here; `tools/bindings.py test gtk` runs one binding's tests.

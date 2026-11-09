@@ -4,22 +4,24 @@
 # one resolving tokens itself matches the core for every fixture theme, render every gallery
 # section in each for a set of themes and roundings, diff each against the reference (Qt), and
 # write out/review/index.html (side by side in N columns, overlay, swipe and pixel diff).
+# Terminal bindings (spec/terminal.md) are diffed by cells and pixels against Ratatui, Qt beside.
 #
 #   bin/review                         default themes (live + five fixtures), radius 0 and 8
 #   bin/review --all-themes            every fixture
 #   bin/review --themes nord,white --radii 0 --sections buttons,inputs
-#   bin/review --bindings rune         only these beside the reference
+#   bin/review --bindings rune         only these beside the reference(s)
 #   bin/review --open                  ...and open the page
 #   bin/review --live                  skip the report; open every gallery as a window instead
 #
-# Keys on the page: t theme, r radius, s section, v view, a against (shift goes back).
+# Keys on the page: t theme, r radius, s section, v view, a against, A against in the terminal
+# family (shift goes back on the others).
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 if [[ ${1:-} == "--help" || ${1:-} == "-h" ]]; then
-  sed -n '3,16p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 fi
 
@@ -48,11 +50,12 @@ for arg in "$@"; do
   prev="$arg"
 done
 
-# With --bindings, build only the reference and those, so a half-built binding elsewhere in the
-# registry doesn't stop the review.
+# With --bindings, build only the references they're compared against (Qt, and Ratatui for a
+# terminal binding) and those, so a half-built binding elsewhere in the registry doesn't stop the
+# review.
 if [[ -n $only ]]; then
-  reference="$(python3 "$ROOT/tools/bindings.py" list 2>/dev/null | head -n1)"
-  "$ROOT/bin/build" core ${reference:+"$reference"} ${only//,/ } >/dev/null
+  mapfile -t references < <(python3 "$ROOT/tools/bindings.py" references ${only//,/ } 2>/dev/null)
+  "$ROOT/bin/build" core "${references[@]}" ${only//,/ } >/dev/null
 else
   "$ROOT/bin/build" >/dev/null
 fi
