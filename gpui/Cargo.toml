@@ -1,0 +1,21 @@
+# The GPUI binding, in a workspace of its own so GPUI's tree stays out of omarchy-ui's.
+[workspace]
+resolver = "3"
+members = ["omarchy-gpui"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+
+[workspace.dependencies]
+# GPUI from crates.io's `gpui-pre`: weekly snapshots of Zed's crates/gpui, pinned exactly. 0.3.10 is
+# zed@08cbb88, whose crates/gpui is the same source as zed@a5c4ca8, and it's the GPUI that
+# gpui-component 0.8.1 pins (=0.3.10). Move all three together (docs/using-gpui.md).
+gpui = { package = "gpui-pre", version = "=0.3.10" }
+gpui_platform = { package = "gpui-pre-platform", version = "=0.3.10" }
+gpui_wgpu = { package = "gpui-pre-wgpu", version = "=0.3.10" }
+gpui-component = { version = "=0.8.1" }
+omarchy-theme = { path = "../crates/omarchy-theme" }
+
+[profile.dev.package."*"]
+opt-level = 2

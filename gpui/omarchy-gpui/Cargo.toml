@@ -1,0 +1,21 @@
+[package]
+name = "omarchy-gpui"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Omarchy's look, live theme-following and component kit for GPUI apps."
+
+[features]
+default = []
+# Map the tokens onto gpui-component's Theme too, so its widgets look Omarchy.
+gpui-component = ["dep:gpui-component"]
+# GPUI's test platform: TestAppContext, and the headless renderer `snap` uses.
+test-support = ["gpui/test-support", "gpui_platform/test-support"]
+
+[dependencies]
+gpui.workspace = true
+gpui_platform.workspace = true
+gpui-component = { workspace = true, optional = true }
+omarchy-theme.workspace = true
+futures = "0.3"
+
