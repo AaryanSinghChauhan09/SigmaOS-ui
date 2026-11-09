@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Build the Textual binding (tools/bindings.d/textual.json's build step; bin/build textual runs it):
+# a project-local environment in build/textual/venv with the pinned Textual and Rich (uv.lock), the
+# omarchy-textual package installed into it (editable), and the gallery's launcher at
+# build/textual/omarchy-textual-gallery. Needs uv; nothing is installed outside build/textual.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+OUT="$ROOT/build/textual"
+command -v uv >/dev/null || { echo "textual: uv not found" >&2; exit 1; }
+mkdir -p "$OUT"
+UV_PROJECT_ENVIRONMENT="$OUT/venv" UV_PYTHON_DOWNLOADS=never \
+  uv sync --quiet --locked --project "$ROOT/tui/textual"
+ln -sfn venv/bin/omarchy-textual-gallery "$OUT/omarchy-textual-gallery"
+echo "build/textual/omarchy-textual-gallery"

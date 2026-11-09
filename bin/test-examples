@@ -11,6 +11,8 @@
 #                 checked and rendered with omarchy-ansi
 #   bubbletea     a Go module outside tui/bubbletea with a replace on it, snapshotted and checked
 #                 the same way
+#   textual       a Python project with a path dependency on omarchy-textual, in an environment of
+#                 its own (uv), snapshotted and rendered the same way
 #
 # The two Qt routes run the same QML on the same kit, so their PNGs must match byte for byte.
 # A route whose tool is missing is skipped. bin/test runs this.
@@ -116,6 +118,24 @@ if command -v go >/dev/null; then
   fi
 else
   skip bubbletea "no go"
+fi
+
+if command -v uv >/dev/null; then
+  # An environment of the example's own (its uv.lock), as an app outside the kit would have.
+  ans="$OUT/textual.ans"
+  png="$OUT/textual.png"
+  rm -f "$ans" "$png"
+  if UV_PROJECT_ENVIRONMENT="$OUT/textual/venv" UV_PYTHON_DOWNLOADS=never \
+    uv sync -q --locked --project "$ROOT/examples/textual" >"$OUT/textual.log" 2>&1 &&
+    timeout 30 "$OUT/textual/venv/bin/omarchy-ui-example-textual" --snap "$ans" --size 50x0 >>"$OUT/textual.log" 2>&1 &&
+    "$ROOT/target/release/omarchy-ansi" check "$ans" --size 50x17 >>"$OUT/textual.log" 2>&1 &&
+    "$ROOT/target/release/omarchy-ansi" png "$ans" "$png" >>"$OUT/textual.log" 2>&1 && rendered "$png"; then
+    ok textual "$png"
+  else
+    bad textual "build/examples/textual.log has the output"
+  fi
+else
+  skip textual "no uv"
 fi
 
 exit "$fail"

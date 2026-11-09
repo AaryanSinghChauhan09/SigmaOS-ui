@@ -1,0 +1,23 @@
+{
+  "name": "textual",
+  "title": "Textual",
+  "family": "terminal",
+  "order": 130,
+  "docs": "docs/using-textual.md",
+  "available": { "commands": ["uv", "python3"], "reason": "no uv (Textual's environment is built with uv into build/textual)" },
+  "build": "tui/textual/build",
+  "gallery": {
+    "sections": "build/textual/omarchy-textual-gallery --list-sections",
+    "snap": "build/textual/omarchy-textual-gallery --snap {out} --section {section} --size {width}x{height}",
+    "window": "tools/terminal-window build/textual/omarchy-textual-gallery"
+  },
+  "tokens": "core",
+  "icons": "none",
+  "tests": [
+    { "name": "behavior", "run": "build/textual/venv/bin/python -m unittest discover -s tui/textual/tests -q" },
+    { "name": "snapshots in every theme", "run": "build/textual/venv/bin/python tui/textual/tests/snapshots.py" },
+    { "name": "window in a pty", "run": "tui/textual/pty-test" },
+    { "name": "live switch", "run": "tools/live/run build/textual/venv/bin/python tui/textual/tests/live_switch.py" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/textual/venv/bin/python tui/textual/tests/live_switch.py", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}

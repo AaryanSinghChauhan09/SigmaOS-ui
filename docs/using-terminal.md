@@ -6,7 +6,7 @@ Terminal apps get the same tokens and components as GUI apps, drawn on the termi
 |---|---|---|
 | Ratatui (Rust) | [using-ratatui.md](using-ratatui.md) | `omarchy-ratatui`: one `omarchy_ratatui::run(app)`; the reference of the terminal family |
 | Bubble Tea + Lip Gloss (Go) | [using-bubbletea.md](using-bubbletea.md) | `omarchy-ui/tui/bubbletea`: one `omarchy.Run(theme, model)`, `omarchy.ThemeChangedMsg`; cell for cell with Ratatui |
-| Textual (Python) | | planned |
+| Textual (Python) | [using-textual.md](using-textual.md) | `omarchy-textual`: `OmarchyApp` (or `follow(app)`), the kit as Textual widgets, stock widgets restyled |
 | Anything else | [using-c.md](using-c.md) | tokens from `libomarchy-theme` or `omarchy-theme --watch --state`; draw per `spec/terminal.md` |
 
 ## What reads as Omarchy in a terminal

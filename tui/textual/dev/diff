@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Diff Textual gallery sections against Ratatui's, cell by cell, in bin/review's default themes
+# (the live desktop + five fixtures) at radius 0 and 8:
+#
+#   tui/textual/dev/diff [--png] SECTION...      (no SECTION: every section)
+#
+# Prints one line per (section, theme, radius) with the cell diff; --png also writes
+# /tmp/omarchy-textual-diff/<section>-<theme>-<r>-{ref,mine,diff}.png to look at.
+
+set -uo pipefail
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+R="$ROOT/tui/ratatui/target/release/omarchy-ratatui-gallery"
+A="$ROOT/target/release/omarchy-ansi"
+G="$ROOT/build/textual/omarchy-textual-gallery"
+png=0
+if [[ ${1:-} == --png ]]; then png=1; shift; fi
+sections=("$@")
+(( ${#sections[@]} )) || mapfile -t sections < <("$G" --list-sections)
+out=/tmp/omarchy-textual-diff
+mkdir -p "$out"
+export OMARCHY_UI_REDUCE_MOTION=1
+worst=0
+for s in "${sections[@]}"; do
+  for th in live tokyo-night catppuccin-latte gruvbox rose-pine retro-82; do
+    for rad in 0 8; do
+      if [[ $th == live ]]; then unset OMARCHY_UI_THEME_DIR; else export OMARCHY_UI_THEME_DIR="$ROOT/fixtures/themes/$th"; fi
+      export OMARCHY_UI_ROUNDING=$rad
+      b="$out/$s-$th-$rad"
+      "$R" --snap "$b-ref.ans" --section "$s" --size 96x0
+      size=$("$A" size "$b-ref.ans")
+      if ! "$G" --snap "$b-mine.ans" --section "$s" --size "$size" 2>"$b.err"; then
+        echo "$s $th $rad: snap failed: $(tail -1 "$b.err")"; continue
+      fi
+      "$A" canon "$b-mine.ans" | cmp -s - "$b-mine.ans" || echo "$s $th $rad: NOT CANONICAL"
+      if (( png )); then d=$("$A" diff "$b-ref.ans" "$b-mine.ans" --png "$b-diff.png"); else d=$("$A" diff "$b-ref.ans" "$b-mine.ans"); fi
+      pct=$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['percent'])" "$d")
+      echo "$s $th $rad: $pct% ($d)"
+      if (( png )); then "$A" png "$b-ref.ans" "$b-ref.png"; "$A" png "$b-mine.ans" "$b-mine.png"; fi
+    done
+  done
+done
