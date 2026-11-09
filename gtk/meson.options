@@ -1,0 +1,1 @@
+option('introspection', type: 'feature', value: 'auto', description: 'Omarchy-1.gir and .typelib (needs g-ir-scanner)')

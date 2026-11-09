@@ -1,0 +1,4 @@
+/* omarchy-version.h: the library's version. */
+#pragma once
+
+#define OMARCHY_GTK_VERSION "@VERSION@"

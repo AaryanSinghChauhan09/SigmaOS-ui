@@ -1,0 +1,24 @@
+{
+  "name": "gtk",
+  "title": "GTK 4",
+  "order": 30,
+  "docs": "docs/using-gtk.md",
+  "available": {
+    "commands": ["cc", "pkg-config", "gtk4-broadwayd"],
+    "check": "pkg-config --exists gtk4 libadwaita-1 json-glib-1.0",
+    "reason": "no gtk4, libadwaita-1 or json-glib development files"
+  },
+  "build": "gtk/build",
+  "gallery": {
+    "sections": "build/gtk/omarchy-gtk-gallery --list-sections",
+    "snap": "build/gtk/omarchy-gtk-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
+    "window": "build/gtk/omarchy-gtk-gallery"
+  },
+  "tokens": "core",
+  "icons": "core",
+  "tests": [
+    { "name": "behavior", "run": "build/gtk/omarchy-gtk-tests" },
+    { "name": "live switch", "run": "tools/live/run build/gtk/omarchy-gtk-live-test" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/gtk/omarchy-gtk-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+  ]
+}

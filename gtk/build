@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Build the GTK 4 binding into build/gtk: libomarchy-gtk-1 (and Omarchy-1.gir/.typelib when
+# g-ir-scanner is installed), the gallery, the behavior tests and the live-switch test.
+#
+#   gtk/build              configure (first time, or when files were added) and build
+#
+# Needs the core's C library (bin/build core, build/ffi), gtk4, libadwaita-1, json-glib and
+# meson + ninja. Without a system meson, one is installed into build/gtk-venv with pip.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="$ROOT/build/gtk"
+
+if [[ ! -f $ROOT/build/ffi/lib/pkgconfig/omarchy-theme.pc ]]; then
+  echo "gtk: no build/ffi; run bin/build core first" >&2
+  exit 1
+fi
+export PKG_CONFIG_PATH="$ROOT/build/ffi/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
+meson=$(command -v meson || true)
+if [[ -z $meson ]]; then
+  venv="$ROOT/build/gtk-venv"
+  if [[ ! -x $venv/bin/meson ]]; then
+    python3 -m venv "$venv"
+    "$venv/bin/pip" install -q meson ninja
+  fi
+  meson="$venv/bin/meson"
+  export PATH="$venv/bin:$PATH"
+fi
+
+quiet() {
+  local out
+  if ! out=$("$@" 2>&1); then
+    echo "$out" >&2
+    exit 1
+  fi
+}
+if [[ -f $OUT/build.ninja ]]; then
+  # Picks up new sources, sections and tests (gen.py lists them at configure time).
+  quiet "$meson" setup --reconfigure "$OUT" "$ROOT/gtk"
+else
+  quiet "$meson" setup "$OUT" "$ROOT/gtk"
+fi
+quiet "$meson" compile -C "$OUT"
+echo "build/gtk/omarchy-gtk-gallery"
