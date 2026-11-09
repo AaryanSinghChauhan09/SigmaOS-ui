@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Build the KDE examples (examples/kde-*) against OmarchyWidgets installed into a staging prefix,
+# as an app would against the package: find_package(OmarchyWidgets) through CMAKE_PREFIX_PATH.
+# Each renders once, offscreen at 2x, in a fixture theme, to build/examples/<name>.png.
+# tools/bindings.d/kde.json runs this as the binding's "examples" test.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+STAGE="$ROOT/build/kde-stage"
+OUT="$ROOT/build/examples"
+mkdir -p "$OUT"
+
+rm -rf "$STAGE"
+cmake --install "$ROOT/build/kde" --prefix "$STAGE" >/dev/null
+# The library finds libomarchy-theme where bin/build core staged it.
+export LD_LIBRARY_PATH="$STAGE/lib:$ROOT/build/ffi/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export OMARCHY_UI_THEME_DIR="$ROOT/fixtures/themes/tokyo-night" OMARCHY_UI_ROUNDING=0 OMARCHY_UI_REDUCE_MOTION=1
+export QT_FORCE_STDERR_LOGGING=1
+
+fail=0
+for dir in "$ROOT"/examples/kde-*/; do
+  name="$(basename "$dir")"
+  build="$ROOT/build/examples/$name"
+  png="$OUT/$name.png"
+  rm -f "$png"
+  if cmake -S "$dir" -B "$build" -G Ninja -DCMAKE_PREFIX_PATH="$STAGE" >"$OUT/$name.log" 2>&1 &&
+    ninja -C "$build" >>"$OUT/$name.log" 2>&1 &&
+    exe="$(find "$build" -maxdepth 1 -type f -executable -name 'omarchy-*' | head -1)" && [[ -n $exe ]] &&
+    timeout 60 "$exe" --snap "$png" >>"$OUT/$name.log" 2>&1 && [[ -s $png ]]; then
+    echo "examples: $name rendered to ${png#"$ROOT"/}"
+  else
+    echo "examples: $name failed (build/examples/$name.log)"
+    fail=1
+  fi
+done
+exit $fail

@@ -167,7 +167,8 @@ int Style::pixelMetric(PixelMetric m, const QStyleOption *opt, const QWidget *w)
   case PM_ButtonDefaultIndicator:
   case PM_ButtonShiftHorizontal:
   case PM_ButtonShiftVertical: return 0;
-  case PM_FocusFrameHMargin:
+  // Item views inset their text by this plus one.
+  case PM_FocusFrameHMargin: return qobject_cast<const QAbstractItemView *>(w) ? t.spacing("controlPaddingX") - 1 : 0;
   case PM_FocusFrameVMargin: return 0;
   case PM_ComboBoxFrameWidth:
   case PM_SpinBoxFrameWidth: return borderWidth();
