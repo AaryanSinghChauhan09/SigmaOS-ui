@@ -181,7 +181,9 @@ println!("{} on {}, radius {}", tokens.palette.foreground, tokens.palette.backgr
 let accent = tokens.palette.accent.hex();                                // Rgba, as "#rrggbbaa"
 
 // Watch: the callback runs on a background thread with fresh tokens, after a change settles
-// (coalesced over 150 ms; only when something actually changed). Keep the Watch alive.
+// (coalesced over 150 ms; only when something actually changed). Keep the Watch alive; dropping
+// it stops the deliveries. A binding hands each to its UI thread and fades the colors over
+// `tokens.motion.theme` ms on `tokens.motion.ease` (spec/following.md).
 let _watch = omarchy_theme::watch(tokens.clone(), |fresh| {
     // send `fresh` to your UI thread and re-theme
 });
@@ -202,9 +204,12 @@ The same resolver as a command, for scripts and other languages. The Arch packag
 
 ```sh
 omarchy-theme                    # the resolved tokens as canonical JSON
-omarchy-theme --watch            # again on every change
+omarchy-theme --watch            # one compact line now, then one per change
+omarchy-theme --watch --state    # the same with theme name, icon theme, language and strings
 omarchy-theme --icon firefox 96  # the file an icon name resolves to (empty if none)
 ```
+
+[`using-c.md`](using-c.md) has every option, the stream format, and `libomarchy-theme`, the same resolver as a C library.
 
 ## Versioning and pinning
 

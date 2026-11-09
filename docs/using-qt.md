@@ -6,7 +6,7 @@ The Qt binding is two QML modules, plus a small native module they use:
 
 | Import | What's in it |
 |---|---|
-| `Omarchy.Theme` | Singletons: `Color` (palette and surfaces), `Style` (rounding, spacing, fonts, motion, state fills), `Border` (border specs), `Util`, `I18n` (the kit's strings in the display language), `Tokens` (everything as canonical JSON) |
+| `Omarchy.Theme` | Singletons: `Color` (palette and surfaces), `Style` (rounding, spacing, fonts, motion, state fills), `Border` (border specs), `Util`, `I18n` (the kit's strings in the display language), `Tokens` (everything as canonical JSON, and the changed hook) |
 | `Omarchy.Ui` | The components: `Button`, `Toggle`, `TextField`, `Dropdown`, `Card`, `Pane`, `Heading`, `ListRow`, `Menu`, `Dialog` and the rest ([`spec/components.md`](../spec/components.md)) |
 | `Omarchy.Theme.Native` | `ThemeSource` (reads the theme, Hyprland and fontconfig, and watches them) and `IconLookup`. You don't import this yourself: `Omarchy.Theme` does. |
 
@@ -182,7 +182,7 @@ A few components are built on Qt Quick Controls (`Dropdown`, `NumberField`, `Too
 
 ### The theme follows itself
 
-Bind to tokens and the view follows the desktop live, with no restart. `ThemeSource` watches:
+Bind to tokens and the view follows the desktop live, with no restart and no code. `ThemeSource` watches:
 
 - theme switches (`~/.local/state/omarchy/current/theme`) and edits inside the theme
 - `~/.config/omarchy/shell.toml` (`omarchy display text size`)
@@ -191,7 +191,45 @@ Bind to tokens and the view follows the desktop live, with no restart. `ThemeSou
 - the display language (`omarchy language`)
 - the icon theme the Omarchy theme names
 
-The one way to break this is copying a token into a plain value at startup (`property color c` set once from JS, a color cached in C++). Keep bindings.
+The one way to break this is copying a token into a plain value at startup (`property color c` set once from JS, a color cached in C++). Keep bindings. The contract every binding shares is [`spec/following.md`](../spec/following.md).
+
+**The transition.** On a theme switch the colors ease from the old theme to the new over 280 ms (`Theme.Style.themeFade`) on CSS's `ease` curve (`Theme.Style.ease`), which reads the same as the Rune kit's color spring. Every color fades: the palette, secondary text, surfaces, state fills and borders. Rounding, gaps, sizes and the font switch at once. There's no fade on the first frame, under reduced motion (Hyprland animations off, `OMARCHY_UI_REDUCE_MOTION=1`), or in any token dump, so snapshots are exact. `Theme.Color.fading` is true while it runs.
+
+**The changed hook.** For what bindings can't reach (a `Canvas`, a cache, a value handed to something outside QML), the `Tokens` singleton announces each change:
+
+```qml
+import Omarchy.Theme as Theme
+
+Connections {
+  target: Theme.Tokens
+  function onChanged(tokens) {        // the canonical JSON of spec/tokens.md, "#rrggbbaa" colors
+    chart.requestPaint()
+  }
+}
+```
+
+- `changed(tokens)` fires once per change that alters the tokens, after `Color` and `Style` have re-resolved (they already read the new values in the handler), on the GUI thread, before the fade starts. Never for the theme the app started with.
+- `Tokens.revision` is 0 at start, plus one per change: a cache key (`if (cachedRevision !== Theme.Tokens.revision) ...`).
+- `Tokens.current` is the tokens in effect, as an object.
+
+**From C++.** An app with its own renderer (a `QQuickPaintedItem`, scene-graph nodes) gets the same hook from `omarchyui.h`, in the vendored route:
+
+```cpp
+#include "omarchyui.h"
+
+QObject::connect(OmarchyUi::Theme::instance(), &OmarchyUi::Theme::changed, renderer,
+                 [renderer](const QJsonObject &tokens) {
+                   renderer->setAccent(OmarchyUi::Theme::color(tokens["palette"]["accent"]));
+                   renderer->update();
+                 });
+```
+
+`OmarchyUi::Theme::tokens()` and `revision()` hold the current set once QML has loaded `Omarchy.Theme`, and `OmarchyUi::Theme::color()` reads a `"#rrggbbaa"` token (which `QColor` alone would take as `#aarrggbb`). With the installed modules, the plugin's C++ isn't linkable; connect to the QML singleton instead:
+
+```cpp
+QObject *tokens = engine.singletonInstance<QObject *>("Omarchy.Theme", "Tokens");
+QObject::connect(tokens, SIGNAL(changed(QVariant)), renderer, SLOT(onThemeChanged(QVariant)));
+```
 
 ### Preview other themes, roundings and icon themes
 
@@ -253,6 +291,8 @@ The kit is pre-1.0 and has no release tags yet. The QML modules are version 1.0 
 | `Cannot load library ... libomarchyuiplugin.so` or "uses incompatible Qt library" | The plugin was built for a different Qt: a pip PySide6 with its own Qt, or Qt was updated. Use the system Qt, or rebuild the package. |
 | Dropdowns, tooltips or steppers have extra frames or padding | Not running under the Basic style. Set `QT_QUICK_CONTROLS_STYLE=Basic` before the application starts. |
 | A stock-looking `Button` or `TextField` | An unqualified name resolved to Qt Quick Controls. Use `O.Button`. |
-| The view doesn't follow theme switches | `OMARCHY_UI_THEME_DIR` is set (a pinned theme is never watched), or a token was copied into a plain value. |
+| The view doesn't follow theme switches | `OMARCHY_UI_THEME_DIR` is set (a pinned theme follows edits to that directory, not the desktop), or a token was copied into a plain value. |
+| A custom-drawn part (`Canvas`, a C++ item) keeps the old colors | It doesn't bind to tokens. Repaint it from `Tokens.onChanged` (QML) or `OmarchyUi::Theme::changed` (C++). |
+| Colors jump instead of fading on a switch | Reduced motion is on (`omarchy toggle animations`, `OMARCHY_UI_REDUCE_MOTION=1`). |
 | Glyphs show as boxes | The kit's glyphs are Nerd Font icons from the theme's `monospace` font (Omarchy's default fonts have them). |
 | `console.log` output is missing | Under a systemd session Qt logs to the journal. Set `QT_FORCE_STDERR_LOGGING=1`. |
