@@ -41,7 +41,9 @@ fn toggle_and_switch_flip(cx: &mut TestAppContext) {
 }
 
 #[gpui::test]
-fn button_group_walks_with_arrows(cx: &mut TestAppContext) {
+fn button_group_is_one_stop_walked_with_arrows(cx: &mut TestAppContext) {
+    // As Qt's ButtonGroup: the arrows (and h/l) move a cursor from the selected option, stopping
+    // at the ends; Return or Space chooses the option under it.
     let (view, cx) = host(cx, SharedString::from("center"), |h, _, cx| {
         ButtonGroup::new([("left", "Left"), ("center", "Center"), ("right", "Right")], h.state.clone())
             .on_choose(cx.listener(|h, v: &SharedString, _, cx| {
@@ -52,8 +54,10 @@ fn button_group_walks_with_arrows(cx: &mut TestAppContext) {
     });
     focus_first(cx);
     cx.simulate_keystrokes("right");
+    assert_eq!(view.read_with(cx, |h, _| h.state.clone()), "center", "moving doesn't choose");
+    cx.simulate_keystrokes("l enter");
     assert_eq!(view.read_with(cx, |h, _| h.state.clone()), "right");
-    cx.simulate_keystrokes("right left left left");
+    cx.simulate_keystrokes("left h h h space");
     assert_eq!(view.read_with(cx, |h, _| h.state.clone()), "left");
 }
 

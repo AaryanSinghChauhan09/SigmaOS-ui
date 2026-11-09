@@ -7,7 +7,7 @@ use gpui::prelude::*;
 use gpui::{App, ClickEvent, ElementId, KeyDownEvent, SharedString, Window, div, px};
 use omarchy_theme::{BorderSpec, Rgba};
 
-use super::{Handler, Look, chrome, focus_handle, id_for, is_activate, label, reserve, tab_keys};
+use super::{Handler, Look, chrome, focus_handle, id_for, is_activate, keyed_state, label, reserve, tab_keys};
 use crate::{Paint, color};
 
 /// A glyph (a Nerd Font codepoint) in the Omarchy font, one line, unboxed.
@@ -26,13 +26,19 @@ pub struct Button {
     bordered: bool,
     selected: bool,
     cursor: bool,
+    focusable: bool,
     on_click: Option<Handler<ClickEvent>>,
 }
 
 impl Button {
     pub fn new(label: impl Into<SharedString>) -> Button {
         let label = label.into();
-        Button { id: id_for("button", &label), label, icon: None, bordered: false, selected: false, cursor: false, on_click: None }
+        Button { id: id_for("button", &label), label, icon: None, bordered: false, selected: false, cursor: false, focusable: true, on_click: None }
+    }
+    /// Off inside a control that is one tab stop itself (ButtonGroup).
+    pub(crate) fn focusable(mut self, on: bool) -> Self {
+        self.focusable = on;
+        self
     }
     /// The element id (focus and state are kept under it); the label by default.
     pub fn id(mut self, id: impl Into<ElementId>) -> Self {
@@ -92,8 +98,8 @@ impl RenderOnce for Button {
         let tk = t.tokens();
         let c = &tk.controls;
         let sp = &tk.spacing;
-        let focus = focus_handle(&self.id, window, cx);
-        let hot_now = self.cursor || focus.is_focused(window);
+        let focus = self.focusable.then(|| focus_handle(&self.id, window, cx));
+        let hot_now = self.cursor || focus.as_ref().is_some_and(|f| f.is_focused(window));
         let rest_border = if self.selected && !c.selected.border.is_none() {
             c.selected.border.clone()
         } else if self.bordered {
@@ -129,7 +135,11 @@ impl RenderOnce for Button {
         if !self.label.is_empty() {
             e = e.child(label(&t, self.label, tk.font.body, self.selected, ink));
         }
-        pressable(e, &focus, self.on_click)
+        match (focus, self.on_click) {
+            (Some(focus), on_click) => pressable(e, &focus, on_click),
+            (None, Some(f)) => e.on_click(move |ev, window, cx| f(ev, window, cx)),
+            (None, None) => e,
+        }
     }
 }
 
@@ -221,40 +231,66 @@ impl ButtonGroup {
 }
 
 impl RenderOnce for ButtonGroup {
-    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let t = Paint::of(cx);
         let gap = t.tokens().spacing.md as f32;
-        let mut r = div().flex().flex_row().gap(px(gap));
+        let focus = focus_handle(&self.id, window, cx);
         let values: Rc<Vec<SharedString>> = Rc::new(self.options.iter().map(|(v, _)| v.clone()).collect());
-        let current = values.iter().position(|v| *v == self.value);
+        let selected = values.iter().position(|v| *v == self.value);
+        // The keyboard cursor while the group has focus: on the selected option when focus
+        // arrives (Qt's `_focusedIndex`), moved by Left/Right (h/l), chosen with Return/Space.
+        let at = keyed_state(&self.id, "button-group", window, cx, || None::<usize>);
+        let focused = focus.is_focused(window);
+        let cursor = if focused { *at.read(cx) } else { None };
+        if focused && cursor.is_none() {
+            at.update(cx, |c, _| *c = Some(selected.unwrap_or(0)));
+        } else if !focused && at.read(cx).is_some() {
+            at.update(cx, |c, _| *c = None);
+        }
+        let cursor = cursor.or(if focused { Some(selected.unwrap_or(0)) } else { None });
+        let mut r = div().id(self.id.clone()).flex().flex_row().gap(px(gap)).track_focus(&focus);
         for (i, (value, text)) in self.options.into_iter().enumerate() {
             let mut b = Button::new(text)
                 .id(ElementId::NamedChild(std::sync::Arc::new(self.id.clone()), value.to_string().into()))
+                .focusable(false)
                 .bordered(true)
                 .selected(value == self.value)
-                .cursor(self.cursor == Some(i));
-            if let Some(f) = self.on_choose.clone() {
-                let v = value.clone();
-                b = b.on_click(move |_, window, cx| f(&v, window, cx));
-            }
+                .cursor(self.cursor == Some(i) || cursor == Some(i));
+            let (f, focus) = (self.on_choose.clone(), focus.clone());
+            let v = value.clone();
+            b = b.on_click(move |_, window, cx| {
+                focus.focus(window, cx);
+                if let Some(f) = &f {
+                    f(&v, window, cx);
+                }
+            });
             r = r.child(b);
         }
-        // Arrow keys walk the choice (Qt's ButtonGroup), bubbling up from the focused button.
-        if let Some(f) = self.on_choose {
-            r = r.on_key_down(move |ev: &KeyDownEvent, window, cx| {
-                let step: isize = match ev.keystroke.key.as_str() {
-                    "left" | "h" => -1,
-                    "right" | "l" => 1,
-                    _ => return,
-                };
-                let Some(at) = current else { return };
-                let next = (at as isize + step).clamp(0, values.len() as isize - 1) as usize;
-                if next != at {
-                    f(&values[next], window, cx);
-                }
+        let choose = self.on_choose;
+        r.on_key_down(move |ev: &KeyDownEvent, window, cx| {
+            if tab_keys(ev, window, cx) {
                 cx.stop_propagation();
-            });
-        }
-        r
+                return;
+            }
+            let n = values.len();
+            let here = at.read(cx).or(selected).unwrap_or(0);
+            match ev.keystroke.key.as_str() {
+                "left" | "h" => at.update(cx, |c, cx| {
+                    *c = Some(here.saturating_sub(1));
+                    cx.notify();
+                }),
+                "right" | "l" => at.update(cx, |c, cx| {
+                    *c = Some((here + 1).min(n.saturating_sub(1)));
+                    cx.notify();
+                }),
+                _ if is_activate(ev) => {
+                    if let (Some(f), Some(v)) = (&choose, values.get(here)) {
+                        f(v, window, cx);
+                    }
+                }
+                _ => return,
+            }
+            cx.stop_propagation();
+        })
     }
 }
