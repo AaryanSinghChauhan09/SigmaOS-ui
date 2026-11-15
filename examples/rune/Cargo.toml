@@ -2,9 +2,9 @@
 # way an app in its own repository depends on the kit. Only omarchy-rune is a dependency: Rune
 # comes through its re-exports (omarchy_rune::rune, omarchy_rune::rune_kit), at the kit's pinned rev.
 #
-# From another repository, as a git dependency instead (<omarchy-ui-repo>: see docs/using-rust.md):
+# From another repository, as a git dependency instead (see docs/using-rust.md):
 #
-#   omarchy-rune = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+#   omarchy-rune = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 
 [package]
 name = "omarchy-ui-example-rune"

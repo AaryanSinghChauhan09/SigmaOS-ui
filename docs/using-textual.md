@@ -1,6 +1,6 @@
 # Using Omarchy UI from Textual
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. Paths such as `examples/...` are relative to a checkout.
+> Paths such as `examples/...` are relative to a checkout.
 
 `omarchy-textual` (`tui/textual`, import `omarchy_textual`) gives a [Textual](https://textual.textualize.io) app Omarchy's look with one call: the live theme, followed without a restart, colors that fade on a switch, Textual's stock widgets restyled to the kit's one-row forms, and the kit's components (`Button`, `Toggle`, `ListRow`, `Menu`, `Table`, …) as Textual widgets that draw exactly the cells [`spec/terminal.md`](../spec/terminal.md) gives them, the same cells as the reference, Ratatui. [`using-terminal.md`](using-terminal.md) has what every terminal binding shares.
 
@@ -14,7 +14,7 @@ dependencies = ["omarchy-textual"]
 
 [tool.uv.sources]
 omarchy-textual = { path = "../omarchy-ui/tui/textual", editable = true }   # or
-omarchy-textual = { git = "<omarchy-ui-repo>", subdirectory = "tui/textual", rev = "<commit>" }
+omarchy-textual = { git = "https://github.com/omacom/omarchy-ui", subdirectory = "tui/textual", rev = "<commit>" }
 ```
 
 `omarchy-textual` pins what it is built against exactly (`textual==8.2.8`, `rich==15.0.0`, `wcwidth==0.9.4`, in `tui/textual/pyproject.toml` and its `uv.lock`; move them together); don't pin Textual or Rich in the app as well. The tokens come from the core's `omarchy-theme` CLI: `$OMARCHY_THEME_BIN`, else `omarchy-theme` on `PATH` (the `omarchy-ui` package installs it), else this checkout's `target/release/omarchy-theme` (`bin/build core`).

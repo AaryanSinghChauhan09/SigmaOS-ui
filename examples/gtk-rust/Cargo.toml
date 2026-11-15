@@ -8,5 +8,5 @@ publish = false
 [workspace]
 
 [dependencies]
-# From a checkout: a path dependency. From git: omarchy-gtk = { git = "<omarchy-ui-repo>" }.
+# From a checkout: a path dependency. From git: omarchy-gtk = { git = "https://github.com/omacom/omarchy-ui" }.
 omarchy-gtk = { path = "../../gtk/rust/omarchy-gtk" }

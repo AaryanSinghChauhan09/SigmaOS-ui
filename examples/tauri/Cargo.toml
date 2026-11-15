@@ -1,9 +1,9 @@
 # A Tauri v2 app outside any omarchy-ui workspace, the way an app in its own repository adopts the
 # kit: tauri-plugin-omarchy in Rust (one call), @omarchy/ui in the page (one import).
 #
-# From another repository, as a git dependency instead (<omarchy-ui-repo>: see docs/using-tauri.md):
+# From another repository, as a git dependency instead (see docs/using-tauri.md):
 #
-#   tauri-plugin-omarchy = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+#   tauri-plugin-omarchy = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 
 [package]
 name = "omarchy-ui-example-tauri"

@@ -1,7 +1,5 @@
 # Using Omarchy UI from C and other languages
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. It has no public remote yet, so substitute wherever you cloned it from.
-
 For a toolkit with no Omarchy UI binding yet (GTK, Qt Widgets, wxWidgets, an editor, a terminal, Electron, a script), the kit's resolver is available two ways. Both give exactly the tokens the Qt and Rune kits use, follow the desktop the same way ([`spec/following.md`](../spec/following.md)), and leave mapping them onto your toolkit to you:
 
 | | In process: `libomarchy-theme` | Out of process: the `omarchy-theme` CLI |

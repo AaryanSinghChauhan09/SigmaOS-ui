@@ -2,9 +2,9 @@
 # kit. Only omarchy-gpui is a dependency: GPUI comes through its re-exports (omarchy_gpui::gpui,
 # omarchy_gpui::gpui_platform), at the kit's pinned version.
 #
-# From another repository, as a git dependency instead (<omarchy-ui-repo>: see docs/using-gpui.md):
+# From another repository, as a git dependency instead (see docs/using-gpui.md):
 #
-#   omarchy-gpui = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+#   omarchy-gpui = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 
 [package]
 name = "omarchy-ui-example-gpui"

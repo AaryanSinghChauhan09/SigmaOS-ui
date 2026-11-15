@@ -1,6 +1,6 @@
 # Using Omarchy UI from GPUI
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. Paths such as `examples/...` are relative to a checkout.
+> Paths such as `examples/...` are relative to a checkout.
 
 `omarchy-gpui` (`gpui/omarchy-gpui`) gives a [GPUI](https://gpui.rs) app Omarchy's look with one call: the live theme as a GPUI global, followed without a restart, colors that fade on a switch, the `monospace` font, and the kit's components (`Button`, `Toggle`, `ListRow`, `Menu`, `Table`, …) drawn the way the Qt kit draws them ([`spec/components.md`](../spec/components.md)). With the `gpui-component` feature, [gpui-component](https://github.com/longbridge/gpui-component)'s widgets follow the theme too.
 
@@ -9,7 +9,7 @@
 ```toml
 [dependencies]
 omarchy-gpui = { path = "../omarchy-ui/gpui/omarchy-gpui" }            # or
-omarchy-gpui = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+omarchy-gpui = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 ```
 
 That one line is all. Use GPUI through the re-exports, `omarchy_gpui::gpui` and `omarchy_gpui::gpui_platform`: they are exactly the GPUI the kit was built against (see [Pins](#pins)). A second `gpui` dependency at another version is a second, incompatible crate (``expected `gpui::App`, found `gpui::App` ``).

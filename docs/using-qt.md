@@ -1,6 +1,6 @@
 # Using Omarchy UI from Qt Quick
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. It has no public remote yet, so substitute wherever you cloned it from. Paths such as `examples/...` and `qt/...` are relative to a checkout and work as written.
+> Paths such as `examples/...` and `qt/...` are relative to a checkout and work as written.
 
 The Qt binding is two QML modules, plus a small native module they use:
 
@@ -28,7 +28,7 @@ If an app vendors the kit and the package is also installed, the vendored copy w
 
 ### Install
 
-From a checkout of `<omarchy-ui-repo>`:
+From a checkout of [omacom/omarchy-ui](https://github.com/omacom/omarchy-ui):
 
 ```sh
 cd packaging/arch/omarchy-ui && makepkg -fsi       # the Arch package: modules + omarchy-theme CLI
@@ -128,7 +128,7 @@ The same file works from any other QML host on the system's Qt:
 Put the repository inside yours, pinned to a commit:
 
 ```sh
-git submodule add <omarchy-ui-repo> third_party/omarchy-ui
+git submodule add https://github.com/omacom/omarchy-ui third_party/omarchy-ui
 ```
 
 (or any checkout; a path is all qmake needs). Then ([`examples/qt-vendored`](../examples/qt-vendored)):

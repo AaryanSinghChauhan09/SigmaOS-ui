@@ -1,6 +1,6 @@
 # Using Omarchy UI from GTK 4
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. It has no public remote yet, so substitute wherever you cloned it from. Paths such as `examples/...` and `gtk/...` are relative to a checkout.
+> Paths such as `examples/...` and `gtk/...` are relative to a checkout.
 
 The GTK binding is one C library, **libomarchy-gtk-1** (namespace `Omarchy`, prefix `omarchy_`, `pkg-config omarchy-gtk-1`, `#include <omarchy-gtk.h>`), built on libomarchy-theme ([using-c.md](using-c.md)), so its tokens are exactly the ones the Qt and Rune kits use. It gives any GTK 4 app, in any language:
 
@@ -118,7 +118,7 @@ pane.append (new Omarchy.Toggle ("Wi-Fi", "On"));
 
 ```toml
 [dependencies]
-omarchy-gtk = { git = "<omarchy-ui-repo>" }          # or a path to gtk/rust/omarchy-gtk
+omarchy-gtk = { git = "https://github.com/omacom/omarchy-ui" }          # or a path to gtk/rust/omarchy-gtk
 ```
 
 ```rust

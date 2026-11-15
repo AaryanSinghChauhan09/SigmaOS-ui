@@ -1,6 +1,6 @@
 # Using Omarchy UI from Rust
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. It has no public remote yet, so substitute wherever you cloned it from. Paths such as `examples/...` are relative to a checkout and work as written.
+> Paths such as `examples/...` are relative to a checkout and work as written.
 
 Two crates, neither on crates.io. Depend on them through Cargo by path or git:
 
@@ -24,7 +24,7 @@ From the repository, pinned to a commit:
 
 ```toml
 [dependencies]
-omarchy-rune = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+omarchy-rune = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 ```
 
 That one line is all. Don't add `rune` or `rune-kit` yourself: use `omarchy_rune::rune` and `omarchy_rune::rune_kit`, which are exactly the Rune `omarchy-rune` was built against. Rune is pre-release and pinned to one git rev in omarchy-ui's `Cargo.toml`. A second `rune` dependency at any other rev is a second, incompatible crate, and you get errors like ``expected `rune::El`, found `rune::El` ``. If you need Rune directly (a feature flag, say), copy the `rev` from omarchy-ui's `[workspace.dependencies]` and update it whenever you update omarchy-ui.
@@ -171,7 +171,7 @@ For GPUI, iced, egui, a TUI, or a tool with no UI. Map `Tokens` onto the framewo
 ```toml
 [dependencies]
 omarchy-theme = { path = "../omarchy-ui/crates/omarchy-theme" }           # or
-omarchy-theme = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+omarchy-theme = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 ```
 
 ```rust

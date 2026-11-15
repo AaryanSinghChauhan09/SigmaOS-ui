@@ -1,6 +1,6 @@
 # Using Omarchy UI from Electron and the web
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. It has no public remote yet, so substitute wherever you cloned it from. Paths such as `examples/...` are relative to a checkout and work as written.
+> Paths such as `examples/...` are relative to a checkout and work as written.
 
 `@omarchy/ui` (`web/`) gives any Electron app, and any web UI in a Chromium shell, Omarchy's look and live theme-following with one call. It also gives the full component kit as framework-neutral custom elements (`<omarchy-button>`, `<omarchy-toggle>`, `<omarchy-list-row>`, …), drawn to match the Qt kit. It's plain ES modules with TypeScript declarations and no runtime dependencies. It isn't on npm: depend on it by path.
 

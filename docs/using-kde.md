@@ -1,6 +1,6 @@
 # Using Omarchy UI from Qt Widgets and KDE apps
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. It has no public remote yet, so substitute wherever you cloned it from. Paths such as `examples/...` and `kde/...` are relative to a checkout and work as written.
+> Paths such as `examples/...` and `kde/...` are relative to a checkout and work as written.
 
 `OmarchyWidgets` (`kde/`) brings a Qt Widgets, KDE Frameworks or Kirigami app onto the live Omarchy theme with one call, and gives Qt Widgets apps the whole component kit ([`spec/components.md`](../spec/components.md)) as widgets. Its tokens come from `libomarchy-theme`, the same resolver every other binding reads ([`docs/using-c.md`](using-c.md)); it never parses the theme itself.
 

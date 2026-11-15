@@ -1,6 +1,6 @@
 # Using Omarchy UI from Ratatui
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. Paths such as `examples/...` are relative to a checkout.
+> Paths such as `examples/...` are relative to a checkout.
 
 `omarchy-ratatui` (`tui/ratatui/omarchy-ratatui`) gives a [Ratatui](https://ratatui.rs) app Omarchy's look in the terminal with one call: the live theme, followed without a restart, colors that fade on a switch, and the kit's components (`Button`, `Toggle`, `ListRow`, `Menu`, `Table`, …) drawn on the cell grid the way [`spec/terminal.md`](../spec/terminal.md) maps them. [`using-terminal.md`](using-terminal.md) has what every terminal binding shares.
 
@@ -9,7 +9,7 @@
 ```toml
 [dependencies]
 omarchy-ratatui = { path = "../omarchy-ui/tui/ratatui/omarchy-ratatui" }            # or
-omarchy-ratatui = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+omarchy-ratatui = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 ```
 
 Use Ratatui and Crossterm through the re-exports (`omarchy_ratatui::ratatui`, `omarchy_ratatui::crossterm`): they are exactly the versions the kit is built against (`ratatui = "=0.30.2"`, `crossterm = "=0.29.0"`, pinned in `tui/ratatui/Cargo.toml`; move them together). `omarchy-ratatui` lives in its own Cargo workspace; a crate inside another workspace's directory without being a member gives itself a `[workspace]`, as [`examples/ratatui`](../examples/ratatui) does.

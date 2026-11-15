@@ -1,6 +1,6 @@
 # Using Omarchy UI from Tauri
 
-> `<omarchy-ui-repo>` below stands for this repository's clone URL. It has no public remote yet, so substitute wherever you cloned it from. Paths such as `examples/...` are relative to a checkout.
+> Paths such as `examples/...` are relative to a checkout.
 
 A [Tauri v2](https://v2.tauri.app) app gets Omarchy's look and live theme following with one call in Rust and one import in the page. The page side is the web kit, `@omarchy/ui` ([`using-web.md`](using-web.md)): the tokens as `--omarchy-*` custom properties, the restyle for plain HTML controls, and every `<omarchy-*>` element. The Rust side is `tauri-plugin-omarchy` ([`web/tauri/plugin`](../web/tauri/plugin)), which gives each webview the same `omarchy` object the Electron preload gives. On Linux, Tauri renders with WebKitGTK; the kit is checked against Qt in it on every `bin/review`, beside Chromium.
 
@@ -17,7 +17,7 @@ A [Tauri v2](https://v2.tauri.app) app gets Omarchy's look and live theme follow
 [dependencies]
 tauri = { version = "=2.12.5" }
 tauri-plugin-omarchy = { path = "../omarchy-ui/web/tauri/plugin" }               # or
-tauri-plugin-omarchy = { git = "<omarchy-ui-repo>", rev = "<commit>" }
+tauri-plugin-omarchy = { git = "https://github.com/omacom/omarchy-ui", rev = "<commit>" }
 ```
 
 ```json
