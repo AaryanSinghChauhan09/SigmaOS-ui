@@ -1,4 +1,6 @@
-# omarchy-ui
+# fk-omarchy-ui
+
+> Forked from omacom/omarchy-ui (MIT). See `SIGMAOS_FORK.md`.
 
 A cross-framework UI kit for apps that look and feel like Omarchy, in any toolkit. It has three parts:
 
