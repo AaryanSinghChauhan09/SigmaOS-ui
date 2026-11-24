@@ -67,9 +67,9 @@ The SigmaOS checkout is `~/sigmaos` on main (`$SIGMAOS_SRC` to override). Pull i
 
 A binding (GTK, Qt Widgets, GPUI, Electron, ...) is a directory of its own plus one registry file. Nothing shared needs editing: `bin/build`, `bin/test`, `bin/review` and `tools/review.py` read `tools/bindings.d/*.json` (through `tools/bindings.py`).
 
-1. **Tokens from the core, never a new resolver.** Rust: depend on `omarchy-theme`. C, GObject (and through GI: Python, GJS, Vala), C++: link `libomarchy-theme` (`pkg-config omarchy-theme`, [`docs/using-c.md`](docs/using-c.md)). Node/Electron: spawn `omarchy-theme --watch --state` and read lines. Map the canonical JSON onto the toolkit's own theme (GTK CSS, a `QPalette`, GPUI's theme, CSS custom properties).
+1. **Tokens from the core, never a new resolver.** Rust: depend on `sigmaos-theme`. C, GObject (and through GI: Python, GJS, Vala), C++: link `libsigmaos-theme` (`pkg-config sigmaos-theme`, [`docs/using-c.md`](docs/using-c.md)). Node/Electron: spawn `sigmaos-theme --watch --state` and read lines. Map the canonical JSON onto the toolkit's own theme (GTK CSS, a `QPalette`, GPUI's theme, CSS custom properties).
 2. **Follow live, per [`spec/following.md`](spec/following.md)**: zero app code or one call; a public changed hook (once per real change, after the new tokens are in effect, on the UI thread, with the new tokens, never for the initial load) and a revision; colors fade over `motion.theme` on `motion.ease`, everything else switches at once, no fade under reduced motion or on first paint.
-3. **The components** of [`spec/components.md`](spec/components.md), under the same names, and a **gallery** with the [`spec/gallery.md`](spec/gallery.md) sections that can: list its sections; render one section to a PNG at 2× and a given size in points, offscreen; honor the `OMARCHY_UI_*` overrides; and (unless it reads the core's tokens directly) print its tokens as canonical JSON.
+3. **The components** of [`spec/components.md`](spec/components.md), under the same names, and a **gallery** with the [`spec/gallery.md`](spec/gallery.md) sections that can: list its sections; render one section to a PNG at 2× and a given size in points, offscreen; honor the `SIGMAOS_UI_*` overrides; and (unless it reads the core's tokens directly) print its tokens as canonical JSON.
 4. **Tests**, run by `bin/test`: its behavior tests, and a **live-switch test** (`tools/live/run` + `tools/live/theme-set`, spec/following.md) that checks the new background, a changed hook that fires once, and the fade.
 5. **Docs**: `docs/using-<framework>.md`, linked from `docs/README.md`.
 6. **The registry file**, `tools/bindings.d/<name>.json` (the file name is the `name`):
@@ -83,16 +83,16 @@ A binding (GTK, Qt Widgets, GPUI, Electron, ...) is a directory of its own plus 
   "available": { "commands": ["meson", "ninja"], "check": "pkg-config --exists gtk4 libadwaita-1", "reason": "no gtk4/libadwaita-1 development files" },
   "build": "gtk/build",
   "gallery": {
-    "sections": "build/gtk/omarchy-gtk-gallery --list-sections",
-    "snap": "build/gtk/omarchy-gtk-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
-    "window": "build/gtk/omarchy-gtk-gallery"
+    "sections": "build/gtk/sigmaos-gtk-gallery --list-sections",
+    "snap": "build/gtk/sigmaos-gtk-gallery --snap {out} --section {section} --size {width}x{height} --scale {scale}",
+    "window": "build/gtk/sigmaos-gtk-gallery"
   },
   "tokens": "core",
   "icons": "core",
   "tests": [
-    { "name": "behavior", "run": "build/gtk/omarchy-gtk-tests" },
-    { "name": "live switch", "run": "tools/live/run build/gtk/omarchy-gtk-live-test" },
-    { "name": "live switch, reduced motion", "run": "tools/live/run build/gtk/omarchy-gtk-live-test", "env": { "OMARCHY_UI_REDUCE_MOTION": "1" } }
+    { "name": "behavior", "run": "build/gtk/sigmaos-gtk-tests" },
+    { "name": "live switch", "run": "tools/live/run build/gtk/sigmaos-gtk-live-test" },
+    { "name": "live switch, reduced motion", "run": "tools/live/run build/gtk/sigmaos-gtk-live-test", "env": { "SIGMAOS_UI_REDUCE_MOTION": "1" } }
   ]
 }
 ```
@@ -106,12 +106,12 @@ A binding (GTK, Qt Widgets, GPUI, Electron, ...) is a directory of its own plus 
 | `available` | `commands` that must be on `PATH`, and an optional shell `check` (exit 0 = available) with a `reason`. When it fails the binding is skipped with a message, never failed. |
 | `build` | Shell command from the repository root that builds everything below |
 | `gallery.sections` | Prints the gallery's sections, one per line |
-| `gallery.snap` | Renders `{section}` to the PNG `{out}` at `{width}`×`{height}` points and device scale `{scale}` (2), offscreen, under whatever `OMARCHY_UI_*` the caller set. The reference gets `{width}` 760 and sizes itself; the rest get the reference's size. A terminal binding writes an ANSI snapshot instead (below). |
+| `gallery.snap` | Renders `{section}` to the PNG `{out}` at `{width}`×`{height}` points and device scale `{scale}` (2), offscreen, under whatever `SIGMAOS_UI_*` the caller set. The reference gets `{width}` 760 and sizes itself; the rest get the reference's size. A terminal binding writes an ANSI snapshot instead (below). |
 | `gallery.window` | The gallery as a window following the desktop (`bin/review --live`) |
 | `tokens` | `"core"` when the binding reads the core's tokens directly (Rust crate, C library, CLI), or `{ "dump": "<command printing canonical JSON>" }` for a resolver of its own; a dump is compared with the core for every fixture at radius 0 and 8 |
 | `icons` | `"core"`, or `{ "lookup": "<command printing the path for {name} at {size}>" }`, compared with the core on `fixtures/icons`, or `"none"` for a binding that draws no icons by name (a terminal) |
 | `tests` | Each `{ name, run, env? }` runs from the repository root; exit 0 passes and its last output line is shown |
 
-**A terminal binding** (`"family": "terminal"`) follows [`spec/terminal.md`](spec/terminal.md). Its `gallery.snap` writes `{section}` as an ANSI snapshot (`.ans`: UTF-8, truecolor SGR, exactly `{width}` columns × `{height}` rows; `--size COLSxROWS`, rows 0 = the section's natural height). The reference (Ratatui) gets 96 columns and 0 rows; the rest get its size. `bin/review` renders every terminal snapshot through one rasterizer (`target/release/omarchy-ansi png`, the core's font and colors), diffs each against Ratatui by cells (`omarchy-ansi diff`) and pixels, and shows Qt beside them to eyeball. `gallery.window` opens it in a terminal: `tools/terminal-window <gallery>`.
+**A terminal binding** (`"family": "terminal"`) follows [`spec/terminal.md`](spec/terminal.md). Its `gallery.snap` writes `{section}` as an ANSI snapshot (`.ans`: UTF-8, truecolor SGR, exactly `{width}` columns × `{height}` rows; `--size COLSxROWS`, rows 0 = the section's natural height). The reference (Ratatui) gets 96 columns and 0 rows; the rest get its size. `bin/review` renders every terminal snapshot through one rasterizer (`target/release/sigmaos-ansi png`, the core's font and colors), diffs each against Ratatui by cells (`sigmaos-ansi diff`) and pixels, and shows Qt beside them to eyeball. `gallery.window` opens it in a terminal: `tools/terminal-window <gallery>`.
 
 Placeholders are shell-quoted when filled in. `tools/bindings.d/qt.json` and `rune.json` are working entries. `tools/bindings.py list` shows what's available here; `tools/bindings.py test gtk` runs one binding's tests.
