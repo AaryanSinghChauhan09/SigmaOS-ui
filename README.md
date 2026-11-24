@@ -71,3 +71,11 @@ O.Card {
 [`examples/`](examples) has a working app for each route, built and rendered by `bin/test`.
 
 [`spec/roadmap.md`](spec/roadmap.md) ranks the primitives still to build. [`AGENTS.md`](AGENTS.md) has the rules that make an app read as Omarchy, and how to work on the kit.
+## Documentation
+
+Detailed Wiki documentation is available in the standalone Wiki repository:
+
+- [SigmaOS-ui-Wiki](https://github.com/AaryanSinghChauhan09/SigmaOS-ui-Wiki) - Full Wiki documentation
+
+For the complete SigmaOS Wiki catalog, see:
+- [SigmaOS Wiki Staging](https://github.com/AaryanSinghChauhan09/sigmaos-wiki-staging)
