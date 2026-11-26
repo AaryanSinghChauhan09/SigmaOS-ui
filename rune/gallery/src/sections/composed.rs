@@ -3,8 +3,9 @@
 
 use omarchy_rune::Theme;
 use omarchy_rune::ui::{
-    Button, Card, ColorWell, CursorModel, Dropdown, Hero, IconButton, KeyValue, ListRow, NumberField, Pane, PasswordField, ScrollArea,
-    SearchItem, SearchList, SettingRow, Slider, Tabs, ToggleSwitch, Tone, section_header, separator,
+    Button, Card, ColorWell, CursorModel, Dropdown, Hero, IconButton, KeyValue, ListRow,
+    NumberField, Pane, PasswordField, ScrollArea, SearchItem, SearchList, SettingRow, Slider, Tabs,
+    ToggleSwitch, Tone, section_header, separator,
 };
 use rune::{El, Side, TextEdit, col, row};
 
@@ -56,15 +57,30 @@ pub fn init() -> Composed {
 
 fn search_items() -> Vec<SearchItem> {
     vec![
-        SearchItem::new("Terminal").glyph("\u{F120}").subtitle("App").detail("Open a new terminal window."),
-        SearchItem::new("Terminal font").glyph("\u{F031}").subtitle("Style").detail("Pick the monospace font every terminal uses."),
-        SearchItem::new("Terminal theme").glyph("\u{F1FC}").subtitle("Style").detail("Match the terminal colors to the desktop theme."),
-        SearchItem::new("Intermediate CA").glyph("\u{F0A3}").subtitle("Certificate").detail("Trust a certificate authority for this machine."),
+        SearchItem::new("Terminal")
+            .glyph("\u{F120}")
+            .subtitle("App")
+            .detail("Open a new terminal window."),
+        SearchItem::new("Terminal font")
+            .glyph("\u{F031}")
+            .subtitle("Style")
+            .detail("Pick the monospace font every terminal uses."),
+        SearchItem::new("Terminal theme")
+            .glyph("\u{F1FC}")
+            .subtitle("Style")
+            .detail("Match the terminal colors to the desktop theme."),
+        SearchItem::new("Intermediate CA")
+            .glyph("\u{F0A3}")
+            .subtitle("Certificate")
+            .detail("Trust a certificate authority for this machine."),
     ]
 }
 
 fn filtered(query: &str) -> Vec<SearchItem> {
-    search_items().into_iter().filter(|i| SearchList::matches(&i.title, query)).collect()
+    search_items()
+        .into_iter()
+        .filter(|i| SearchList::matches(&i.title, query))
+        .collect()
 }
 
 pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
@@ -76,8 +92,21 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
     let networks = ScrollArea::new("composed-networks")
         .max_height(280.0)
         .gap(sp.xxs as f32)
-        .child(ListRow::new("Basecamp").glyph("\u{F0928}").status("Connected", Tone::Success).current(true).build(t))
-        .child(ListRow::new("Basecamp Guest").glyph("\u{F0925}").subtitle("Open").action("\u{F0159}", true).cursor(true).build(t))
+        .child(
+            ListRow::new("Basecamp")
+                .glyph("\u{F0928}")
+                .status("Connected", Tone::Success)
+                .current(true)
+                .build(t),
+        )
+        .child(
+            ListRow::new("Basecamp Guest")
+                .glyph("\u{F0925}")
+                .subtitle("Open")
+                .action("\u{F0159}", true)
+                .cursor(true)
+                .build(t),
+        )
         .child(
             ListRow::new("Coffee Shop")
                 .glyph("\u{F0922}")
@@ -114,47 +143,85 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .child(
             Hero::new("\u{F0928}", "Wi-Fi")
                 .status("Connected to Basecamp")
-                .trailing(ToggleSwitch::new(c.wifi).on_toggle(|s: &mut State| s.composed.wifi ^= true).build(t))
+                .trailing(
+                    ToggleSwitch::new(c.wifi)
+                        .on_toggle(|s: &mut State| s.composed.wifi ^= true)
+                        .build(t),
+                )
                 .build(t),
         )
         .child(section_header(t, "Networks"))
         .child(networks)
         .child(separator(t))
-        .child(KeyValue::new().pair("IP", "192.168.1.24").pair("Gateway", "192.168.1.1").pair("DNS", "1.1.1.1").build(t))
+        .child(
+            KeyValue::new()
+                .pair("IP", "192.168.1.24")
+                .pair("Gateway", "192.168.1.1")
+                .pair("DNS", "1.1.1.1")
+                .build(t),
+        )
         .build(t);
 
     // An app inspector, as omareel's side panel: a pane on the window, ruled off from the canvas.
-    let tabs = Tabs::new(["Shape", "Cursor", "Zoom"], c.tab).on_choose(|s: &mut State, i| s.composed.tab = i).build(t);
+    let tabs = Tabs::new(["Shape", "Cursor", "Zoom"], c.tab)
+        .on_choose(|s: &mut State, i| s.composed.tab = i)
+        .build(t);
     let frame = col()
         .w_full()
-        .child(SettingRow::new("Radius").control(Slider::new(c.radius).width(110.0).on_change(|s: &mut State, v| s.composed.radius = v).build(t)).build(t))
+        .child(
+            SettingRow::new("Radius")
+                .control(
+                    Slider::new(c.radius)
+                        .width(110.0)
+                        .on_change(|s: &mut State, v| s.composed.radius = v)
+                        .build(t),
+                )
+                .build(t),
+        )
         .child(
             SettingRow::new("Border")
                 .control(
-                    Dropdown::new("composed-border", [("solid", "Solid"), ("none", "None")], c.border.clone())
-                        .width(110.0)
-                        .open(c.border_open)
-                        .on_toggle(|s: &mut State| s.composed.border_open ^= true)
-                        .on_choose(|s: &mut State, v: &str| {
-                            s.composed.border = v.into();
-                            s.composed.border_open = false;
-                        })
-                        .build(t, layer),
+                    Dropdown::new(
+                        "composed-border",
+                        [("solid", "Solid"), ("none", "None")],
+                        c.border.clone(),
+                    )
+                    .width(110.0)
+                    .open(c.border_open)
+                    .on_toggle(|s: &mut State| s.composed.border_open ^= true)
+                    .on_choose(|s: &mut State, v: &str| {
+                        s.composed.border = v.into();
+                        s.composed.border_open = false;
+                    })
+                    .build(t, layer),
                 )
                 .build(t),
         )
         .child(
             SettingRow::new("Shadow")
                 .cursor(true)
-                .control(ToggleSwitch::new(c.shadow).on_toggle(|s: &mut State| s.composed.shadow ^= true).build(t))
+                .control(
+                    ToggleSwitch::new(c.shadow)
+                        .on_toggle(|s: &mut State| s.composed.shadow ^= true)
+                        .build(t),
+                )
                 .build(t),
         );
     let background = col()
         .w_full()
-        .child(SettingRow::new("Fill").control(ColorWell::new(t.accent()).build(t)).build(t))
+        .child(
+            SettingRow::new("Fill")
+                .control(ColorWell::new(t.accent()).build(t))
+                .build(t),
+        )
         .child(
             SettingRow::new("Padding")
-                .control(NumberField::new("", c.padding).range(0, 96).on_change(|s: &mut State, v| s.composed.padding = v).build(t))
+                .control(
+                    NumberField::new("", c.padding)
+                        .range(0, 96)
+                        .on_change(|s: &mut State, v| s.composed.padding = v)
+                        .build(t),
+                )
                 .build(t),
         );
     let inspector = Pane::new()
@@ -181,8 +248,16 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .detail(true)
         .size(360.0, 300.0)
         .on_state(|s: &mut State| (&mut s.composed.query, &mut s.composed.cursor))
-        .on_activate(|s: &mut State, i| s.composed.picked = filtered(&s.composed.query.text).get(i).map(|i| i.title.clone()))
-        .on_delete(|s: &mut State, i| s.composed.deleted = filtered(&s.composed.query.text).get(i).map(|i| i.title.clone()))
+        .on_activate(|s: &mut State, i| {
+            s.composed.picked = filtered(&s.composed.query.text)
+                .get(i)
+                .map(|i| i.title.clone())
+        })
+        .on_delete(|s: &mut State, i| {
+            s.composed.deleted = filtered(&s.composed.query.text)
+                .get(i)
+                .map(|i| i.title.clone())
+        })
         .on_close(|s: &mut State| s.composed.closes += 1)
         .build(t);
     let empty = SearchList::new("composed-empty", &c.empty_query, &c.empty_cursor)
@@ -192,7 +267,15 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .build(t);
 
     vec![
-        row().items_start().gap(column_gap).child(wifi).child(inspector),
-        row().items_start().gap(column_gap).child(search).child(empty),
+        row()
+            .items_start()
+            .gap(column_gap)
+            .child(wifi)
+            .child(inspector),
+        row()
+            .items_start()
+            .gap(column_gap)
+            .child(search)
+            .child(empty),
     ]
 }

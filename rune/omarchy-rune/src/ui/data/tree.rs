@@ -18,7 +18,12 @@ pub struct TreeNode {
 
 impl TreeNode {
     pub fn new(id: impl Into<String>, label: impl Into<String>) -> TreeNode {
-        TreeNode { id: id.into(), label: label.into(), glyph: None, children: Vec::new() }
+        TreeNode {
+            id: id.into(),
+            label: label.into(),
+            glyph: None,
+            children: Vec::new(),
+        }
     }
     pub fn glyph(mut self, g: impl Into<String>) -> Self {
         self.glyph = Some(g.into());
@@ -96,13 +101,15 @@ impl Tree {
         self.fold = Some(Box::new(move |e: El, id: String, open: bool| {
             let (f, twice) = (g.clone(), g.clone());
             let again = id.clone();
-            e.on_double_press(move |s: &mut S| twice(s, &again)).on_key(move |s: &mut S, k: &KeyEvent, _: &mut Tx| {
-                let fold = matches!((&k.key, open), (Key::Left, true) | (Key::Right, false));
-                if fold {
-                    f(s, &id);
-                }
-                fold
-            })
+            e.on_double_press(move |s: &mut S| twice(s, &again)).on_key(
+                move |s: &mut S, k: &KeyEvent, _: &mut Tx| {
+                    let fold = matches!((&k.key, open), (Key::Left, true) | (Key::Right, false));
+                    if fold {
+                        f(s, &id);
+                    }
+                    fold
+                },
+            )
         }));
         self
     }
@@ -123,7 +130,11 @@ impl Tree {
     fn walk<'a>(&self, nodes: &'a [TreeNode], depth: usize, out: &mut Vec<Visible<'a>>) {
         for n in nodes {
             let open = !n.children.is_empty() && self.expanded.iter().any(|e| *e == n.id);
-            out.push(Visible { node: n, depth, open });
+            out.push(Visible {
+                node: n,
+                depth,
+                open,
+            });
             if open {
                 self.walk(&n.children, depth + 1, out);
             }
@@ -145,9 +156,20 @@ impl Tree {
             let n = v.node;
             let is_selected = self.selected.as_deref() == Some(n.id.as_str());
             let branch = !n.children.is_empty();
-            let mut line = row().w_full().h_full().items_center().pl(sp.md as f32 + v.depth as f32 * sp.huge as f32).pr(sp.md as f32);
+            let mut line = row()
+                .w_full()
+                .h_full()
+                .items_center()
+                .pl(sp.md as f32 + v.depth as f32 * sp.huge as f32)
+                .pr(sp.md as f32);
             let mut chevron = if branch {
-                centered_glyph(t, if v.open { "\u{f0140}" } else { "\u{f0142}" }, tk.font.icon_small, t.dim(), slot)
+                centered_glyph(
+                    t,
+                    if v.open { "\u{f0140}" } else { "\u{f0142}" },
+                    tk.font.icon_small,
+                    t.dim(),
+                    slot,
+                )
             } else {
                 el().w(slot).h_full()
             };
@@ -160,15 +182,43 @@ impl Tree {
             line = line.child(chevron).child(el().w(sp.sm as f32));
             if let Some(g) = &n.glyph {
                 let ink = if is_selected { selected_ink } else { t.dim() };
-                line = line.child(row().w(icon as f32 + sp.md as f32).h_full().items_center().child(glyph(t, g, icon, ink)));
+                line = line.child(
+                    row()
+                        .w(icon as f32 + sp.md as f32)
+                        .h_full()
+                        .items_center()
+                        .child(glyph(t, g, icon, ink)),
+                );
             }
-            let style = if is_selected { t.text_style_bold(tk.font.body) } else { t.text_style(tk.font.body) };
-            line = line.child(text(n.label.clone()).font(style).color(if is_selected { selected_ink } else { t.fg() }).truncate().grow(1.0));
-            let mut base = el().w_full().h(h).role("treeitem").focusable(true).focus_selected(is_selected).label(n.label.clone());
+            let style = if is_selected {
+                t.text_style_bold(tk.font.body)
+            } else {
+                t.text_style(tk.font.body)
+            };
+            line = line.child(
+                text(n.label.clone())
+                    .font(style)
+                    .color(if is_selected { selected_ink } else { t.fg() })
+                    .truncate()
+                    .grow(1.0),
+            );
+            let mut base = el()
+                .w_full()
+                .h(h)
+                .role("treeitem")
+                .focusable(true)
+                .focus_selected(is_selected)
+                .label(n.label.clone());
             if branch {
                 base = base.expanded(v.open);
             }
-            let mut e = row_chrome(t, base, vec![line], is_selected, self.cursor.as_deref() == Some(n.id.as_str()));
+            let mut e = row_chrome(
+                t,
+                base,
+                vec![line],
+                is_selected,
+                self.cursor.as_deref() == Some(n.id.as_str()),
+            );
             if let Some(k) = &self.key {
                 e = e.key(format!("{k}-{}", n.id));
             }

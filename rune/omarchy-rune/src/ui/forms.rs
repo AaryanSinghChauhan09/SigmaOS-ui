@@ -15,12 +15,20 @@ type Access = Box<dyn FnOnce(El) -> El>;
 /// The rest and hot looks of a bordered input (TextField's ladder).
 pub(crate) fn input_looks(t: &Theme) -> (Look, Look) {
     let c = &t.tokens().controls;
-    (Look::new(c.normal.fill, c.normal.border.clone()), Look::new(c.hover.fill, c.hover.border.clone()))
+    (
+        Look::new(c.normal.fill, c.normal.border.clone()),
+        Look::new(c.hover.fill, c.hover.border.clone()),
+    )
 }
 
 /// One look as a layer filling its parent.
 pub(crate) fn layer(look: &Look, radius: f32) -> El {
-    border(el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).radius(radius).fill(color(look.fill)), &look.border)
+    border(
+        el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+            .radius(radius)
+            .fill(color(look.fill)),
+        &look.border,
+    )
 }
 
 /// The rest and hot layers of `rest`/`hot`, cross-faded by the nearest hover group, or the hot
@@ -29,7 +37,10 @@ pub(crate) fn state_layers(rest: &Look, hot: &Look, forced: bool, radius: f32) -
     if forced {
         vec![layer(hot, radius)]
     } else {
-        vec![layer(rest, radius).group_opacity(1.0, 0.0), layer(hot, radius).group_opacity(0.0, 1.0)]
+        vec![
+            layer(rest, radius).group_opacity(1.0, 0.0),
+            layer(hot, radius).group_opacity(0.0, 1.0),
+        ]
     }
 }
 
@@ -54,7 +65,14 @@ pub struct SettingRow {
 
 impl SettingRow {
     pub fn new(label: impl Into<String>) -> SettingRow {
-        SettingRow { label: label.into(), description: String::new(), control: None, cursor: false, disabled: false, width: None }
+        SettingRow {
+            label: label.into(),
+            description: String::new(),
+            control: None,
+            cursor: false,
+            disabled: false,
+            width: None,
+        }
     }
     pub fn description(mut self, d: impl Into<String>) -> Self {
         self.description = d.into();
@@ -84,14 +102,25 @@ impl SettingRow {
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
         let sp = &tk.spacing;
-        let (ink, dim) = if self.disabled { (t.faint(), t.faint()) } else { (t.fg(), t.dim()) };
-        let mut words = col()
-            .grow(1.0)
-            .min_w(0.0)
-            .gap(sp.xxs as f32)
-            .child(text(self.label.clone()).font(t.text_style(tk.font.body)).color(ink).single_line().truncate());
+        let (ink, dim) = if self.disabled {
+            (t.faint(), t.faint())
+        } else {
+            (t.fg(), t.dim())
+        };
+        let mut words = col().grow(1.0).min_w(0.0).gap(sp.xxs as f32).child(
+            text(self.label.clone())
+                .font(t.text_style(tk.font.body))
+                .color(ink)
+                .single_line()
+                .truncate(),
+        );
         if !self.description.is_empty() {
-            words = words.child(text(self.description).font(t.text_style(tk.font.caption)).color(dim).wrap());
+            words = words.child(
+                text(self.description)
+                    .font(t.text_style(tk.font.caption))
+                    .color(dim)
+                    .wrap(),
+            );
         }
         let pad_y = sp.md as f32;
         let mut r = row()
@@ -184,7 +213,11 @@ impl Checkbox {
         let line = tk.font.line_px(tk.font.body) as f32;
         let box_y = ((line - size) / 2.0).round().max(0.0);
         let text_y = ((size - line) / 2.0).round().max(0.0);
-        let radius = if self.exclusive { size / 2.0 } else { t.radius_small() };
+        let radius = if self.exclusive {
+            size / 2.0
+        } else {
+            t.radius_small()
+        };
 
         let rest = if self.checked {
             Look::new(c.selected.fill, c.selected.border.clone())
@@ -192,7 +225,11 @@ impl Checkbox {
             Look::new(c.normal.fill, c.normal.border.clone())
         };
         let hot = Look::new(c.hover.fill, c.hover.border.clone());
-        let layers = if self.disabled { vec![layer(&rest, radius)] } else { state_layers(&rest, &hot, self.cursor, radius) };
+        let layers = if self.disabled {
+            vec![layer(&rest, radius)]
+        } else {
+            state_layers(&rest, &hot, self.cursor, radius)
+        };
         let mut mark_box = el().size(size, size).center().mt(box_y).children(layers);
         if self.checked {
             mark_box = mark_box.child(if self.exclusive {
@@ -206,15 +243,30 @@ impl Checkbox {
             mark_box = mark_box.opacity(0.5);
         }
 
-        let (ink, dim) = if self.disabled { (t.faint(), t.faint()) } else { (t.fg(), t.dim()) };
+        let (ink, dim) = if self.disabled {
+            (t.faint(), t.faint())
+        } else {
+            (t.fg(), t.dim())
+        };
         let mut words = col()
             .mt(text_y)
             .min_w(0.0)
             .shrink()
             .gap(sp.xxs as f32)
-            .child(text(self.label.clone()).font(t.text_style(tk.font.body)).color(ink).single_line().truncate());
+            .child(
+                text(self.label.clone())
+                    .font(t.text_style(tk.font.body))
+                    .color(ink)
+                    .single_line()
+                    .truncate(),
+            );
         if !self.description.is_empty() {
-            words = words.child(text(self.description).font(t.text_style(tk.font.caption)).color(dim).wrap());
+            words = words.child(
+                text(self.description)
+                    .font(t.text_style(tk.font.caption))
+                    .color(dim)
+                    .wrap(),
+            );
         }
 
         let mut e = row()
@@ -259,9 +311,15 @@ pub struct RadioGroup {
 
 impl RadioGroup {
     /// `options` are (value, label) pairs.
-    pub fn new<V: Into<String>, L: Into<String>>(options: impl IntoIterator<Item = (V, L)>, value: impl Into<String>) -> RadioGroup {
+    pub fn new<V: Into<String>, L: Into<String>>(
+        options: impl IntoIterator<Item = (V, L)>,
+        value: impl Into<String>,
+    ) -> RadioGroup {
         RadioGroup {
-            options: options.into_iter().map(|(v, l)| (v.into(), l.into(), String::new())).collect(),
+            options: options
+                .into_iter()
+                .map(|(v, l)| (v.into(), l.into(), String::new()))
+                .collect(),
             value: value.into(),
             cursor: None,
             choose: None,
@@ -288,7 +346,10 @@ impl RadioGroup {
     }
 
     pub fn build(self, t: &Theme) -> El {
-        let mut g = col().gap(t.tokens().spacing.lg as f32).role("radiogroup").focus_group();
+        let mut g = col()
+            .gap(t.tokens().spacing.lg as f32)
+            .role("radiogroup")
+            .focus_group();
         let n = self.options.len();
         for (i, (value, label, description)) in self.options.into_iter().enumerate() {
             let r = Radio::new(label)
@@ -403,9 +464,16 @@ impl PasswordField {
         if t.tokens().reduce_motion {
             return;
         }
-        live.pulse([-t.space(8.0), 0.0], [0.0, 0.0], std::time::Duration::from_millis(35));
+        live.pulse(
+            [-t.space(8.0), 0.0],
+            [0.0, 0.0],
+            std::time::Duration::from_millis(35),
+        );
     }
-    pub fn on_edit<S: 'static>(mut self, f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static) -> Self {
+    pub fn on_edit<S: 'static>(
+        mut self,
+        f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static,
+    ) -> Self {
         self.access = Some(Box::new(move |e: El| e.on_edit(f)));
         self
     }
@@ -420,7 +488,11 @@ impl PasswordField {
         let error_ink = color(polkit.text_error);
         if self.error.is_some() {
             let w = (c.normal.border.max_width().max(1.0)) as f64;
-            let spec = BorderSpec { color: polkit.border_error.color, widths: [w; 4], gradient: None };
+            let spec = BorderSpec {
+                color: polkit.border_error.color,
+                widths: [w; 4],
+                gradient: None,
+            };
             rest.border = spec.clone();
             hot.border = spec;
         }
@@ -429,14 +501,34 @@ impl PasswordField {
         edit.set_secure(true);
         // The placeholder in textFaint, as every placeholder.
         let placeholder = self.placeholder.clone();
-        let mut input = bare_input(t, &edit, self.placeholder).placeholder(placeholder, t.faint()).revealed(self.revealed);
+        let mut input = bare_input(t, &edit, self.placeholder)
+            .placeholder(placeholder, t.faint())
+            .revealed(self.revealed);
         if let Some(access) = self.access {
             input = access(input);
         }
-        let lock = glyph(t, "\u{f023}", tk.font.body, if self.error.is_some() { error_ink } else { t.dim() });
+        let lock = glyph(
+            t,
+            "\u{f023}",
+            tk.font.body,
+            if self.error.is_some() {
+                error_ink
+            } else {
+                t.dim()
+            },
+        );
         let mut children = vec![lock, input];
         if self.revealable {
-            let eye = glyph(t, if self.revealed { "\u{f0209}" } else { "\u{f0208}" }, tk.font.body, t.dim());
+            let eye = glyph(
+                t,
+                if self.revealed {
+                    "\u{f0209}"
+                } else {
+                    "\u{f0208}"
+                },
+                tk.font.body,
+                t.dim(),
+            );
             let eye = el().role("button").label("Reveal").child(eye);
             children.push(match self.reveal {
                 Some(attach) => attach(eye),
@@ -459,13 +551,21 @@ impl PasswordField {
             Some(w) => base.w(w),
             None => base.w_full(),
         };
-        let mut field = base.children(state_layers(&rest, &hot, self.cursor, t.radius())).children(children);
+        let mut field = base
+            .children(state_layers(&rest, &hot, self.cursor, t.radius()))
+            .children(children);
         if let Some(live) = &self.shaker {
             field = field.live_offset(live.smooth(Spring::bouncy(0.14, 0.3)));
         }
-        let Some(message) = self.error else { return field };
+        let Some(message) = self.error else {
+            return field;
+        };
         let mut out = col().gap(sp.label_gap as f32).child(field).child(
-            text(message).font(t.text_style(tk.font.caption)).color(error_ink).wrap().role("alert"),
+            text(message)
+                .font(t.text_style(tk.font.caption))
+                .color(error_ink)
+                .wrap()
+                .role("alert"),
         );
         out = match self.width {
             Some(w) => out.w(w),
@@ -491,7 +591,15 @@ pub struct TextArea {
 
 impl TextArea {
     pub fn new(edit: &TextEdit) -> TextArea {
-        TextArea { edit: edit.clone(), placeholder: String::new(), width: None, min_rows: 3, max_rows: 6, cursor: false, access: None }
+        TextArea {
+            edit: edit.clone(),
+            placeholder: String::new(),
+            width: None,
+            min_rows: 3,
+            max_rows: 6,
+            cursor: false,
+            access: None,
+        }
     }
     pub fn placeholder(mut self, p: impl Into<String>) -> Self {
         self.placeholder = p.into();
@@ -511,7 +619,10 @@ impl TextArea {
         self.cursor = on;
         self
     }
-    pub fn on_edit<S: 'static>(mut self, f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static) -> Self {
+    pub fn on_edit<S: 'static>(
+        mut self,
+        f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static,
+    ) -> Self {
         self.access = Some(Box::new(move |e: El| e.on_edit(f)));
         self
     }
@@ -542,7 +653,7 @@ impl TextArea {
             Some(w) => base.w(w),
             None => base.w_full(),
         };
-        base.children(state_layers(&rest, &hot, self.cursor, t.radius())).child(viewport)
+        base.children(state_layers(&rest, &hot, self.cursor, t.radius()))
+            .child(viewport)
     }
 }
-

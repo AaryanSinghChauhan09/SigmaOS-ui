@@ -139,15 +139,29 @@ gallery! {
 
 fn section(t: &Theme, title: &str, body: Vec<El>) -> El {
     let sp = &t.tokens().spacing;
-    col().w_full().gap(sp.lg as f32).child(section_header(t, title)).child(col().w_full().gap(sp.xxl as f32).children(body))
+    col()
+        .w_full()
+        .gap(sp.lg as f32)
+        .child(section_header(t, title))
+        .child(col().w_full().gap(sp.xxl as f32).children(body))
 }
 
 fn view(s: &State, _cx: &mut Cx<State>) -> El {
     let t = &s.theme;
     let sp = &t.tokens().spacing;
     let mut layer = Vec::new();
-    let page = col().w_full().padding(sp.panel_padding as f32).gap(sp.huge as f32 * 2.0).children(sections(s, t, &mut layer));
-    let body = col().w_full().h_full().fill(t.bg()).child(page.scroll(rune::ScrollSpec { stick_bottom: false }).grow(1.0).min_h(0.0));
+    let page = col()
+        .w_full()
+        .padding(sp.panel_padding as f32)
+        .gap(sp.huge as f32 * 2.0)
+        .children(sections(s, t, &mut layer));
+    let body = col().w_full().h_full().fill(t.bg()).child(
+        page.scroll(rune::ScrollSpec {
+            stick_bottom: false,
+        })
+        .grow(1.0)
+        .min_h(0.0),
+    );
     rune_kit::root(body, layer)
 }
 
@@ -161,7 +175,10 @@ fn main() {
         return;
     }
     // Follows the theme (setup, poll, the per-frame apply and the font) through omarchy_rune.
-    omarchy_rune::run(AppSpec { scenes: SCENES, ..AppSpec::new("Omarchy UI · Rune", (WIDTH, 900.0), init, view) });
+    omarchy_rune::run(AppSpec {
+        scenes: SCENES,
+        ..AppSpec::new("Omarchy UI · Rune", (WIDTH, 900.0), init, view)
+    });
 }
 
 #[cfg(test)]
@@ -176,7 +193,9 @@ mod tests {
     }
 
     fn fixture(name: &str) -> Theme {
-        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/themes").join(name);
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/themes")
+            .join(name);
         let read = |f: &str| std::fs::read_to_string(dir.join(f)).unwrap_or_default();
         Theme::from_tokens(omarchy_theme::resolve(&omarchy_theme::Sources {
             colors: omarchy_theme::parse::parse_colors(&read("colors.toml")),
@@ -197,7 +216,15 @@ mod tests {
                 let mut s = init();
                 s.theme = fixture(&name);
                 s.section = Some(section);
-                let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+                let mut rt = Runtime::new(
+                    s,
+                    view,
+                    (WIDTH, 900.0),
+                    Env {
+                        system_dark: true,
+                        scale: 2.0,
+                    },
+                );
                 rt.frame(0.0);
             }
         }
@@ -209,7 +236,15 @@ mod tests {
         let mut s = init();
         s.theme = fixture("tokyo-night");
         s.section = Some("toggles");
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        let mut rt = Runtime::new(
+            s,
+            view,
+            (WIDTH, 900.0),
+            Env {
+                system_dark: true,
+                scale: 2.0,
+            },
+        );
         rt.frame(0.0);
         let before = rt.state.switches[0];
         let (x, y) = rt.find("switch-0").expect("the first switch");
@@ -234,11 +269,20 @@ mod tests {
         rt.pointer_down(x, y + 3.0);
         rt.pointer_up(x, y + 3.0);
         rt.frame(3.0 / 60.0);
-        rt.key(rune::KeyEvent { key: rune::Key::Down, mods: Default::default() });
+        rt.key(rune::KeyEvent {
+            key: rune::Key::Down,
+            mods: Default::default(),
+        });
         rt.frame(4.0 / 60.0);
-        rt.key(rune::KeyEvent { key: rune::Key::Text("j".into()), mods: Default::default() });
+        rt.key(rune::KeyEvent {
+            key: rune::Key::Text("j".into()),
+            mods: Default::default(),
+        });
         rt.frame(5.0 / 60.0);
-        assert!(rt.state.lists.cursor.is_at("rows", 6), "the still pointer doesn't pull the cursor back");
+        assert!(
+            rt.state.lists.cursor.is_at("rows", 6),
+            "the still pointer doesn't pull the cursor back"
+        );
     }
 
     /// The composed SearchList: typing filters, arrows move the cursor, Return activates the
@@ -247,7 +291,10 @@ mod tests {
     fn search_list_filters_moves_and_activates() {
         use rune::{Key, KeyEvent};
         let key = |rt: &mut Runtime<State>, k: Key, at: f64| {
-            rt.key(KeyEvent { key: k, mods: Default::default() });
+            rt.key(KeyEvent {
+                key: k,
+                mods: Default::default(),
+            });
             rt.frame(at);
         };
         let mut rt = runtime("composed");
@@ -258,12 +305,22 @@ mod tests {
         assert_eq!(rt.state.composed.picked.as_deref(), Some("Terminal theme"));
         key(&mut rt, Key::Text("i".into()), 4.0 / 60.0);
         assert_eq!(rt.state.composed.query.text, "termi");
-        assert_eq!(rt.state.composed.cursor.index(), 0, "a new query starts at the first match");
+        assert_eq!(
+            rt.state.composed.cursor.index(),
+            0,
+            "a new query starts at the first match"
+        );
         key(&mut rt, Key::Text("x".into()), 5.0 / 60.0);
-        assert!(rt.find("composed-search-row-0").is_none(), "nothing matches termix");
+        assert!(
+            rt.find("composed-search-row-0").is_none(),
+            "nothing matches termix"
+        );
         key(&mut rt, Key::Escape, 6.0 / 60.0);
         assert_eq!(rt.state.composed.query.text, "");
-        assert!(rt.find("composed-search-row-3").is_some(), "an empty query lists everything");
+        assert!(
+            rt.find("composed-search-row-3").is_some(),
+            "an empty query lists everything"
+        );
     }
 
     /// The rest of SearchList's keys, as `qt/tests/tst_searchlist.qml` drives Qt's: j, k, x and
@@ -275,7 +332,10 @@ mod tests {
         let mut at = 1.0 / 60.0;
         let mut key = |rt: &mut Runtime<State>, k: Key| {
             at += 1.0 / 60.0;
-            rt.key(KeyEvent { key: k, mods: Default::default() });
+            rt.key(KeyEvent {
+                key: k,
+                mods: Default::default(),
+            });
             rt.frame(at);
         };
         let text = |t: &str| Key::Text(t.into());
@@ -283,7 +343,16 @@ mod tests {
         press(&mut rt, "composed-search-filter");
         let c = |rt: &Runtime<State>| rt.state.composed.cursor.index();
 
-        for (k, want) in [(Key::Down, 2), (Key::Down, 3), (Key::Down, 3), (Key::Up, 2), (Key::Home, 0), (Key::End, 3), (Key::PageUp, 0), (Key::PageDown, 3)] {
+        for (k, want) in [
+            (Key::Down, 2),
+            (Key::Down, 3),
+            (Key::Down, 3),
+            (Key::Up, 2),
+            (Key::Home, 0),
+            (Key::End, 3),
+            (Key::PageUp, 0),
+            (Key::PageDown, 3),
+        ] {
             let name = format!("{k:?}");
             key(&mut rt, k);
             assert_eq!(c(&rt), want, "after {name}");
@@ -295,17 +364,30 @@ mod tests {
         for t in ["j", "k", " ", "x"] {
             key(&mut rt, text(t));
         }
-        assert_eq!(rt.state.composed.query.text, "termjk x", "j, k, Space and x are text");
-        assert_eq!(rt.state.composed.deleted.as_deref(), Some("Terminal theme"), "x didn't delete");
+        assert_eq!(
+            rt.state.composed.query.text, "termjk x",
+            "j, k, Space and x are text"
+        );
+        assert_eq!(
+            rt.state.composed.deleted.as_deref(),
+            Some("Terminal theme"),
+            "x didn't delete"
+        );
         assert!(rt.find("composed-search-row-0").is_none());
         key(&mut rt, Key::Enter);
-        assert_eq!(rt.state.composed.picked, None, "Return with no rows does nothing");
+        assert_eq!(
+            rt.state.composed.picked, None,
+            "Return with no rows does nothing"
+        );
 
         key(&mut rt, Key::Escape);
         assert_eq!(rt.state.composed.query.text, "");
         assert_eq!(rt.state.composed.closes, 0);
         key(&mut rt, Key::Escape);
-        assert_eq!(rt.state.composed.closes, 1, "Escape on an empty query asks to close");
+        assert_eq!(
+            rt.state.composed.closes, 1,
+            "Escape on an empty query asks to close"
+        );
     }
 
     /// The empty SearchList reads the catalog's no-matches line (the one Qt's I18n reads, from
@@ -318,14 +400,29 @@ mod tests {
             tokens.language = language.into();
             s.theme = Theme::from_tokens(tokens);
             s.section = Some("composed");
-            let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+            let mut rt = Runtime::new(
+                s,
+                view,
+                (WIDTH, 900.0),
+                Env {
+                    system_dark: true,
+                    scale: 2.0,
+                },
+            );
             rt.frame(0.0);
-            let want = omarchy_theme::strings::lookup(language, "common.noMatchesFor").unwrap().replace("%1", "zzz");
+            let want = omarchy_theme::strings::lookup(language, "common.noMatchesFor")
+                .unwrap()
+                .replace("%1", "zzz");
             if !line.is_empty() {
                 assert_eq!(want, line);
             }
             assert!(want.contains("zzz"));
-            assert!(rt.elements().iter().any(|e| e.text.as_deref() == Some(want.as_str())), "{language}: no {want:?} on screen");
+            assert!(
+                rt.elements()
+                    .iter()
+                    .any(|e| e.text.as_deref() == Some(want.as_str())),
+                "{language}: no {want:?} on screen"
+            );
         }
     }
 
@@ -342,17 +439,46 @@ mod tests {
                 tokens.language = language.into();
                 s.theme = Theme::from_tokens(tokens);
                 s.section = Some(section);
-                let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+                let mut rt = Runtime::new(
+                    s,
+                    view,
+                    (WIDTH, 900.0),
+                    Env {
+                        system_dark: true,
+                        scale: 2.0,
+                    },
+                );
                 rt.frame(0.0);
                 let els = rt.elements();
                 for w in want {
-                    let found = els.iter().any(|e| e.text.as_deref() == Some(w.as_str()) || e.label.as_deref() == Some(w.as_str()));
+                    let found = els.iter().any(|e| {
+                        e.text.as_deref() == Some(w.as_str())
+                            || e.label.as_deref() == Some(w.as_str())
+                    });
                     assert!(found, "{language}/{section}: no {w:?}");
                 }
             };
-            shows("surfaces", &[lookup(language, "common.cancel"), lookup(language, "common.confirm")]);
-            shows("pickers", &[lookup(language, "multiSelect.selectedCount").replace("%1", "4"), lookup(language, "common.search")]);
-            shows("layout", &[lookup(language, "clock.previousMonth"), lookup(language, "clock.nextMonth")]);
+            shows(
+                "surfaces",
+                &[
+                    lookup(language, "common.cancel"),
+                    lookup(language, "common.confirm"),
+                ],
+            );
+            shows(
+                "pickers",
+                &[
+                    lookup(language, "multiSelect.selectedCount").replace("%1", "4"),
+                    lookup(language, "common.search"),
+                ],
+            );
+            shows(
+                "layout",
+                &[
+                    lookup(language, "clock.previousMonth"),
+                    lookup(language, "clock.nextMonth"),
+                ],
+            );
         }
         assert_eq!(lookup("de", "common.cancel"), "Abbrechen");
     }
@@ -362,14 +488,24 @@ mod tests {
         let mut s = init();
         s.theme = fixture("tokyo-night");
         s.section = Some(section);
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        let mut rt = Runtime::new(
+            s,
+            view,
+            (WIDTH, 900.0),
+            Env {
+                system_dark: true,
+                scale: 2.0,
+            },
+        );
         rt.frame(0.0);
         rt
     }
 
     /// Click the element keyed `key`.
     fn press(rt: &mut Runtime<State>, key: &str) {
-        let (x, y) = rt.find(key).unwrap_or_else(|| panic!("no element keyed {key}"));
+        let (x, y) = rt
+            .find(key)
+            .unwrap_or_else(|| panic!("no element keyed {key}"));
         rt.pointer_down(x, y);
         rt.pointer_up(x, y);
         rt.frame(1.0 / 60.0);
@@ -407,7 +543,10 @@ mod tests {
                 "End" => Key::End,
                 c => Key::Text(c.into()),
             };
-            rt.key(KeyEvent { key, mods: Default::default() });
+            rt.key(KeyEvent {
+                key,
+                mods: Default::default(),
+            });
             // j and k are re-sent as Down and Up, which land on the next frame.
             for _ in 0..2 {
                 at += 1.0 / 60.0;
@@ -426,9 +565,15 @@ mod tests {
                 key(&mut rt, k);
             }
             if ran == "Sidebar" {
-                assert!(!rt.state.menus.sidebar, "j skips the disabled row to Sidebar and Enter flips it");
+                assert!(
+                    !rt.state.menus.sidebar,
+                    "j skips the disabled row to Sidebar and Enter flips it"
+                );
             } else if ran == "Word wrap" {
-                assert!(rt.state.menus.wrap, "Up from the first row wraps to the last");
+                assert!(
+                    rt.state.menus.wrap,
+                    "Up from the first row wraps to the last"
+                );
             } else {
                 assert_eq!(rt.state.menus.ran, Some(ran), "after {keys:?}");
             }
@@ -443,8 +588,12 @@ mod tests {
         let (x, _) = rt.find("night-light").expect("the pane's header switch");
         let sp = &rt.state.theme.tokens().spacing;
         // The page padding, the 240-wide Layers pane and the gap, then the 240-wide bordered pane.
-        let right = sp.panel_padding as f32 + 240.0 + sp.huge as f32 + 240.0 - sp.panel_padding as f32;
-        assert!(x > right - 40.0 && x < right, "the action ends the header, not the title ({x} vs {right})");
+        let right =
+            sp.panel_padding as f32 + 240.0 + sp.huge as f32 + 240.0 - sp.panel_padding as f32;
+        assert!(
+            x > right - 40.0 && x < right,
+            "the action ends the header, not the title ({x} vs {right})"
+        );
         assert!(rt.state.night_light);
         press(&mut rt, "night-light");
         assert!(!rt.state.night_light);
@@ -474,7 +623,10 @@ mod tests {
                     "End" => Key::End,
                     c => Key::Text(c.into()),
                 };
-                rt.key(KeyEvent { key, mods: Default::default() });
+                rt.key(KeyEvent {
+                    key,
+                    mods: Default::default(),
+                });
                 // A key a handler re-sends (an alias) lands on the next frame.
                 for _ in 0..2 {
                     *at += 1.0 / 60.0;
@@ -485,21 +637,47 @@ mod tests {
         let mut at = 1.0 / 60.0;
         let mut rt = pressed("navigation", "tab-1");
         assert_eq!(rt.state.navigation.tab, 1);
-        for (keys, want) in [(&["Right"][..], 2), (&["l"], 3), (&["Right"], 3), (&["h", "Left"], 1), (&["Home"], 0), (&["Left"], 0), (&["End"], 3), (&["Up", "Down"], 3)] {
+        for (keys, want) in [
+            (&["Right"][..], 2),
+            (&["l"], 3),
+            (&["Right"], 3),
+            (&["h", "Left"], 1),
+            (&["Home"], 0),
+            (&["Left"], 0),
+            (&["End"], 3),
+            (&["Up", "Down"], 3),
+        ] {
             walk(&mut rt, keys, &mut at);
             assert_eq!(rt.state.navigation.tab, want, "tabs after {keys:?}");
         }
 
         let mut rt = pressed("navigation", "rail-0");
         let last = 4;
-        for (keys, want) in [(&["Down"][..], 1), (&["j"], 2), (&["k", "Up"], 0), (&["Up"], 0), (&["End"], last), (&["Down"], last), (&["Home"], 0), (&["Right", "Left"], 0)] {
+        for (keys, want) in [
+            (&["Down"][..], 1),
+            (&["j"], 2),
+            (&["k", "Up"], 0),
+            (&["Up"], 0),
+            (&["End"], last),
+            (&["Down"], last),
+            (&["Home"], 0),
+            (&["Right", "Left"], 0),
+        ] {
             walk(&mut rt, keys, &mut at);
             assert_eq!(rt.state.navigation.panel, want, "rail after {keys:?}");
         }
 
         let mut rt = pressed("forms", "radio-top");
         assert_eq!(rt.state.forms.position, "top");
-        for (keys, want) in [(&["Down"][..], "bottom"), (&["j"], "hidden"), (&["Down"], "hidden"), (&["k"], "bottom"), (&["Up", "Up"], "top"), (&["Right"], "bottom"), (&["Left"], "top")] {
+        for (keys, want) in [
+            (&["Down"][..], "bottom"),
+            (&["j"], "hidden"),
+            (&["Down"], "hidden"),
+            (&["k"], "bottom"),
+            (&["Up", "Up"], "top"),
+            (&["Right"], "bottom"),
+            (&["Left"], "top"),
+        ] {
             walk(&mut rt, keys, &mut at);
             assert_eq!(rt.state.forms.position, want, "radios after {keys:?}");
         }
@@ -537,7 +715,10 @@ mod tests {
         let mut at = 1.0 / 60.0;
         let mut walk = |rt: &mut Runtime<State>, keys: &[Key]| {
             for k in keys {
-                rt.key(KeyEvent { key: k.clone(), mods: Default::default() });
+                rt.key(KeyEvent {
+                    key: k.clone(),
+                    mods: Default::default(),
+                });
                 for _ in 0..2 {
                     at += 1.0 / 60.0;
                     rt.frame(at);
@@ -553,15 +734,49 @@ mod tests {
         walk(&mut rt, &[text("m"), text("e"), text("s")]);
         assert_eq!(rt.state.pickers.search.text, "mes");
         walk(&mut rt, &[Key::Enter]);
-        assert_eq!(rt.state.pickers.notify, ["Mail", "Updates", "Messages"], "Return toggles the first match");
-        walk(&mut rt, &[Key::Backspace, Key::Backspace, Key::Backspace, Key::Down, text(" ")]);
-        assert_eq!(rt.state.pickers.notify, ["Mail", "Updates", "Messages", "Calendar"], "Down into the list, Space toggles");
+        assert_eq!(
+            rt.state.pickers.notify,
+            ["Mail", "Updates", "Messages"],
+            "Return toggles the first match"
+        );
+        walk(
+            &mut rt,
+            &[
+                Key::Backspace,
+                Key::Backspace,
+                Key::Backspace,
+                Key::Down,
+                text(" "),
+            ],
+        );
+        assert_eq!(
+            rt.state.pickers.notify,
+            ["Mail", "Updates", "Messages", "Calendar"],
+            "Down into the list, Space toggles"
+        );
         walk(&mut rt, &[text("j"), Key::Enter]);
-        assert_eq!(rt.state.pickers.notify, ["Updates", "Messages", "Calendar"], "j walks, Return toggles");
-        walk(&mut rt, &[Key::End, text("j"), text("j"), text("j"), text("j")]);
-        assert_eq!(rt.state.pickers.notify_row, Some(4), "stops at the last row");
-        walk(&mut rt, &[text("k"), text("k"), text("k"), text("k"), Key::Up]);
-        assert_eq!(rt.state.pickers.notify_row, None, "Up off the first row goes back to the search");
+        assert_eq!(
+            rt.state.pickers.notify,
+            ["Updates", "Messages", "Calendar"],
+            "j walks, Return toggles"
+        );
+        walk(
+            &mut rt,
+            &[Key::End, text("j"), text("j"), text("j"), text("j")],
+        );
+        assert_eq!(
+            rt.state.pickers.notify_row,
+            Some(4),
+            "stops at the last row"
+        );
+        walk(
+            &mut rt,
+            &[text("k"), text("k"), text("k"), text("k"), Key::Up],
+        );
+        assert_eq!(
+            rt.state.pickers.notify_row, None,
+            "Up off the first row goes back to the search"
+        );
         walk(&mut rt, &[Key::Escape]);
         assert!(!rt.state.pickers.notify_open, "Escape closes it");
         walk(&mut rt, &[Key::Down]);
@@ -591,7 +806,10 @@ mod tests {
         use rune::{Key, KeyEvent};
         fn walk(rt: &mut Runtime<State>, keys: &[Key], at: &mut f64) {
             for k in keys {
-                rt.key(KeyEvent { key: k.clone(), mods: Default::default() });
+                rt.key(KeyEvent {
+                    key: k.clone(),
+                    mods: Default::default(),
+                });
                 for _ in 0..2 {
                     *at += 1.0 / 60.0;
                     rt.frame(*at);
@@ -603,7 +821,11 @@ mod tests {
         assert_eq!(rt.state.data.row, 0);
         walk(&mut rt, &[Key::Down, Key::Enter], &mut at);
         assert_eq!(rt.state.data.row, 1);
-        walk(&mut rt, &[Key::End, Key::Down, Key::Text(" ".into())], &mut at);
+        walk(
+            &mut rt,
+            &[Key::End, Key::Down, Key::Text(" ".into())],
+            &mut at,
+        );
         let last = rt.state.data.row;
         assert!(last > 1, "End then Space chooses the last row");
         walk(&mut rt, &[Key::Home, Key::Up, Key::Enter], &mut at);
@@ -622,7 +844,10 @@ mod tests {
         walk(&mut rt, &[Key::Right], &mut at);
         assert!(open(&rt, "qt"), "and leaves an open one");
         walk(&mut rt, &[Key::Down, Key::Enter], &mut at);
-        assert_ne!(rt.state.data.node, "qt", "Down then Return chooses the next row");
+        assert_ne!(
+            rt.state.data.node, "qt",
+            "Down then Return chooses the next row"
+        );
     }
 
     /// The sidebar picks, the split handle drags, the calendar picks a day and steps months.
@@ -641,7 +866,10 @@ mod tests {
         assert_eq!(rt.state.layout.sidebar, 240.0);
 
         press(&mut rt, "cal-2026-11-20");
-        assert_eq!(rt.state.layout.day, omarchy_rune::ui::Date::new(2026, 11, 20));
+        assert_eq!(
+            rt.state.layout.day,
+            omarchy_rune::ui::Date::new(2026, 11, 20)
+        );
         press(&mut rt, "cal-next");
         assert_eq!(rt.state.layout.month, (2026, 12));
     }
@@ -655,15 +883,26 @@ mod tests {
         let mut rt = runtime("progress");
         rt.frame(0.225);
         let els = rt.elements();
-        let spinners: Vec<_> = els.iter().filter(|e| e.label.as_deref() == Some("Busy")).collect();
+        let spinners: Vec<_> = els
+            .iter()
+            .filter(|e| e.label.as_deref() == Some("Busy"))
+            .collect();
         assert_eq!(spinners.len(), 4, "the section's four spinners");
         let (turning, pulsing) = spinners.split_at(2);
         for s in turning {
-            let glyph = els.iter().find(|e| e.role == "icon" && e.parent.is_some_and(|p| std::ptr::eq(&els[p], *s)))
+            let glyph = els
+                .iter()
+                .find(|e| e.role == "icon" && e.parent.is_some_and(|p| std::ptr::eq(&els[p], *s)))
                 .expect("a turning spinner draws its glyph as an icon");
-            assert_eq!(glyph.rect, s.rect, "the glyph turns about the spinner square's middle");
+            assert_eq!(
+                glyph.rect, s.rect,
+                "the glyph turns about the spinner square's middle"
+            );
             let phase = glyph.loop_phase.expect("the glyph runs a loop");
-            assert!((phase - 0.225 / Spinner::TURN).abs() < 1e-6, "a quarter turn at 225 ms, not {phase}");
+            assert!(
+                (phase - 0.225 / Spinner::TURN).abs() < 1e-6,
+                "a quarter turn at 225 ms, not {phase}"
+            );
             assert_eq!(s.rect[2], s.rect[3], "a square");
         }
         for s in pulsing {
@@ -672,14 +911,31 @@ mod tests {
         }
 
         let mut s = init();
-        s.theme = Theme::from_tokens(omarchy_theme::Tokens { reduce_motion: true, ..fixture("tokyo-night").tokens().clone() });
+        s.theme = Theme::from_tokens(omarchy_theme::Tokens {
+            reduce_motion: true,
+            ..fixture("tokyo-night").tokens().clone()
+        });
         s.section = Some("progress");
-        let mut rt = Runtime::new(s, view, (WIDTH, 900.0), Env { system_dark: true, scale: 2.0 });
+        let mut rt = Runtime::new(
+            s,
+            view,
+            (WIDTH, 900.0),
+            Env {
+                system_dark: true,
+                scale: 2.0,
+            },
+        );
         rt.frame(0.0);
         rt.frame(0.3);
         let els = rt.elements();
-        assert!(!els.iter().any(|e| e.role == "icon"), "still spinners are text");
-        assert!(els.iter().all(|e| e.loop_phase.is_none_or(|p| p == 0.0)), "nothing loops");
+        assert!(
+            !els.iter().any(|e| e.role == "icon"),
+            "still spinners are text"
+        );
+        assert!(
+            els.iter().all(|e| e.loop_phase.is_none_or(|p| p == 0.0)),
+            "nothing loops"
+        );
     }
 
     /// Pressing a clip selects it; pressing a swatch picks its color.

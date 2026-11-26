@@ -11,7 +11,9 @@ use crate::parse::{parse_colors, parse_shell};
 use crate::resolve::{HyprValues, Sources};
 
 fn home() -> PathBuf {
-    std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("/"))
+    std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("/"))
 }
 
 /// `~/.local/state/omarchy/current`, the directory a theme switch swaps the theme into.
@@ -68,7 +70,10 @@ pub fn hypr_dir() -> Option<PathBuf> {
         if !dir.join(".socket.sock").exists() {
             continue;
         }
-        let t = entry.metadata().and_then(|m| m.modified()).unwrap_or(std::time::UNIX_EPOCH);
+        let t = entry
+            .metadata()
+            .and_then(|m| m.modified())
+            .unwrap_or(std::time::UNIX_EPOCH);
         if best.as_ref().is_none_or(|(bt, _)| t > *bt) {
             best = Some((t, dir));
         }
@@ -87,7 +92,8 @@ fn hypr_option(dir: &Path, name: &str) -> Option<serde_json::Value> {
 }
 
 fn first_number(css: &str) -> Option<f64> {
-    css.split(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-')).find_map(|t| t.parse().ok())
+    css.split(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-'))
+        .find_map(|t| t.parse().ok())
 }
 
 /// Hyprland's values, with `OMARCHY_UI_*` overrides on top. Falls back to the defaults when
@@ -127,14 +133,26 @@ pub fn hypr_values() -> HyprValues {
 
 /// The family `monospace` resolves to and its file, from `fc-match`.
 pub fn resolve_font(family: &str) -> (String, Option<PathBuf>) {
-    let out = Command::new("fc-match").args(["-f", "%{family[0]}\n%{file}", family]).output();
+    let out = Command::new("fc-match")
+        .args(["-f", "%{family[0]}\n%{file}", family])
+        .output();
     match out {
         Ok(o) if o.status.success() => {
             let s = String::from_utf8_lossy(&o.stdout);
             let mut lines = s.lines();
             let name = lines.next().unwrap_or(family).trim().to_string();
-            let file = lines.next().map(|f| PathBuf::from(f.trim())).filter(|p| p.exists());
-            (if name.is_empty() { family.to_string() } else { name }, file)
+            let file = lines
+                .next()
+                .map(|f| PathBuf::from(f.trim()))
+                .filter(|p| p.exists());
+            (
+                if name.is_empty() {
+                    family.to_string()
+                } else {
+                    name
+                },
+                file,
+            )
         }
         _ => (family.to_string(), None),
     }
@@ -148,13 +166,17 @@ pub fn load_sources() -> Sources {
     if !is_pinned() {
         shell.extend(parse_shell(&read(&user_shell_path())));
     }
-    let family = std::env::var("OMARCHY_UI_FONT_FAMILY").ok().filter(|f| !f.trim().is_empty());
+    let family = std::env::var("OMARCHY_UI_FONT_FAMILY")
+        .ok()
+        .filter(|f| !f.trim().is_empty());
     let (font_family, (resolved, file)) = match family {
         Some(f) => (f.clone(), resolve_font(&f)),
         None => ("monospace".to_string(), resolve_font("monospace")),
     };
     let theme_name = if is_pinned() {
-        dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
+        dir.file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default()
     } else {
         read(&current_dir().join("theme.name")).trim().to_string()
     };

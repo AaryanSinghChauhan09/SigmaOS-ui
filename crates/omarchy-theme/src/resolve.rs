@@ -22,7 +22,12 @@ pub struct HyprValues {
 impl Default for HyprValues {
     /// What the shell assumes before Hyprland answers: sharp corners and a 10px outer gap.
     fn default() -> Self {
-        Self { rounding: 0.0, gaps_out: 10.0, animations: true, border_size: 2.0 }
+        Self {
+            rounding: 0.0,
+            gaps_out: 10.0,
+            animations: true,
+            border_size: 2.0,
+        }
     }
 }
 
@@ -48,11 +53,22 @@ struct Ctx<'a> {
     v: &'a ShellValues,
 }
 
-const ROLES: &[&str] = &["foreground", "text", "accent", "urgent", "muted", "background", "transparent"];
+const ROLES: &[&str] = &[
+    "foreground",
+    "text",
+    "accent",
+    "urgent",
+    "muted",
+    "background",
+    "transparent",
+];
 
 impl Ctx<'_> {
     fn get(&self, key: &str) -> Option<&str> {
-        self.v.get(key).map(String::as_str).filter(|s| !s.is_empty())
+        self.v
+            .get(key)
+            .map(String::as_str)
+            .filter(|s| !s.is_empty())
     }
 
     fn role(&self, name: &str) -> Option<Rgba> {
@@ -78,7 +94,11 @@ impl Ctx<'_> {
     /// then a role or a literal.
     fn flat_color(&self, value: &str, fallback: Rgba) -> Rgba {
         let first = |s: &str| -> String {
-            s.split_whitespace().find(|w| !is_angle(w)).unwrap_or(s).trim().to_string()
+            s.split_whitespace()
+                .find(|w| !is_angle(w))
+                .unwrap_or(s)
+                .trim()
+                .to_string()
         };
         let mut token = first(value);
         let mut seen = std::collections::HashSet::new();
@@ -102,7 +122,13 @@ impl Ctx<'_> {
     }
 
     /// `Color.composed`: a color key with its `-alpha` companion, which replaces the alpha.
-    fn composed(&self, color_key: &str, alpha_key: &str, color_fallback: Rgba, alpha_fallback: f64) -> Rgba {
+    fn composed(
+        &self,
+        color_key: &str,
+        alpha_key: &str,
+        color_fallback: Rgba,
+        alpha_fallback: f64,
+    ) -> Rgba {
         let base = match self.get(color_key) {
             Some(raw) => self.flat_color(raw, color_fallback),
             None => color_fallback,
@@ -111,7 +137,8 @@ impl Ctx<'_> {
     }
 
     fn text(&self, key: &str, fallback: Rgba) -> Rgba {
-        self.get(key).map_or(fallback, |raw| self.flat_color(raw, fallback))
+        self.get(key)
+            .map_or(fallback, |raw| self.flat_color(raw, fallback))
     }
 
     /// `Border.resolveValueRef`: follow `section.key` references to their value.
@@ -140,16 +167,32 @@ impl Ctx<'_> {
     }
 
     /// `Border.borderValue`: a solid color or a gradient, falling back to `fallback` × opacity.
-    fn border_value(&self, raw: &str, fallback: Rgba, opacity: f64, legacy_gradient: &str) -> (Rgba, Option<Gradient>) {
+    fn border_value(
+        &self,
+        raw: &str,
+        fallback: Rgba,
+        opacity: f64,
+        legacy_gradient: &str,
+    ) -> (Rgba, Option<Gradient>) {
         let fb = fallback.times_alpha(opacity);
         let raw = raw.trim();
-        let primary = if raw.is_empty() { gradient_from(&[], fb) } else { self.gradient(raw, fb, opacity) };
+        let primary = if raw.is_empty() {
+            gradient_from(&[], fb)
+        } else {
+            self.gradient(raw, fb, opacity)
+        };
         let color = primary.0.first().copied().unwrap_or(fb);
-        let mut gradient = (primary.0.len() > 1).then(|| Gradient { colors: primary.0.clone(), angle: primary.1 });
+        let mut gradient = (primary.0.len() > 1).then(|| Gradient {
+            colors: primary.0.clone(),
+            angle: primary.1,
+        });
         if gradient.is_none() && !legacy_gradient.trim().is_empty() {
             let legacy = self.gradient(legacy_gradient, color, opacity);
             if legacy.0.len() > 1 {
-                gradient = Some(Gradient { colors: legacy.0, angle: legacy.1 });
+                gradient = Some(Gradient {
+                    colors: legacy.0,
+                    angle: legacy.1,
+                });
             }
         }
         (color, gradient)
@@ -172,12 +215,22 @@ impl Ctx<'_> {
     }
 
     fn value_or(&self, section: &str, keys: &[String]) -> Option<&str> {
-        keys.iter().find_map(|k| self.get(&format!("{section}.{k}")))
+        keys.iter()
+            .find_map(|k| self.get(&format!("{section}.{k}")))
     }
 
     /// `Border.surfaceSpec`.
-    fn surface_border(&self, section: &str, token: &str, fallback: Rgba, fallback_width: f64, alpha_key: Option<&str>) -> BorderSpec {
-        let alpha_key = alpha_key.map(str::to_string).unwrap_or_else(|| format!("{token}-alpha"));
+    fn surface_border(
+        &self,
+        section: &str,
+        token: &str,
+        fallback: Rgba,
+        fallback_width: f64,
+        alpha_key: Option<&str>,
+    ) -> BorderSpec {
+        let alpha_key = alpha_key
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("{token}-alpha"));
         let opacity = self.alpha_key(&format!("{section}.{alpha_key}"), 1.0);
         let keys = |suffix: &str| -> Vec<String> {
             if token == "border" {
@@ -195,20 +248,33 @@ impl Ctx<'_> {
                 widths[i] = side_override(v);
             }
         }
-        BorderSpec { color, widths, gradient }
+        BorderSpec {
+            color,
+            widths,
+            gradient,
+        }
     }
 }
 
 fn gradient_from(colors: &[Rgba], fallback: Rgba) -> (Vec<Rgba>, f64) {
-    if colors.is_empty() { (vec![fallback], 0.0) } else { (colors.to_vec(), 0.0) }
+    if colors.is_empty() {
+        (vec![fallback], 0.0)
+    } else {
+        (colors.to_vec(), 0.0)
+    }
 }
 
 fn is_angle(w: &str) -> bool {
-    w.strip_suffix("deg").is_some_and(|n| n.parse::<f64>().is_ok())
+    w.strip_suffix("deg")
+        .is_some_and(|n| n.parse::<f64>().is_ok())
 }
 
 fn is_ref(s: &str) -> bool {
-    let ok = |p: &str| !p.is_empty() && p.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-');
+    let ok = |p: &str| {
+        !p.is_empty()
+            && p.bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+    };
     s.split_once('.').is_some_and(|(a, b)| ok(a) && ok(b))
 }
 
@@ -218,8 +284,14 @@ fn side_override(v: &str) -> f64 {
 
 /// `BorderGeometry.parseWidthSpec`: `N`, `Y X`, `T X B` or `T R B L`.
 pub(crate) fn parse_widths(value: Option<&str>, fallback: f64) -> [f64; 4] {
-    let fb = if fallback.is_finite() && fallback >= 0.0 { fallback } else { 0.0 };
-    let Some(value) = value.filter(|v| !v.is_empty()) else { return [fb; 4] };
+    let fb = if fallback.is_finite() && fallback >= 0.0 {
+        fallback
+    } else {
+        0.0
+    };
+    let Some(value) = value.filter(|v| !v.is_empty()) else {
+        return [fb; 4];
+    };
     let mut nums: Vec<f64> = Vec::new();
     for tok in value.split(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-')) {
         if nums.len() == 4 {
@@ -245,7 +317,9 @@ fn int(raw: &str) -> Option<i64> {
         Some(rest) => (true, rest),
         None => (false, s),
     };
-    let end = digits.find(|c: char| !c.is_ascii_digit()).unwrap_or(digits.len());
+    let end = digits
+        .find(|c: char| !c.is_ascii_digit())
+        .unwrap_or(digits.len());
     let n: i64 = digits[..end].parse().ok()?;
     Some(if neg { -n } else { n })
 }
@@ -273,10 +347,19 @@ pub fn resolve(src: &Sources) -> Tokens {
     let x = Ctx { c, v };
 
     // ---- [controls] (or the legacy [style]); [controls] wins when both set a key.
-    let style = |key: &str| -> Option<&str> { x.get(&format!("controls.{key}")).or_else(|| x.get(&format!("style.{key}"))) };
+    let style = |key: &str| -> Option<&str> {
+        x.get(&format!("controls.{key}"))
+            .or_else(|| x.get(&format!("style.{key}")))
+    };
     let style_num = |key: &str, fb: f64| style(key).and_then(float).unwrap_or(fb);
     let style_alpha = |key: &str, fb: f64| clamp_alpha(style_num(key, fb));
-    let style_str = |key: &str, fb: &str| -> String { style(key).map(str::trim).filter(|s| !s.is_empty()).unwrap_or(fb).to_string() };
+    let style_str = |key: &str, fb: &str| -> String {
+        style(key)
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(fb)
+            .to_string()
+    };
 
     let normal_tok = style_str("normal-color", "foreground");
     let hover_tok = style_str("hover-cursor-color", "foreground");
@@ -296,7 +379,11 @@ pub fn resolve(src: &Sources) -> Tokens {
             _ => {
                 let t = token.trim();
                 let hexish = t.starts_with('#') && matches!(t.len(), 4 | 7 | 9);
-                if hexish { parse_color(t, 1.0).unwrap_or(fallback) } else { fallback }
+                if hexish {
+                    parse_color(t, 1.0).unwrap_or(fallback)
+                } else {
+                    fallback
+                }
             }
         }
     };
@@ -311,7 +398,9 @@ pub fn resolve(src: &Sources) -> Tokens {
     let selection_c = state_color(&selection_tok, c.foreground);
 
     let normal_w = style_num("normal-border-width", 1.0).round().max(0.0);
-    let hover_w = style_num("hover-cursor-border-width", normal_w).round().max(0.0);
+    let hover_w = style_num("hover-cursor-border-width", normal_w)
+        .round()
+        .max(0.0);
     let selected_w = style_num("selected-border-width", 0.0).round().max(0.0);
     let focus_w = style_num("focus-border-width", hover_w).round().max(0.0);
 
@@ -325,7 +414,11 @@ pub fn resolve(src: &Sources) -> Tokens {
                 widths[i] = side_override(v);
             }
         }
-        BorderSpec { color: col, widths, gradient }
+        BorderSpec {
+            color: col,
+            widths,
+            gradient,
+        }
     };
 
     let hover_border_alpha = style_alpha("hover-cursor-border-alpha", 0.25);
@@ -333,7 +426,12 @@ pub fn resolve(src: &Sources) -> Tokens {
     let controls = Controls {
         normal: StateTokens {
             fill: normal_c.with_alpha(style_alpha("normal-fill-alpha", 0.04)),
-            border: control_border("normal", normal_c, style_alpha("normal-border-alpha", 0.4), normal_w),
+            border: control_border(
+                "normal",
+                normal_c,
+                style_alpha("normal-border-alpha", 0.4),
+                normal_w,
+            ),
             text: c.foreground,
         },
         hover: StateTokens {
@@ -343,22 +441,40 @@ pub fn resolve(src: &Sources) -> Tokens {
         },
         focus: StateTokens {
             fill: focus_c.with_alpha(style_alpha("focus-fill-alpha", hover_fill_alpha)),
-            border: control_border("focus", focus_c, style_alpha("focus-border-alpha", hover_border_alpha), focus_w),
+            border: control_border(
+                "focus",
+                focus_c,
+                style_alpha("focus-border-alpha", hover_border_alpha),
+                focus_w,
+            ),
             text: c.foreground,
         },
         selected: StateTokens {
             fill: selected_c.with_alpha(style_alpha("selected-fill-alpha", 0.18)),
-            border: control_border("selected", selected_c, style_alpha("selected-border-alpha", 1.0), selected_w),
+            border: control_border(
+                "selected",
+                selected_c,
+                style_alpha("selected-border-alpha", 1.0),
+                selected_w,
+            ),
             text: selected_c,
         },
-        pressed: FillToken { fill: pressed_c.with_alpha(style_alpha("pressed-fill-alpha", 0.22)) },
-        selection: FillToken { fill: selection_c.with_alpha(style_alpha("selection-fill-alpha", 0.35)) },
+        pressed: FillToken {
+            fill: pressed_c.with_alpha(style_alpha("pressed-fill-alpha", 0.22)),
+        },
+        selection: FillToken {
+            fill: selection_c.with_alpha(style_alpha("selection-fill-alpha", 0.35)),
+        },
     };
 
     // ---- [font] and [spacing]
     let base = x.get("font.base-size").and_then(int).unwrap_or(12).max(1);
     let font_scale = (base as f64 / 12.0).max(1.0 / 12.0);
-    let spacing_scale = x.get("spacing.scale").and_then(float).filter(|n| *n >= 0.0).unwrap_or(1.0);
+    let spacing_scale = x
+        .get("spacing.scale")
+        .and_then(float)
+        .filter(|n| *n >= 0.0)
+        .unwrap_or(1.0);
     let with_font = bool_token(x.get("spacing.scale-with-font"), true);
     let eff = spacing_scale * if with_font { font_scale } else { 1.0 };
     let space = |px: f64| -> i64 {
@@ -384,7 +500,11 @@ pub fn resolve(src: &Sources) -> Tokens {
         family: src.font_family.clone(),
         resolved_family: src.resolved_font_family.clone(),
         file: src.font_file.clone(),
-        line_height: src.font_file.as_deref().and_then(crate::fontmetrics::line_height_ratio).unwrap_or(1.3),
+        line_height: src
+            .font_file
+            .as_deref()
+            .and_then(crate::fontmetrics::line_height_ratio)
+            .unwrap_or(1.3),
         base_size: base,
         caption: ft("caption", font_px(0.833)),
         body_small,
@@ -434,24 +554,51 @@ pub fn resolve(src: &Sources) -> Tokens {
     let card_w = space(2.0).max(1) as f64;
     let line_w = normal_w.max(1.0);
     let surface = |name: &str, bg: Rgba, bg_alpha: f64, border_fb: Rgba, width: f64| -> Surface {
-        let border_color = x.composed(&format!("{name}.border"), &format!("{name}.border-alpha"), border_fb, 1.0);
+        let border_color = x.composed(
+            &format!("{name}.border"),
+            &format!("{name}.border-alpha"),
+            border_fb,
+            1.0,
+        );
         Surface {
-            background: x.composed(&format!("{name}.background"), &format!("{name}.background-alpha"), bg, bg_alpha),
+            background: x.composed(
+                &format!("{name}.background"),
+                &format!("{name}.background-alpha"),
+                bg,
+                bg_alpha,
+            ),
             text: x.text(&format!("{name}.text"), c.foreground),
             border: x.surface_border(name, "border", border_color, width, None),
         }
     };
-    let menu_selected_border = x.composed("menu.selected-border", "menu.selected-border-alpha", c.foreground, 0.0);
-    let polkit_border_error = x.composed("polkit.border-error", "polkit.border-alpha", c.urgent, 1.0);
+    let menu_selected_border = x.composed(
+        "menu.selected-border",
+        "menu.selected-border-alpha",
+        c.foreground,
+        0.0,
+    );
+    let polkit_border_error =
+        x.composed("polkit.border-error", "polkit.border-alpha", c.urgent, 1.0);
     let surfaces = Surfaces {
         popups: surface("popups", c.background, 1.0, c.accent, card_w),
         tooltip: surface("tooltip", c.background, 1.0, c.foreground, line_w),
         menu: MenuSurface {
             base: surface("menu", c.background, 1.0, c.foreground, card_w),
             scrim: x.composed("menu.scrim", "menu.scrim-alpha", c.background, 0.5),
-            selected_background: x.composed("menu.selected-background", "menu.selected-background-alpha", c.foreground, 0.08),
+            selected_background: x.composed(
+                "menu.selected-background",
+                "menu.selected-background-alpha",
+                c.foreground,
+                0.08,
+            ),
             selected_text: x.text("menu.selected-text", c.accent),
-            selected_border: x.surface_border("menu", "selected-border", menu_selected_border, 0.0, None),
+            selected_border: x.surface_border(
+                "menu",
+                "selected-border",
+                menu_selected_border,
+                0.0,
+                None,
+            ),
         },
         notifications: NotificationSurface {
             base: surface("notifications", c.background, 1.0, c.accent, card_w),
@@ -459,7 +606,12 @@ pub fn resolve(src: &Sources) -> Tokens {
         },
         polkit: PolkitSurface {
             base: Surface {
-                background: x.composed("polkit.background", "polkit.background-alpha", c.background, 1.0),
+                background: x.composed(
+                    "polkit.background",
+                    "polkit.background-alpha",
+                    c.background,
+                    1.0,
+                ),
                 text: x.text("polkit.text", c.foreground),
                 border: x.surface_border(
                     "polkit",
@@ -470,14 +622,25 @@ pub fn resolve(src: &Sources) -> Tokens {
                 ),
             },
             text_error: x.text("polkit.text-error", c.urgent),
-            border_error: x.surface_border("polkit", "border-error", polkit_border_error, card_w, Some("border-alpha")),
+            border_error: x.surface_border(
+                "polkit",
+                "border-error",
+                polkit_border_error,
+                card_w,
+                Some("border-alpha"),
+            ),
             accent: x.text("polkit.accent", c.accent),
             scrim: x.composed("polkit.scrim", "polkit.scrim-alpha", c.background, 0.5),
         },
     };
 
     let mut named = c.named.clone();
-    for (k, val) in [("foreground", c.foreground), ("background", c.background), ("accent", c.accent), ("muted", c.muted)] {
+    for (k, val) in [
+        ("foreground", c.foreground),
+        ("background", c.background),
+        ("accent", c.accent),
+        ("muted", c.muted),
+    ] {
         named.entry(k.to_string()).or_insert(val);
     }
 
@@ -502,10 +665,18 @@ pub fn resolve(src: &Sources) -> Tokens {
             // base03). Otherwise derived toward the background: Qt's darker in a dark theme (the
             // shell's own factors), a mix in a light one, where darker would mean stronger.
             text_dim: c.dark_foreground.unwrap_or_else(|| {
-                if c.dark { c.foreground.darker(1.5) } else { c.foreground.mix(c.background, 1.0 / 3.0) }
+                if c.dark {
+                    c.foreground.darker(1.5)
+                } else {
+                    c.foreground.mix(c.background, 1.0 / 3.0)
+                }
             }),
             text_faint: c.muted_named.unwrap_or_else(|| {
-                if c.dark { c.foreground.darker(2.0) } else { c.foreground.mix(c.background, 0.5) }
+                if c.dark {
+                    c.foreground.darker(2.0)
+                } else {
+                    c.foreground.mix(c.background, 0.5)
+                }
             }),
             track: c.foreground.with_alpha(0.12),
             scrim: surfaces.menu.scrim,

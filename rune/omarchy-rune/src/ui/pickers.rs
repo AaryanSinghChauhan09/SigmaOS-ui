@@ -7,7 +7,7 @@ use std::rc::Rc;
 use omarchy_theme::Rgba;
 use rune::{Align, Color, El, Key, KeyEvent, Side, TextEdit, Tx, col, el, row, text};
 
-use super::forms::{bold_mark, input_looks, layer, bare_input, state_layers};
+use super::forms::{bare_input, bold_mark, input_looks, layer, state_layers};
 use super::{Attach, Look, glyph};
 use crate::{Theme, border, color};
 
@@ -52,7 +52,8 @@ trait Wire {
     fn input(&self, e: El, shown: Rc<Vec<String>>, choose: Option<Chooser>) -> El;
 }
 
-type Access<S> = Rc<dyn for<'a> Fn(&'a mut S) -> (&'a mut bool, &'a mut TextEdit, &'a mut Option<usize>)>;
+type Access<S> =
+    Rc<dyn for<'a> Fn(&'a mut S) -> (&'a mut bool, &'a mut TextEdit, &'a mut Option<usize>)>;
 
 struct Wiring<S> {
     access: Access<S>,
@@ -74,7 +75,9 @@ fn multiselect_key(
     in_field: bool,
 ) -> (bool, Option<String>) {
     let typed = match &k.key {
-        Key::Text(t) if !k.mods.ctrl && !k.mods.alt && !k.mods.logo && !k.mods.cmd => Some(t.as_str()),
+        Key::Text(t) if !k.mods.ctrl && !k.mods.alt && !k.mods.logo && !k.mods.cmd => {
+            Some(t.as_str())
+        }
         _ => None,
     };
     if !*open {
@@ -150,7 +153,11 @@ impl<S: 'static> Wire for Wiring<S> {
     }
 
     fn input(&self, e: El, shown: Rc<Vec<String>>, choose: Option<Chooser>) -> El {
-        let (edit, change, keys) = (self.access.clone(), self.access.clone(), self.access.clone());
+        let (edit, change, keys) = (
+            self.access.clone(),
+            self.access.clone(),
+            self.access.clone(),
+        );
         e.on_edit(move |s: &mut S| edit(s).1)
             .on_input_change(move |s: &mut S, _| *change(s).2 = None)
             .on_input_key(move |s: &mut S, k: &KeyEvent, _: &mut Tx| {
@@ -174,7 +181,10 @@ impl MultiSelect {
         MultiSelect {
             key: key.into(),
             label: String::new(),
-            options: options.into_iter().map(|(v, l)| (v.into(), l.into())).collect(),
+            options: options
+                .into_iter()
+                .map(|(v, l)| (v.into(), l.into()))
+                .collect(),
             values: values.into_iter().map(Into::into).collect(),
             open: false,
             cursor: false,
@@ -217,13 +227,21 @@ impl MultiSelect {
         self.search = Some(edit.clone());
         self
     }
-    pub fn on_search<S: 'static>(mut self, f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static) -> Self {
+    pub fn on_search<S: 'static>(
+        mut self,
+        f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static,
+    ) -> Self {
         self.search_access = Some(Box::new(move |e: El| e.on_edit(f)));
         self
     }
     /// The search placeholder, the trigger's text with nothing chosen, and the popup's text
     /// with nothing to show (by default the catalog's, in the display language, as Qt's).
-    pub fn texts(mut self, placeholder: impl Into<String>, none_selected: impl Into<String>, no_options: impl Into<String>) -> Self {
+    pub fn texts(
+        mut self,
+        placeholder: impl Into<String>,
+        none_selected: impl Into<String>,
+        no_options: impl Into<String>,
+    ) -> Self {
         self.texts = Some((placeholder.into(), none_selected.into(), no_options.into()));
         self
     }
@@ -251,7 +269,8 @@ impl MultiSelect {
     /// same values to `open`, `search` and `highlighted`.
     pub fn on_state<S: 'static>(
         mut self,
-        f: impl for<'a> Fn(&'a mut S) -> (&'a mut bool, &'a mut TextEdit, &'a mut Option<usize>) + 'static,
+        f: impl for<'a> Fn(&'a mut S) -> (&'a mut bool, &'a mut TextEdit, &'a mut Option<usize>)
+        + 'static,
     ) -> Self {
         self.wire = Some(Box::new(Wiring::<S> { access: Rc::new(f) }));
         self
@@ -259,10 +278,18 @@ impl MultiSelect {
 
     /// The values of the options the search shows, in order.
     fn shown_values(&self) -> Vec<String> {
-        let query = self.search.as_ref().map(|e| e.text.to_lowercase()).unwrap_or_default();
+        let query = self
+            .search
+            .as_ref()
+            .map(|e| e.text.to_lowercase())
+            .unwrap_or_default();
         self.options
             .iter()
-            .filter(|(v, l)| query.is_empty() || l.to_lowercase().contains(&query) || v.to_lowercase().contains(&query))
+            .filter(|(v, l)| {
+                query.is_empty()
+                    || l.to_lowercase().contains(&query)
+                    || v.to_lowercase().contains(&query)
+            })
             .map(|(v, _)| v.clone())
             .collect()
     }
@@ -272,9 +299,17 @@ impl MultiSelect {
             return String::new();
         }
         if self.values.len() > 3 {
-            return t.tokens().string("multiSelect.selectedCount", "%1 selected").replace("%1", &self.values.len().to_string());
+            return t
+                .tokens()
+                .string("multiSelect.selectedCount", "%1 selected")
+                .replace("%1", &self.values.len().to_string());
         }
-        let label = |v: &String| self.options.iter().find(|(o, _)| o == v).map_or_else(|| v.clone(), |(_, l)| l.clone());
+        let label = |v: &String| {
+            self.options
+                .iter()
+                .find(|(o, _)| o == v)
+                .map_or_else(|| v.clone(), |(_, l)| l.clone())
+        };
         self.values.iter().map(label).collect::<Vec<_>>().join(", ")
     }
 
@@ -296,9 +331,18 @@ impl MultiSelect {
                 tk.string("common.noOptions", "No options"),
             )
         });
-        let (words, words_ink) =
-            if chosen.is_empty() { (none_text, t.dim()) } else { (chosen, ink) };
-        let words = text(words).font(t.text_style(tk.font.body)).color(words_ink).single_line().truncate().grow(1.0).min_w(0.0);
+        let (words, words_ink) = if chosen.is_empty() {
+            (none_text, t.dim())
+        } else {
+            (chosen, ink)
+        };
+        let words = text(words)
+            .font(t.text_style(tk.font.body))
+            .color(words_ink)
+            .single_line()
+            .truncate()
+            .grow(1.0)
+            .min_w(0.0);
         let chevron = glyph(t, "\u{f0140}", tk.font.body, color(pop.text.darker(1.2)));
         let base = row()
             .key(self.key.clone())
@@ -312,7 +356,15 @@ impl MultiSelect {
             .label(self.label.clone())
             .expanded(self.open)
             .focusable(true);
-        let mut trigger = super::chrome(t, base, vec![words, chevron], &rest, &hot, self.cursor, t.radius());
+        let mut trigger = super::chrome(
+            t,
+            base,
+            vec![words, chevron],
+            &rest,
+            &hot,
+            self.cursor,
+            t.radius(),
+        );
         let shown = Rc::new(self.shown_values());
         if let Some(wire) = &self.wire {
             trigger = wire.trigger(trigger, shown.clone(), self.chooser.clone());
@@ -322,17 +374,31 @@ impl MultiSelect {
 
         if self.open {
             let access = self.search_access.take();
-            layer.push(self.popup(t, width, access, placeholder, empty_text).anchored(self.key.clone(), Side::Bottom, Align::Start, sp.xxs as f32));
+            layer.push(
+                self.popup(t, width, access, placeholder, empty_text)
+                    .anchored(self.key.clone(), Side::Bottom, Align::Start, sp.xxs as f32),
+            );
         }
 
         let mut out = col().gap(sp.label_gap as f32);
         if !self.label.is_empty() {
-            out = out.child(text(self.label.clone()).font(t.text_style_bold(tk.font.caption)).color(t.dim()));
+            out = out.child(
+                text(self.label.clone())
+                    .font(t.text_style_bold(tk.font.caption))
+                    .color(t.dim()),
+            );
         }
         out.child(trigger)
     }
 
-    fn popup(&self, t: &Theme, width: f32, access: Option<Box<dyn FnOnce(El) -> El>>, placeholder: String, empty_text: String) -> El {
+    fn popup(
+        &self,
+        t: &Theme,
+        width: f32,
+        access: Option<Box<dyn FnOnce(El) -> El>>,
+        placeholder: String,
+        empty_text: String,
+    ) -> El {
         let tk = t.tokens();
         let sp = &tk.spacing;
         let c = &tk.controls;
@@ -341,12 +407,20 @@ impl MultiSelect {
         let row_h = sp.popup_row_height as f32;
         let gap = sp.label_gap as f32;
 
-        let query = self.search.as_ref().map(|e| e.text.to_lowercase()).unwrap_or_default();
+        let query = self
+            .search
+            .as_ref()
+            .map(|e| e.text.to_lowercase())
+            .unwrap_or_default();
         let shown: Vec<(usize, &(String, String))> = self
             .options
             .iter()
             .enumerate()
-            .filter(|(_, (v, l))| query.is_empty() || l.to_lowercase().contains(&query) || v.to_lowercase().contains(&query))
+            .filter(|(_, (v, l))| {
+                query.is_empty()
+                    || l.to_lowercase().contains(&query)
+                    || v.to_lowercase().contains(&query)
+            })
             .collect();
 
         // The shell sizes the popup to its rows plus 50 for the search header, at most six rows.
@@ -376,14 +450,24 @@ impl MultiSelect {
             .hover_group_focus()
             .radius(t.radius());
         // The search field holds focus while the popup is open, so it wears the focus look.
-        let field = field_base.children(state_layers(&rest, &hot, true, t.radius())).child(input);
-        let header = col().w_full().h(header_h).padding(sp.md as f32).child(field);
+        let field = field_base
+            .children(state_layers(&rest, &hot, true, t.radius()))
+            .child(input);
+        let header = col()
+            .w_full()
+            .h(header_h)
+            .padding(sp.md as f32)
+            .child(field);
         let rule = el().w_full().h(1.0).fill(color(pop.text.with_alpha(0.10)));
 
         let list_h = height - 2.0 * pad - header_h - 1.0;
         let mut list = col().w_full().h(list_h.max(0.0)).gap(gap).clip_rounded(0.0);
         if shown.is_empty() {
-            list = list.center().child(text(empty_text).font(t.text_style(tk.font.body)).color(t.faint()));
+            list = list.center().child(
+                text(empty_text)
+                    .font(t.text_style(tk.font.body))
+                    .color(t.faint()),
+            );
         }
         let box_size = t.space(16.0);
         let box_radius = (t.radius() / 2.0).max(2.0);
@@ -394,9 +478,17 @@ impl MultiSelect {
             } else {
                 Look::new(Rgba::TRANSPARENT, c.normal.border.clone())
             };
-            let mut check = el().size(box_size, box_size).center().child(layer(&look, box_radius));
+            let mut check = el()
+                .size(box_size, box_size)
+                .center()
+                .child(layer(&look, box_radius));
             if selected {
-                check = check.child(bold_mark(t, "\u{2713}", (box_size * 0.85).round() as i64, color(c.selected.text)));
+                check = check.child(bold_mark(
+                    t,
+                    "\u{2713}",
+                    (box_size * 0.85).round() as i64,
+                    color(c.selected.text),
+                ));
             }
             let lit = self.highlighted == Some(row_index);
             let r = row()
@@ -405,20 +497,38 @@ impl MultiSelect {
                 .items_center()
                 .gap(sp.row_gap as f32)
                 .px(sp.control_padding_x as f32)
-                .fill(if lit { color(c.hover.fill) } else { Color::TRANSPARENT })
+                .fill(if lit {
+                    color(c.hover.fill)
+                } else {
+                    Color::TRANSPARENT
+                })
                 .key(format!("{}-{value}", self.key))
                 .role("menuitemcheckbox")
                 .label(label.clone())
                 .checked(selected)
                 .child(check)
-                .child(text(label.clone()).font(t.text_style(tk.font.body)).color(ink).single_line().truncate().grow(1.0).min_w(0.0));
+                .child(
+                    text(label.clone())
+                        .font(t.text_style(tk.font.body))
+                        .color(ink)
+                        .single_line()
+                        .truncate()
+                        .grow(1.0)
+                        .min_w(0.0),
+                );
             list = list.child(match &self.choose {
                 Some(attach) => attach(r, value.clone()),
                 None => r,
             });
         }
 
-        let p = col().w(width).h(height).padding(pad).fill(color(pop.background)).radius(t.radius()).role("listbox");
+        let p = col()
+            .w(width)
+            .h(height)
+            .padding(pad)
+            .fill(color(pop.background))
+            .radius(t.radius())
+            .role("listbox");
         border(p, &pop_border).child(header).child(rule).child(list)
     }
 }
@@ -435,7 +545,11 @@ pub struct ColorWell {
 
 impl ColorWell {
     pub fn new(swatch: Color) -> ColorWell {
-        ColorWell { swatch, cursor: false, press: None }
+        ColorWell {
+            swatch,
+            cursor: false,
+            press: None,
+        }
     }
     pub fn cursor(mut self, on: bool) -> Self {
         self.cursor = on;
@@ -458,9 +572,17 @@ impl ColorWell {
             .pin(Some(inset), Some(inset), Some(inset), Some(inset))
             .radius((r - sp.xxs as f32).max(0.0))
             .fill(self.swatch);
-        let well = border(el().size(w, h).radius(r).fill(color(c.normal.fill)), &c.normal.border).child(inner);
+        let well = border(
+            el().size(w, h).radius(r).fill(color(c.normal.fill)),
+            &c.normal.border,
+        )
+        .child(inner);
         let ring = layer(&Look::new(Rgba::TRANSPARENT, c.hover.border.clone()), r);
-        let ring = if self.cursor { ring } else { ring.group_opacity(0.0, 1.0) };
+        let ring = if self.cursor {
+            ring
+        } else {
+            ring.group_opacity(0.0, 1.0)
+        };
         let e = el()
             .size(w + pad * 2.0, h + pad * 2.0)
             .center()
@@ -490,7 +612,12 @@ pub struct SwatchStrip {
 
 impl SwatchStrip {
     pub fn new(colors: impl IntoIterator<Item = Color>, current: Option<usize>) -> SwatchStrip {
-        SwatchStrip { colors: colors.into_iter().collect(), current, cursor: None, pick: None }
+        SwatchStrip {
+            colors: colors.into_iter().collect(),
+            current,
+            cursor: None,
+            pick: None,
+        }
     }
     pub fn cursor(mut self, index: Option<usize>) -> Self {
         self.cursor = index;
@@ -516,18 +643,28 @@ impl SwatchStrip {
         let mut strip = row().gap(sp.xxs as f32).role("radiogroup").focus_group();
         for (i, swatch) in self.colors.into_iter().enumerate() {
             let chosen = self.current == Some(i);
-            let ring = el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).radius(ring_r);
+            let ring = el()
+                .pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+                .radius(ring_r);
             let ring = if chosen {
                 ring.border(ring_w, t.accent())
             } else if self.cursor == Some(i) {
                 ring.border(ring_w, color(tk.controls.hover.border.color))
             } else {
-                ring.border(ring_w, color(tk.controls.hover.border.color)).group_opacity(0.0, 1.0)
+                ring.border(ring_w, color(tk.controls.hover.border.color))
+                    .group_opacity(0.0, 1.0)
             };
             // A track-colored rim around the color (over the page, as Qt draws a translucent
             // border), so a swatch the color of the background still shows.
-            let fill = el().pin(Some(1.0), Some(1.0), Some(1.0), Some(1.0)).radius((r - 1.0).max(0.0)).fill(swatch);
-            let chip = el().size(size, size).radius(r).border(1.0, t.track()).child(fill);
+            let fill = el()
+                .pin(Some(1.0), Some(1.0), Some(1.0), Some(1.0))
+                .radius((r - 1.0).max(0.0))
+                .fill(swatch);
+            let chip = el()
+                .size(size, size)
+                .radius(r)
+                .border(1.0, t.track())
+                .child(fill);
             let e = el()
                 .size(cell, cell)
                 .center()

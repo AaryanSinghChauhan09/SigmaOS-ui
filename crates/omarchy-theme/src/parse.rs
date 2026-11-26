@@ -46,7 +46,11 @@ impl Default for ColorsFile {
 fn split_kv(line: &str) -> Option<(&str, &str)> {
     let (k, v) = line.split_once('=')?;
     let k = k.trim();
-    if k.is_empty() || !k.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-') {
+    if k.is_empty()
+        || !k
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+    {
         return None;
     }
     Some((k, v.trim()))
@@ -57,7 +61,9 @@ pub fn parse_colors(raw: &str) -> ColorsFile {
     let (mut fg, mut bg, mut accent, mut muted) = (None, None, None, None);
     let (mut urgent, mut success, mut warning) = (None, None, None);
     for line in raw.lines() {
-        let Some((key, value)) = split_kv(line) else { continue };
+        let Some((key, value)) = split_kv(line) else {
+            continue;
+        };
         let unquoted = value.trim_matches(|c| c == '"' || c == '\'');
         if key == "mode" {
             out.dark = !unquoted.eq_ignore_ascii_case("light");
@@ -68,7 +74,9 @@ pub fn parse_colors(raw: &str) -> ColorsFile {
         if v.len() < 7 || !v.starts_with('#') {
             continue;
         }
-        let Some(c) = parse_color(&v[..7], 1.0) else { continue };
+        let Some(c) = parse_color(&v[..7], 1.0) else {
+            continue;
+        };
         out.named.insert(key.to_string(), c);
         match key {
             "foreground" => fg = Some(c),
@@ -111,14 +119,18 @@ pub fn parse_shell(raw: &str) -> ShellValues {
                 let tail = tail.trim();
                 if (tail.is_empty() || tail.starts_with('#'))
                     && !name.is_empty()
-                    && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+                    && name
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
                 {
                     section = name.to_string();
                 }
             }
             continue;
         }
-        let Some((key, value)) = split_kv(line) else { continue };
+        let Some((key, value)) = split_kv(line) else {
+            continue;
+        };
         if section.is_empty() {
             continue;
         }
@@ -157,7 +169,9 @@ fn shell_value(v: &str) -> Option<String> {
         let int = parts.next().unwrap_or("");
         !int.is_empty()
             && int.bytes().all(|b| b.is_ascii_digit())
-            && parts.next().is_none_or(|f| !f.is_empty() && f.bytes().all(|b| b.is_ascii_digit()))
+            && parts
+                .next()
+                .is_none_or(|f| !f.is_empty() && f.bytes().all(|b| b.is_ascii_digit()))
     };
     let words: Vec<&str> = body.split_whitespace().collect();
     if words.len() == 1 && is_num(words[0]) {
@@ -167,7 +181,9 @@ fn shell_value(v: &str) -> Option<String> {
         return Some(words.join(" "));
     }
     let bare = body.starts_with(|c: char| c.is_ascii_alphabetic())
-        && body.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-');
+        && body
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-');
     bare.then(|| body.to_string())
 }
 
@@ -189,7 +205,9 @@ mod tests {
 
     #[test]
     fn colors_fallbacks() {
-        let c = parse_colors("color0 = \"#000000\"\ncolor7 = \"#eeeeee\"\ncolor4 = \"#0000ff\"\ncolor1 = \"#ff0000\"\n");
+        let c = parse_colors(
+            "color0 = \"#000000\"\ncolor7 = \"#eeeeee\"\ncolor4 = \"#0000ff\"\ncolor1 = \"#ff0000\"\n",
+        );
         assert_eq!(c.background, Rgba::rgb(0, 0, 0));
         assert_eq!(c.foreground, Rgba::rgb(0xee, 0xee, 0xee));
         assert_eq!(c.accent, Rgba::rgb(0, 0, 0xff));

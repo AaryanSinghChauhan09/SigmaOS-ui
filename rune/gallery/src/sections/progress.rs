@@ -16,7 +16,11 @@ pub fn build(_s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
             .child(marked(0.2).build(t))
             .child(marked(0.65).build(t))
             .child(marked(0.92).alarming(true).build(t)),
-        Meter::new(0.65).label("Battery").value_text("65%").width(360.0).build(t),
+        Meter::new(0.65)
+            .label("Battery")
+            .value_text("65%")
+            .width(360.0)
+            .build(t),
         row()
             .gap(gap)
             .child(ProgressBar::new(0.4).width(340.0).build(t))

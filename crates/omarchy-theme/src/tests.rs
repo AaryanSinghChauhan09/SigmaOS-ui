@@ -2,7 +2,9 @@ use super::*;
 use crate::parse::{parse_colors, parse_shell};
 
 fn fixture(name: &str) -> Tokens {
-    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/themes").join(name);
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/themes")
+        .join(name);
     let read = |f: &str| std::fs::read_to_string(dir.join(f)).unwrap_or_default();
     resolve(&Sources {
         colors: parse_colors(&read("colors.toml")),
@@ -75,8 +77,14 @@ fn light_themes_say_so() {
 #[test]
 fn base_size_scales_spacing_and_type() {
     let mut shell = parse_shell("[font]\nbase-size = 18\n");
-    shell.insert("controls.hover-cursor-border".into(), "rgba(33ccffee) rgba(00ff99ee) 45deg".into());
-    let t = resolve(&Sources { shell, ..Default::default() });
+    shell.insert(
+        "controls.hover-cursor-border".into(),
+        "rgba(33ccffee) rgba(00ff99ee) 45deg".into(),
+    );
+    let t = resolve(&Sources {
+        shell,
+        ..Default::default()
+    });
     assert_eq!(t.font.body, 18);
     assert_eq!(t.spacing.control_height, 42);
     let g = t.controls.hover.border.gradient.expect("gradient");
@@ -111,9 +119,21 @@ fn dim_and_faint_text_fall_back_to_the_foreground() {
     // Legacy short names count; canonical ones win wherever they sit.
     let c = parse_colors("dark_fg = \"#111111\"\ndark_foreground = \"#222222\"\n");
     assert_eq!(c.dark_foreground.unwrap().hex(), "#222222ff");
-    assert_eq!(parse_colors("dark_fg = \"#111111\"\n").dark_foreground.unwrap().hex(), "#111111ff");
+    assert_eq!(
+        parse_colors("dark_fg = \"#111111\"\n")
+            .dark_foreground
+            .unwrap()
+            .hex(),
+        "#111111ff"
+    );
     // color8 stands in for muted.
-    assert_eq!(parse_colors("color8 = \"#333333\"\n").muted_named.unwrap().hex(), "#333333ff");
+    assert_eq!(
+        parse_colors("color8 = \"#333333\"\n")
+            .muted_named
+            .unwrap()
+            .hex(),
+        "#333333ff"
+    );
     // Neither: derived from the foreground, as before.
     let c = parse_colors("foreground = \"#a9b1d6\"\nbackground = \"#1a1b26\"\n");
     assert_eq!((c.dark_foreground, c.muted_named), (None, None));

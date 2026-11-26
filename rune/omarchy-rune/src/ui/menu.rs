@@ -12,7 +12,11 @@ type Open = Box<dyn FnOnce(El, bool) -> El>;
 type Close = Box<dyn FnOnce(El, bool, bool) -> El>;
 
 /// The vim keys every menu walks with, as Qt's `Menu.handleKey` does.
-const VIM: crate::KeyMap = &[("j", Some(Key::Down)), ("k", Some(Key::Up)), ("l", Some(Key::Right))];
+const VIM: crate::KeyMap = &[
+    ("j", Some(Key::Down)),
+    ("k", Some(Key::Up)),
+    ("l", Some(Key::Right)),
+];
 
 /// One row of a Menu: an optional leading glyph, the label, a dim shortcut hint at the right, and
 /// a trailing mark: an accent check (or a radio dot) when checked, or a chevron when the row
@@ -118,7 +122,11 @@ impl MenuItem {
                 }
                 _ => false,
             });
-            if pressed { e } else { e.on_press(move |s: &mut S| f(s)) }
+            if pressed {
+                e
+            } else {
+                e.on_press(move |s: &mut S| f(s))
+            }
         }));
         self
     }
@@ -142,7 +150,11 @@ impl MenuItem {
         };
         let hot_ink = (enabled && !self.destructive).then(|| color(menu.selected_text));
         let forced = self.cursor && enabled;
-        let (ink, hover_ink) = if forced { (hot_ink.unwrap_or(rest_ink), None) } else { (rest_ink, hot_ink) };
+        let (ink, hover_ink) = if forced {
+            (hot_ink.unwrap_or(rest_ink), None)
+        } else {
+            (rest_ink, hot_ink)
+        };
 
         let mut kids = Vec::new();
         if reserve_icon {
@@ -151,7 +163,10 @@ impl MenuItem {
                 None => el().size(icon_box, h),
             });
         }
-        let mut label = text(self.label.clone()).font(t.text_style(tk.font.body)).color(ink).single_line();
+        let mut label = text(self.label.clone())
+            .font(t.text_style(tk.font.body))
+            .color(ink)
+            .single_line();
         if let Some(c) = hover_ink {
             label = label.group_color(c);
         }
@@ -162,17 +177,34 @@ impl MenuItem {
         kids.push(el().grow(1.0));
         if let Some(hint) = &self.shortcut {
             let ink = if enabled { t.dim() } else { t.faint() };
-            kids.push(text(hint.clone()).font(t.text_style(tk.font.body_small)).color(ink).single_line().ml(sp.huge as f32));
+            kids.push(
+                text(hint.clone())
+                    .font(t.text_style(tk.font.body_small))
+                    .color(ink)
+                    .single_line()
+                    .ml(sp.huge as f32),
+            );
         }
         if reserve_mark {
             let marked = self.checkable && self.checked;
             let mark = if marked {
                 let ink = if enabled { t.accent() } else { t.faint() };
-                let (glyph, size) = if self.exclusive { ("\u{25cf}", tk.font.caption) } else { ("\u{2713}", tk.font.body) };
+                let (glyph, size) = if self.exclusive {
+                    ("\u{25cf}", tk.font.caption)
+                } else {
+                    ("\u{2713}", tk.font.body)
+                };
                 optical(glyph, t.text_style(size), ink, None, mark_box, h)
             } else if self.submenu {
                 let ink = if enabled { t.dim() } else { t.faint() };
-                optical("\u{f054}", t.text_style(tk.font.icon_small), ink, None, mark_box, h)
+                optical(
+                    "\u{f054}",
+                    t.text_style(tk.font.icon_small),
+                    ink,
+                    None,
+                    mark_box,
+                    h,
+                )
             } else {
                 el().size(mark_box, h)
             };
@@ -244,7 +276,15 @@ pub struct Menu {
 
 impl Menu {
     pub fn new() -> Menu {
-        Menu { entries: Vec::new(), min_width: None, anchor: None, at: None, submenu: false, key: None, close: None }
+        Menu {
+            entries: Vec::new(),
+            min_width: None,
+            anchor: None,
+            at: None,
+            submenu: false,
+            key: None,
+            close: None,
+        }
     }
     pub fn item(mut self, item: MenuItem) -> Self {
         self.entries.push(Entry::Item(item));
@@ -306,7 +346,11 @@ impl Menu {
                 }
                 true
             });
-            if popup { e.modal(true, move |s: &mut S| f(s)) } else { e }
+            if popup {
+                e.modal(true, move |s: &mut S| f(s))
+            } else {
+                e
+            }
         }));
         self
     }
@@ -318,8 +362,14 @@ impl Menu {
         let bw = menu.base.border.widths.map(|w| w as f32);
         let pad = sp.sm as f32;
         let min_w = self.min_width.unwrap_or_else(|| t.space(160.0));
-        let reserve_icon = self.entries.iter().any(|e| matches!(e, Entry::Item(i) if i.icon.is_some()));
-        let reserve_mark = self.entries.iter().any(|e| matches!(e, Entry::Item(i) if i.checkable || i.submenu));
+        let reserve_icon = self
+            .entries
+            .iter()
+            .any(|e| matches!(e, Entry::Item(i) if i.icon.is_some()));
+        let reserve_mark = self
+            .entries
+            .iter()
+            .any(|e| matches!(e, Entry::Item(i) if i.checkable || i.submenu));
 
         let mut frame = col()
             .items_stretch()
@@ -339,8 +389,16 @@ impl Menu {
         for entry in self.entries {
             frame = frame.child(match entry {
                 Entry::Item(item) => item.build(t, reserve_icon, reserve_mark),
-                Entry::Separator => col().py(pad).items_stretch().child(el().h(1.0).fill(t.track())).a11y_hidden(),
-                Entry::Section(label) => col().pt(pad).pb(sp.xxs as f32).px(sp.control_padding_x as f32).child(section_header(t, label)),
+                Entry::Separator => col()
+                    .py(pad)
+                    .items_stretch()
+                    .child(el().h(1.0).fill(t.track()))
+                    .a11y_hidden(),
+                Entry::Section(label) => col()
+                    .pt(pad)
+                    .pb(sp.xxs as f32)
+                    .px(sp.control_padding_x as f32)
+                    .child(section_header(t, label)),
             });
         }
         let popup = self.anchor.is_some() || self.at.is_some();

@@ -19,7 +19,11 @@ pub struct Clip {
 
 impl Clip {
     pub fn new(start: f32, end: f32, label: impl Into<String>) -> Clip {
-        Clip { start, end, label: label.into() }
+        Clip {
+            start,
+            end,
+            label: label.into(),
+        }
     }
 }
 
@@ -49,7 +53,11 @@ impl TimelineView {
     pub fn clamped(self, zoom: f32, start: f32, max_zoom: f32) -> TimelineView {
         let zoom = zoom.clamp(1.0, max_zoom);
         let visible = self.duration / zoom;
-        TimelineView { zoom, start: start.clamp(0.0, (self.duration - visible).max(0.0)), ..self }
+        TimelineView {
+            zoom,
+            start: start.clamp(0.0, (self.duration - visible).max(0.0)),
+            ..self
+        }
     }
 }
 
@@ -137,22 +145,25 @@ impl Timeline {
     /// Scrubbing: the time under the pointer on the ruler or an empty lane, or a key's step.
     pub fn on_seek<S: 'static>(mut self, f: impl Fn(&mut S, f32) + 'static) -> Self {
         let f = Rc::new(f);
-        self.seek = Some(Rc::new(move |e: El, view: TimelineView, position: f32, major: f32| {
-            let drag = f.clone();
-            let key = f.clone();
-            e.on_drag(move |s: &mut S, d: &mut Drag, _tx| drag(s, view.time_at(d.x))).on_key(move |s: &mut S, k, _tx: &mut Tx| {
-                let step = if k.mods.shift { major } else { 1.0 };
-                let to = match k.key {
-                    Key::Left => position - step,
-                    Key::Right => position + step,
-                    Key::Home => 0.0,
-                    Key::End => view.duration,
-                    _ => return false,
-                };
-                key(s, to.clamp(0.0, view.duration));
-                true
-            })
-        }));
+        self.seek = Some(Rc::new(
+            move |e: El, view: TimelineView, position: f32, major: f32| {
+                let drag = f.clone();
+                let key = f.clone();
+                e.on_drag(move |s: &mut S, d: &mut Drag, _tx| drag(s, view.time_at(d.x)))
+                    .on_key(move |s: &mut S, k, _tx: &mut Tx| {
+                        let step = if k.mods.shift { major } else { 1.0 };
+                        let to = match k.key {
+                            Key::Left => position - step,
+                            Key::Right => position + step,
+                            Key::Home => 0.0,
+                            Key::End => view.duration,
+                            _ => return false,
+                        };
+                        key(s, to.clamp(0.0, view.duration));
+                        true
+                    })
+            },
+        ));
         self
     }
     /// A clip was pressed: its track and index.
@@ -166,22 +177,38 @@ impl Timeline {
     }
     /// A trim handle of the selected clip was dragged or nudged with the arrow keys (a point a
     /// press): its track, index, edge (`Left` or `Right`) and the new time for that edge.
-    pub fn on_trim<S: 'static>(mut self, f: impl Fn(&mut S, usize, usize, Edge, f32) + 'static) -> Self {
+    pub fn on_trim<S: 'static>(
+        mut self,
+        f: impl Fn(&mut S, usize, usize, Edge, f32) + 'static,
+    ) -> Self {
         let f = Rc::new(f);
-        self.trim = Some(Rc::new(move |h: TrimHandle, track: usize, clip: usize, edge: Edge, origin: f32, view: TimelineView| {
-            let (drag, nudge) = (f.clone(), f.clone());
-            h.on_drag(move |s: &mut S, d: &mut Drag| {
-                if d.phase == Phase::Down {
-                    d.data = origin;
-                    return;
-                }
-                let to = (d.data + d.dx / view.pixels_per_second()).clamp(0.0, view.duration);
-                drag(s, track, clip, edge, to);
-            })
-            .on_nudge(move |s: &mut S, dx, _dy| {
-                nudge(s, track, clip, edge, (origin + dx / view.pixels_per_second()).clamp(0.0, view.duration));
-            })
-        }));
+        self.trim = Some(Rc::new(
+            move |h: TrimHandle,
+                  track: usize,
+                  clip: usize,
+                  edge: Edge,
+                  origin: f32,
+                  view: TimelineView| {
+                let (drag, nudge) = (f.clone(), f.clone());
+                h.on_drag(move |s: &mut S, d: &mut Drag| {
+                    if d.phase == Phase::Down {
+                        d.data = origin;
+                        return;
+                    }
+                    let to = (d.data + d.dx / view.pixels_per_second()).clamp(0.0, view.duration);
+                    drag(s, track, clip, edge, to);
+                })
+                .on_nudge(move |s: &mut S, dx, _dy| {
+                    nudge(
+                        s,
+                        track,
+                        clip,
+                        edge,
+                        (origin + dx / view.pixels_per_second()).clamp(0.0, view.duration),
+                    );
+                })
+            },
+        ));
         self
     }
     /// The wheel zoomed: the new zoom and left-edge time.
@@ -196,7 +223,11 @@ impl Timeline {
                 }
                 let anchor = view.time_at(w.x);
                 let z = (view.zoom * 1.25f32.powf(steps)).clamp(1.0, max_zoom);
-                let next = view.clamped(z, anchor - w.x / (view.width * z / view.duration.max(0.001)), max_zoom);
+                let next = view.clamped(
+                    z,
+                    anchor - w.x / (view.width * z / view.duration.max(0.001)),
+                    max_zoom,
+                );
                 f(s, next.zoom, next.start);
                 true
             })
@@ -209,18 +240,33 @@ impl Timeline {
         let sp = &tk.spacing;
         let w = self.width.unwrap_or(t.space(720.0));
         let h = self.height.unwrap_or(t.space(160.0));
-        let view = TimelineView { duration: self.duration, zoom: self.zoom, start: self.start, width: w };
+        let view = TimelineView {
+            duration: self.duration,
+            zoom: self.zoom,
+            start: self.start,
+            width: w,
+        };
         let pps = view.pixels_per_second();
         let ruler_h = t.space(24.0);
         let lane_gap = sp.xs as f32;
         let inset = sp.xxs as f32;
         let small = t.radius_small();
         let n = self.tracks.len();
-        let lane_h = if n > 0 { ((h - ruler_h - lane_gap * (n as f32 - 1.0)) / n as f32).floor() } else { 0.0 };
+        let lane_h = if n > 0 {
+            ((h - ruler_h - lane_gap * (n as f32 - 1.0)) / n as f32).floor()
+        } else {
+            0.0
+        };
         let step = tick_step(pps, t.space(90.0));
         let end = self.start + view.visible();
 
-        let mut e = el().w(w).h(h).clip_rounded(0.0).focusable(true).role("slider").key("timeline");
+        let mut e = el()
+            .w(w)
+            .h(h)
+            .clip_rounded(0.0)
+            .focusable(true)
+            .role("slider")
+            .key("timeline");
 
         // ---- ruler: minor and major ticks, then labels
         let minor = step / 5.0;
@@ -231,7 +277,11 @@ impl Timeline {
             if time > self.duration + 1e-4 {
                 break;
             }
-            let th = if i % 5 == 0 { t.space(6.0) } else { t.space(3.0) };
+            let th = if i % 5 == 0 {
+                t.space(6.0)
+            } else {
+                t.space(3.0)
+            };
             let x = view.x_at(time).min(w - 1.0);
             e = e.child(el().absolute(x, ruler_h - th).size(1.0, th).fill(t.faint()));
         }
@@ -243,7 +293,13 @@ impl Timeline {
             let label = format_ruler(time, step);
             let lw = rune::text::advance(&label, style).ceil();
             let x = (view.x_at(time) - (lw / 2.0).round()).min(w - lw).max(0.0);
-            e = e.child(text(label).font(style).color(t.dim()).single_line().absolute(x, sp.xxs as f32));
+            e = e.child(
+                text(label)
+                    .font(style)
+                    .color(t.dim())
+                    .single_line()
+                    .absolute(x, sp.xxs as f32),
+            );
         }
 
         // ---- lanes and clips
@@ -253,7 +309,12 @@ impl Timeline {
         let pad = sp.control_padding_x as f32;
         for (ti, clips) in self.tracks.iter().enumerate() {
             let ly = ruler_h + ti as f32 * (lane_h + lane_gap);
-            e = e.child(el().absolute(0.0, ly).size(w, lane_h).radius(small).fill(color(c.normal.fill)));
+            e = e.child(
+                el().absolute(0.0, ly)
+                    .size(w, lane_h)
+                    .radius(small)
+                    .fill(color(c.normal.fill)),
+            );
             for (ci, clip) in clips.iter().enumerate() {
                 let selected = self.selected == Some((ti, ci));
                 let x = view.x_at(clip.start);
@@ -262,13 +323,24 @@ impl Timeline {
                 let (rest, hot) = if selected {
                     let look = Look::new(
                         c.selected.fill,
-                        BorderSpec { color: tk.palette.accent, widths: [1f64.max(t.space(2.0) as f64); 4], gradient: None },
+                        BorderSpec {
+                            color: tk.palette.accent,
+                            widths: [1f64.max(t.space(2.0) as f64); 4],
+                            gradient: None,
+                        },
                     );
                     (look.clone(), look)
                 } else {
-                    (Look::new(c.normal.fill, c.normal.border.clone()), Look::new(c.hover.fill, c.hover.border.clone()))
+                    (
+                        Look::new(c.normal.fill, c.normal.border.clone()),
+                        Look::new(c.hover.fill, c.hover.border.clone()),
+                    )
                 };
-                let label_style = if selected { t.text_style_bold(label_size) } else { t.text_style(label_size) };
+                let label_style = if selected {
+                    t.text_style_bold(label_size)
+                } else {
+                    t.text_style(label_size)
+                };
                 let label = text(clip.label.clone())
                     .font(label_style)
                     .color(t.fg())
@@ -276,7 +348,11 @@ impl Timeline {
                     .truncate()
                     .absolute(pad, ((ch - label_h) / 2.0).floor())
                     .w((cw - pad * 2.0).max(0.0));
-                let base = el().absolute(x, ly + inset).size(cw, ch).cursor(Cursor::Pointer).key(format!("clip-{ti}-{ci}"));
+                let base = el()
+                    .absolute(x, ly + inset)
+                    .size(cw, ch)
+                    .cursor(Cursor::Pointer)
+                    .key(format!("clip-{ti}-{ci}"));
                 let base = match &self.select {
                     Some(sel) => sel(base, ti, ci),
                     None => base,
@@ -286,7 +362,11 @@ impl Timeline {
                     for edge in [Edge::Left, Edge::Right] {
                         let mut handle = TrimHandle::new(edge).height(ch);
                         if let Some(trim) = &self.trim {
-                            let origin = if edge == Edge::Left { clip.start } else { clip.end };
+                            let origin = if edge == Edge::Left {
+                                clip.start
+                            } else {
+                                clip.end
+                            };
                             handle = trim(handle, ti, ci, edge, origin, view);
                         }
                         let hw = handle.size(t).0;
@@ -304,17 +384,35 @@ impl Timeline {
             let head_w = t.space(10.0);
             let head_h = t.space(10.0);
             let accent = tk.palette.accent;
-            let ink = if self.cursor { color(hot_accent(t, accent)) } else { color(accent) };
+            let ink = if self.cursor {
+                color(hot_accent(t, accent))
+            } else {
+                color(accent)
+            };
             let x = view.x_at(self.position) - (head_w / 2.0).round();
             let y = ruler_h - head_h;
             e = e
-                .child(el().absolute(x, y).size(head_w, head_h).radius(small).fill(ink))
-                .child(el().absolute(x + ((head_w - line_w) / 2.0).round(), ruler_h).size(line_w, h - ruler_h).fill(ink));
+                .child(
+                    el().absolute(x, y)
+                        .size(head_w, head_h)
+                        .radius(small)
+                        .fill(ink),
+                )
+                .child(
+                    el().absolute(x + ((head_w - line_w) / 2.0).round(), ruler_h)
+                        .size(line_w, h - ruler_h)
+                        .fill(ink),
+                );
         }
 
         if let Some(seek) = &self.seek {
             // Shift+arrow steps by the labeled ruler step, as Qt's tickStep.
-            e = seek(e, view, self.position, tick_step(view.pixels_per_second(), t.space(90.0)));
+            e = seek(
+                e,
+                view,
+                self.position,
+                tick_step(view.pixels_per_second(), t.space(90.0)),
+            );
         }
         if let Some(v) = &self.view {
             e = v(e, view, self.max_zoom);
@@ -327,7 +425,10 @@ impl Timeline {
 /// 30 min, 1 h at least `min_px` apart.
 fn tick_step(pps: f32, min_px: f32) -> f32 {
     let target = min_px / pps.max(0.001);
-    const STEPS: [f32; 16] = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 30.0, 60.0, 120.0, 300.0, 600.0, 900.0, 1800.0, 3600.0];
+    const STEPS: [f32; 16] = [
+        0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 30.0, 60.0, 120.0, 300.0, 600.0, 900.0, 1800.0,
+        3600.0,
+    ];
     STEPS.into_iter().find(|s| *s >= target).unwrap_or(3600.0)
 }
 
@@ -348,7 +449,11 @@ fn format_ruler(seconds: f32, step: f32) -> String {
 pub(crate) fn format_clock(seconds: f32) -> String {
     let s = seconds.max(0.0).floor() as i64;
     let (h, m, sec) = (s / 3600, (s % 3600) / 60, s % 60);
-    if h > 0 { format!("{h}:{m:02}:{sec:02}") } else { format!("{m}:{sec:02}") }
+    if h > 0 {
+        format!("{h}:{m:02}:{sec:02}")
+    } else {
+        format!("{m}:{sec:02}")
+    }
 }
 
 /// A media transport scrub: elapsed time, a one-track position bar (the Slider's metrics, the
@@ -363,7 +468,13 @@ pub struct Scrubber {
 
 impl Scrubber {
     pub fn new(position: f32, duration: f32) -> Scrubber {
-        Scrubber { position, duration, width: None, cursor: false, seek: None }
+        Scrubber {
+            position,
+            duration,
+            width: None,
+            cursor: false,
+            seek: None,
+        }
     }
     /// Default `space(360)`.
     pub fn width(mut self, w: f32) -> Self {
@@ -378,26 +489,28 @@ impl Scrubber {
     /// Pressing or dragging the bar, or Left/Right (5 s, Shift 30 s), Home/End.
     pub fn on_seek<S: 'static>(mut self, f: impl Fn(&mut S, f32) + 'static) -> Self {
         let f = Rc::new(f);
-        self.seek = Some(Rc::new(move |e: El, inset: f32, duration: f32, position: f32| {
-            let drag = f.clone();
-            let key = f.clone();
-            e.on_drag(move |s: &mut S, d: &mut Drag, _tx| {
-                let frac = ((d.x - inset) / (d.w - inset * 2.0).max(1.0)).clamp(0.0, 1.0);
-                drag(s, frac * duration)
-            })
-            .on_key(move |s: &mut S, k, _tx: &mut Tx| {
-                let step = if k.mods.shift { 30.0 } else { 5.0 };
-                let to = match k.key {
-                    Key::Left => position - step,
-                    Key::Right => position + step,
-                    Key::Home => 0.0,
-                    Key::End => duration,
-                    _ => return false,
-                };
-                key(s, to.clamp(0.0, duration));
-                true
-            })
-        }));
+        self.seek = Some(Rc::new(
+            move |e: El, inset: f32, duration: f32, position: f32| {
+                let drag = f.clone();
+                let key = f.clone();
+                e.on_drag(move |s: &mut S, d: &mut Drag, _tx| {
+                    let frac = ((d.x - inset) / (d.w - inset * 2.0).max(1.0)).clamp(0.0, 1.0);
+                    drag(s, frac * duration)
+                })
+                .on_key(move |s: &mut S, k, _tx: &mut Tx| {
+                    let step = if k.mods.shift { 30.0 } else { 5.0 };
+                    let to = match k.key {
+                        Key::Left => position - step,
+                        Key::Right => position + step,
+                        Key::Home => 0.0,
+                        Key::End => duration,
+                        _ => return false,
+                    };
+                    key(s, to.clamp(0.0, duration));
+                    true
+                })
+            },
+        ));
         self
     }
 
@@ -418,7 +531,11 @@ impl Scrubber {
         let bar_x = ew + gap;
         let bar_w = w - tw - gap - bar_x;
         let track_w = bar_w - knob;
-        let progress = if self.duration > 0.0 { (self.position / self.duration).clamp(0.0, 1.0) } else { 0.0 };
+        let progress = if self.duration > 0.0 {
+            (self.position / self.duration).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
         let mid = h / 2.0;
         let ty = ((h - line) / 2.0).floor();
 
@@ -441,17 +558,47 @@ impl Scrubber {
             .range_value(self.position as f64, 0.0, self.duration as f64)
             .cursor(Cursor::Pointer)
             .key("scrubber")
-            .child(el().absolute(knob / 2.0, mid - track_h / 2.0).size(track_w, track_h).radius(track_h / 2.0).fill(t.track()))
-            .child(el().absolute(knob / 2.0, mid - track_h / 2.0).size(played, track_h).radius(track_h / 2.0).fill(t.fg()))
-            .child(if self.cursor { knob_at(1.15) } else { knob_at(1.0).group_opacity(1.0, 0.0) })
-            .child(if self.cursor { el() } else { knob_at(1.15).group_opacity(0.0, 1.0) });
+            .child(
+                el().absolute(knob / 2.0, mid - track_h / 2.0)
+                    .size(track_w, track_h)
+                    .radius(track_h / 2.0)
+                    .fill(t.track()),
+            )
+            .child(
+                el().absolute(knob / 2.0, mid - track_h / 2.0)
+                    .size(played, track_h)
+                    .radius(track_h / 2.0)
+                    .fill(t.fg()),
+            )
+            .child(if self.cursor {
+                knob_at(1.15)
+            } else {
+                knob_at(1.0).group_opacity(1.0, 0.0)
+            })
+            .child(if self.cursor {
+                el()
+            } else {
+                knob_at(1.15).group_opacity(0.0, 1.0)
+            });
         if let Some(seek) = &self.seek {
             bar = seek(bar, knob / 2.0, self.duration, self.position);
         }
         el().w(w)
             .h(h)
-            .child(text(elapsed).font(style).color(t.dim()).single_line().absolute(0.0, ty))
+            .child(
+                text(elapsed)
+                    .font(style)
+                    .color(t.dim())
+                    .single_line()
+                    .absolute(0.0, ty),
+            )
             .child(bar)
-            .child(text(total).font(style).color(t.dim()).single_line().absolute(w - tw, ty))
+            .child(
+                text(total)
+                    .font(style)
+                    .color(t.dim())
+                    .single_line()
+                    .absolute(w - tw, ty),
+            )
     }
 }

@@ -36,7 +36,10 @@ fn main() {
         let name = args.get(i + 1).map(String::as_str).unwrap_or("");
         let size = args.get(i + 2).and_then(|s| s.parse().ok()).unwrap_or(48);
         let found = omarchy_theme::icons::IconLookup::current().find(name, size);
-        println!("{}", found.map(|p| p.display().to_string()).unwrap_or_default());
+        println!(
+            "{}",
+            found.map(|p| p.display().to_string()).unwrap_or_default()
+        );
         return;
     }
     if let Some(i) = args.iter().position(|a| a == "--icons") {
@@ -44,7 +47,12 @@ fn main() {
         let icons = omarchy_theme::icons::IconLookup::current();
         let found: serde_json::Map<String, serde_json::Value> = args[(i + 2).min(args.len())..]
             .iter()
-            .map(|n| (n.clone(), icons.find(n, size).map(|p| p.display().to_string()).into()))
+            .map(|n| {
+                (
+                    n.clone(),
+                    icons.find(n, size).map(|p| p.display().to_string()).into(),
+                )
+            })
             .collect();
         println!("{}", serde_json::Value::Object(found));
         return;
@@ -54,13 +62,20 @@ fn main() {
         return;
     }
     if has("--strings") {
-        println!("{}", omarchy_theme::strings::table_json(&omarchy_theme::strings::language()));
+        println!(
+            "{}",
+            omarchy_theme::strings::table_json(&omarchy_theme::strings::language())
+        );
         return;
     }
 
     let state = has("--state");
     let line = move |t: &omarchy_theme::Tokens, revision: u64| {
-        if state { t.to_state_json(revision) } else { t.to_canonical_json_compact() }
+        if state {
+            t.to_state_json(revision)
+        } else {
+            t.to_canonical_json_compact()
+        }
     };
     let tokens = omarchy_theme::load();
     if !has("--watch") {

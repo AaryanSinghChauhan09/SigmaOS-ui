@@ -203,7 +203,9 @@ impl ListRow {
     /// The pointer moved over the row, at a window point: pass it to
     /// [`CursorModel::pointer_moved`].
     pub fn on_pointer_move<S: 'static>(mut self, f: impl Fn(&mut S, f32, f32) + 'static) -> Self {
-        self.pointer = Some(Box::new(move |e: El| e.on_pointer_move(move |s: &mut S, p| f(s, p.x, p.y))));
+        self.pointer = Some(Box::new(move |e: El| {
+            e.on_pointer_move(move |s: &mut S, p| f(s, p.x, p.y))
+        }));
         self
     }
 
@@ -213,8 +215,16 @@ impl ListRow {
         let sp = &tk.spacing;
         let f = &tk.font;
         let faint = tk.roles.text_faint;
-        let ink = if self.disabled { faint } else { tk.palette.foreground };
-        let dim = if self.disabled { faint } else { tk.roles.text_dim };
+        let ink = if self.disabled {
+            faint
+        } else {
+            tk.palette.foreground
+        };
+        let dim = if self.disabled {
+            faint
+        } else {
+            tk.roles.text_dim
+        };
 
         let (fill, edge) = if self.cursor {
             (c.hover.fill, c.hover.border.clone())
@@ -234,18 +244,46 @@ impl ListRow {
             (None, true) => None,
         };
         if let Some(e) = lead {
-            body = body.child(row().w(lead_width(t)).justify_center().items_center().child(e)).child(el().w(t.space(10.0)));
+            body = body
+                .child(
+                    row()
+                        .w(lead_width(t))
+                        .justify_center()
+                        .items_center()
+                        .child(e),
+                )
+                .child(el().w(t.space(10.0)));
         }
 
         let mut info = col().grow(1.0).min_w(0.0).gap(t.space(1.0)).child(
-            text(self.title.clone()).font(t.text_style_bold(f.body)).color(color(ink)).single_line().truncate(),
+            text(self.title.clone())
+                .font(t.text_style_bold(f.body))
+                .color(color(ink))
+                .single_line()
+                .truncate(),
         );
         if !self.subtitle.is_empty() {
-            info = info.child(text(self.subtitle).font(t.text_style(f.caption)).color(color(dim)).single_line().truncate());
+            info = info.child(
+                text(self.subtitle)
+                    .font(t.text_style(f.caption))
+                    .color(color(dim))
+                    .single_line()
+                    .truncate(),
+            );
         }
         if !self.status.is_empty() {
-            let tint = if self.disabled { faint } else { self.tone.rgba(t, tk.roles.text_dim) };
-            info = info.child(text(self.status).font(t.text_style(f.caption)).color(color(tint)).single_line().truncate());
+            let tint = if self.disabled {
+                faint
+            } else {
+                self.tone.rgba(t, tk.roles.text_dim)
+            };
+            info = info.child(
+                text(self.status)
+                    .font(t.text_style(f.caption))
+                    .color(color(tint))
+                    .single_line()
+                    .truncate(),
+            );
         }
         body = body.child(info);
 
@@ -256,7 +294,12 @@ impl ListRow {
         if let Some(e) = self.trailing {
             trail.push(e);
         } else if !self.value.is_empty() {
-            trail.push(text(self.value).font(t.text_style(f.body_small)).color(color(dim)).single_line());
+            trail.push(
+                text(self.value)
+                    .font(t.text_style(f.body_small))
+                    .color(color(dim))
+                    .single_line(),
+            );
         }
         // The end slot: the trailing glyph at rest, the action in its place while it shows (under
         // the cursor, or the pointer through the row's hover group).
@@ -267,27 +310,56 @@ impl ListRow {
             let mut slot = row().size(side, side).center().radius(t.radius());
             if has_action && self.action_cursor && !self.disabled {
                 // The cursor look in the action's own ink, whatever color the theme gives the cursor.
-                let tone = if self.action_urgent { tk.palette.urgent } else { tk.palette.foreground };
+                let tone = if self.action_urgent {
+                    tk.palette.urgent
+                } else {
+                    tk.palette.foreground
+                };
                 let w = c.hover.border.max_width();
-                slot = border(slot.fill(color(tone.with_alpha(c.hover.fill.alpha_f() as f64))), &BorderSpec {
-                    color: tone.with_alpha(c.hover.border.color.alpha_f() as f64),
-                    widths: [w; 4],
-                    gradient: None,
-                });
+                slot = border(
+                    slot.fill(color(tone.with_alpha(c.hover.fill.alpha_f() as f64))),
+                    &BorderSpec {
+                        color: tone.with_alpha(c.hover.border.color.alpha_f() as f64),
+                        widths: [w; 4],
+                        gradient: None,
+                    },
+                );
             }
             if !self.trailing_glyph.is_empty() {
-                let tint = if self.disabled { faint } else { self.trailing_tone.rgba(t, tk.roles.text_dim) };
+                let tint = if self.disabled {
+                    faint
+                } else {
+                    self.trailing_tone.rgba(t, tk.roles.text_dim)
+                };
                 let mark = glyph(t, &self.trailing_glyph, f.subtitle, color(tint));
                 let rest = if shown { 0.0 } else { 1.0 };
-                let hovered = if has_action && !self.disabled { 0.0 } else { rest };
+                let hovered = if has_action && !self.disabled {
+                    0.0
+                } else {
+                    rest
+                };
                 // Stacked under the action, centered in the slot.
-                slot = slot.child(row().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).center().child(mark).group_opacity(rest, hovered));
+                slot = slot.child(
+                    row()
+                        .pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+                        .center()
+                        .child(mark)
+                        .group_opacity(rest, hovered),
+                );
             }
             if has_action {
-                let ink = if self.action_urgent { tk.palette.urgent } else { tk.roles.text_dim };
+                let ink = if self.action_urgent {
+                    tk.palette.urgent
+                } else {
+                    tk.roles.text_dim
+                };
                 let rest = if shown { 1.0 } else { 0.0 };
                 let mark = glyph(t, &self.action, f.subtitle, color(ink));
-                slot = slot.role("button").child(if self.disabled { mark.opacity(0.0) } else { mark.group_opacity(rest, 1.0) });
+                slot = slot.role("button").child(if self.disabled {
+                    mark.opacity(0.0)
+                } else {
+                    mark.group_opacity(rest, 1.0)
+                });
                 if let Some(attach) = self.action_press {
                     slot = attach(slot);
                 }
@@ -351,7 +423,13 @@ pub struct ScrollArea {
 impl ScrollArea {
     /// `key` names the viewport, for `Tx::scroll_to_y` and the like.
     pub fn new(key: impl Into<String>) -> ScrollArea {
-        ScrollArea { key: key.into(), max_height: None, width: None, gap: 0.0, children: Vec::new() }
+        ScrollArea {
+            key: key.into(),
+            max_height: None,
+            width: None,
+            gap: 0.0,
+            children: Vec::new(),
+        }
     }
     pub fn max_height(mut self, h: f32) -> Self {
         self.max_height = Some(h);
@@ -395,7 +473,9 @@ impl ScrollArea {
             .w_full()
             .gap(self.gap)
             .children(self.children)
-            .scroll(ScrollSpec { stick_bottom: false })
+            .scroll(ScrollSpec {
+                stick_bottom: false,
+            })
             .on_scroll_offset(move |at: ScrollPos| {
                 pos_w.set(at);
                 let track = at.viewport[1];
@@ -462,14 +542,22 @@ pub struct KeyValue {
 
 impl KeyValue {
     pub fn new() -> KeyValue {
-        KeyValue { pairs: Vec::new(), columns: 1 }
+        KeyValue {
+            pairs: Vec::new(),
+            columns: 1,
+        }
     }
     pub fn pair(mut self, label: impl Into<String>, value: impl Into<String>) -> Self {
         self.pairs.push((label.into(), value.into(), Tone::Neutral));
         self
     }
     /// A pair whose value is tinted (a packet loss in urgent).
-    pub fn pair_toned(mut self, label: impl Into<String>, value: impl Into<String>, tone: Tone) -> Self {
+    pub fn pair_toned(
+        mut self,
+        label: impl Into<String>,
+        value: impl Into<String>,
+        tone: Tone,
+    ) -> Self {
         self.pairs.push((label.into(), value.into(), tone));
         self
     }
@@ -489,9 +577,15 @@ impl KeyValue {
             let mut column = col().gap(tk.spacing.label_gap as f32);
             for (label, value, tone) in self.pairs.iter().skip(c / 2).step_by(n) {
                 column = column.child(if c % 2 == 0 {
-                    text(label.clone()).font(t.text_style(size)).color(t.dim()).single_line()
+                    text(label.clone())
+                        .font(t.text_style(size))
+                        .color(t.dim())
+                        .single_line()
                 } else {
-                    text(value.clone()).font(t.text_style(size)).color(color(tone.rgba(t, tk.palette.foreground))).single_line()
+                    text(value.clone())
+                        .font(t.text_style(size))
+                        .color(color(tone.rgba(t, tk.palette.foreground)))
+                        .single_line()
                 });
             }
             grid = grid.child(column);
@@ -519,7 +613,14 @@ pub struct Hero {
 
 impl Hero {
     pub fn new(glyph: impl Into<String>, title: impl Into<String>) -> Hero {
-        Hero { glyph: glyph.into(), title: title.into(), status: String::new(), error: false, glyph_opacity: 1.0, trailing: None }
+        Hero {
+            glyph: glyph.into(),
+            title: title.into(),
+            status: String::new(),
+            error: false,
+            glyph_opacity: 1.0,
+            trailing: None,
+        }
     }
     pub fn status(mut self, s: impl Into<String>) -> Self {
         self.status = s.into();
@@ -543,13 +644,23 @@ impl Hero {
         let tk = t.tokens();
         let f = &tk.font;
         let mut labels = col().grow(1.0).min_w(0.0).gap(t.space(2.0)).child(
-            text(self.title).font(t.text_style_bold(f.title)).color(t.fg()).single_line().truncate(),
+            text(self.title)
+                .font(t.text_style_bold(f.title))
+                .color(t.fg())
+                .single_line()
+                .truncate(),
         );
         if !self.status.is_empty() {
             let ink = if self.error { t.urgent() } else { t.dim() };
             let mut style = t.text_style_bold(f.caption);
             style.tracking = 1.2;
-            labels = labels.child(text(self.status.to_uppercase()).font(style).color(ink).single_line().truncate());
+            labels = labels.child(
+                text(self.status.to_uppercase())
+                    .font(style)
+                    .color(ink)
+                    .single_line()
+                    .truncate(),
+            );
         }
         let mut e = row()
             .w_full()

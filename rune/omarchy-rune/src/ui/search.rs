@@ -27,7 +27,10 @@ pub struct SearchItem {
 
 impl SearchItem {
     pub fn new(title: impl Into<String>) -> SearchItem {
-        SearchItem { title: title.into(), ..Default::default() }
+        SearchItem {
+            title: title.into(),
+            ..Default::default()
+        }
     }
     pub fn subtitle(mut self, s: impl Into<String>) -> Self {
         self.subtitle = s.into();
@@ -70,7 +73,11 @@ struct Wiring<S> {
 
 impl<S: 'static> Wire for Wiring<S> {
     fn input(&self, e: El, list: &str, count: usize, cb: Callbacks) -> El {
-        let (edit, keys, change) = (self.access.clone(), self.access.clone(), self.access.clone());
+        let (edit, keys, change) = (
+            self.access.clone(),
+            self.access.clone(),
+            self.access.clone(),
+        );
         let list = list.to_string();
         e.on_edit(move |s: &mut S| edit(s).0)
             .on_input_change(move |s: &mut S, _| {
@@ -105,7 +112,9 @@ impl<S: 'static> Wire for Wiring<S> {
                     CursorKey::Close => (&cb.close, 0),
                     CursorKey::Text(_) | CursorKey::Ignored => return false,
                 };
-                if count > 0 && let Some(f) = call {
+                if count > 0
+                    && let Some(f) = call
+                {
                     f(s, at);
                 }
                 true
@@ -242,7 +251,10 @@ impl SearchList {
         self
     }
     /// Where the app keeps the query and the cursor, so typing and the keys reach them.
-    pub fn on_state<S: 'static>(mut self, f: impl for<'a> Fn(&'a mut S) -> (&'a mut TextEdit, &'a mut CursorModel) + 'static) -> Self {
+    pub fn on_state<S: 'static>(
+        mut self,
+        f: impl for<'a> Fn(&'a mut S) -> (&'a mut TextEdit, &'a mut CursorModel) + 'static,
+    ) -> Self {
         self.wire = Some(Box::new(Wiring::<S> { access: Rc::new(f) }));
         self
     }
@@ -267,11 +279,16 @@ impl SearchList {
         let bw = menu.border.widths.map(|w| w as f32);
         let pad = sp.panel_padding as f32;
         let (w, h) = self.size.unwrap_or((t.space(480.0), t.space(360.0)));
-        let header_h = t.space(34.0).max((f.title + sp.control_padding_y * 2) as f32);
+        let header_h = t
+            .space(34.0)
+            .max((f.title + sp.control_padding_y * 2) as f32);
         let inner_w = w - bw[1] - bw[3] - pad * 2.0;
         let body_h = h - bw[0] - bw[2] - pad * 2.0 - header_h - sp.md as f32;
         let n = self.items.len();
-        let cursor = self.cursor.map(|i| i.min(n.saturating_sub(1))).filter(|_| n > 0);
+        let cursor = self
+            .cursor
+            .map(|i| i.min(n.saturating_sub(1)))
+            .filter(|_| n > 0);
 
         // The filter line: heading-sized menu text, the placeholder dim, no caret (the list owns
         // Left and Right, so the line only grows at its end).
@@ -282,7 +299,11 @@ impl SearchList {
             .grow(1.0)
             .min_w(0.0)
             .color(color(menu.text))
-            .placeholder(self.placeholder.unwrap_or_else(|| tk.string("common.search", "Search...")), t.faint())
+            .placeholder(
+                self.placeholder
+                    .unwrap_or_else(|| tk.string("common.search", "Search...")),
+                t.faint(),
+            )
             .caret(rune::Color::TRANSPARENT, color(tk.controls.selection.fill));
         if let Some(wire) = &self.wire {
             input = wire.input(input, &self.key, n, self.cb.clone());
@@ -294,16 +315,30 @@ impl SearchList {
                 self.empty_text
             } else {
                 // The catalog's line takes the query as `%1`, as Qt's `arg` does; a caller's as `{}`.
-                let line = self.no_matches.unwrap_or_else(|| tk.string("common.noMatchesFor", "No matches for “%1”"));
-                line.replace("{}", &self.query.text).replace("%1", &self.query.text)
+                let line = self
+                    .no_matches
+                    .unwrap_or_else(|| tk.string("common.noMatchesFor", "No matches for “%1”"));
+                line.replace("{}", &self.query.text)
+                    .replace("%1", &self.query.text)
             };
-            el().w_full().h(body_h).center().child(EmptyState::new(title).glyph(self.empty_glyph).overlay(true).build(t))
+            el().w_full().h(body_h).center().child(
+                EmptyState::new(title)
+                    .glyph(self.empty_glyph)
+                    .overlay(true)
+                    .build(t),
+            )
         } else {
             let gap = sp.xxl as f32;
             let detail_w = self.detail_width.unwrap_or((inner_w * 0.45).floor());
-            let list_w = if self.detail { inner_w - detail_w - gap * 2.0 - 1.0 } else { inner_w };
+            let list_w = if self.detail {
+                inner_w - detail_w - gap * 2.0 - 1.0
+            } else {
+                inner_w
+            };
             let rows = self.items.iter().enumerate().map(|(i, item)| {
-                let mut r = ListRow::new(item.title.clone()).key(format!("{}-row-{i}", self.key)).cursor(cursor == Some(i));
+                let mut r = ListRow::new(item.title.clone())
+                    .key(format!("{}-row-{i}", self.key))
+                    .cursor(cursor == Some(i));
                 if !item.glyph.is_empty() {
                     r = r.glyph(item.glyph.clone());
                 }
@@ -319,7 +354,12 @@ impl SearchList {
                     None => e,
                 }
             });
-            let list = ScrollArea::new(format!("{}-scroll", self.key)).width(list_w).max_height(body_h).gap(sp.xxs as f32).children(rows).build(t);
+            let list = ScrollArea::new(format!("{}-scroll", self.key))
+                .width(list_w)
+                .max_height(body_h)
+                .gap(sp.xxs as f32)
+                .children(rows)
+                .build(t);
             let mut b = row().w_full().h(body_h).items_start().child(list);
             if self.detail {
                 let pane = match self.detail_el {
@@ -329,8 +369,20 @@ impl SearchList {
                         col()
                             .w_full()
                             .gap(sp.sm as f32)
-                            .child(text(item.title).font(t.text_style_bold(f.title)).color(color(menu.text)).single_line().truncate())
-                            .child(text(item.detail).font(t.text_style(f.body)).color(t.dim()).wrap().w_full())
+                            .child(
+                                text(item.title)
+                                    .font(t.text_style_bold(f.title))
+                                    .color(color(menu.text))
+                                    .single_line()
+                                    .truncate(),
+                            )
+                            .child(
+                                text(item.detail)
+                                    .font(t.text_style(f.body))
+                                    .color(t.dim())
+                                    .wrap()
+                                    .w_full(),
+                            )
                     }
                 };
                 b = b

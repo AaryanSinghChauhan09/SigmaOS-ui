@@ -103,10 +103,17 @@ pub fn key_name(k: &rune::Key) -> Option<&str> {
 
 fn aliases<S: 'static>(e: El, map: KeyMap) -> El {
     e.on_key(move |_: &mut S, k: &rune::KeyEvent, tx: &mut rune::Tx| {
-        let Some(name) = key_name(&k.key) else { return false };
-        let Some((_, to)) = map.iter().find(|(from, _)| *from == name) else { return false };
+        let Some(name) = key_name(&k.key) else {
+            return false;
+        };
+        let Some((_, to)) = map.iter().find(|(from, _)| *from == name) else {
+            return false;
+        };
         if let Some(to) = to {
-            tx.send_key(rune::KeyEvent { key: to.clone(), mods: k.mods });
+            tx.send_key(rune::KeyEvent {
+                key: to.clone(),
+                mods: k.mods,
+            });
         }
         true
     })
@@ -121,7 +128,16 @@ impl Theme {
     pub fn from_tokens(tokens: Tokens) -> Theme {
         let family = family_for(&tokens);
         let kit = build_kit(&tokens, family);
-        Theme { tokens, revision: 0, kit, family, inbox: Arc::default(), watch: None, icons: Arc::default(), aliases: Arc::default() }
+        Theme {
+            tokens,
+            revision: 0,
+            kit,
+            family,
+            inbox: Arc::default(),
+            watch: None,
+            icons: Arc::default(),
+            aliases: Arc::default(),
+        }
     }
 
     /// Start following the desktop: theme switches, `omarchy font set`, `omarchy display text
@@ -139,7 +155,9 @@ impl Theme {
     /// in effect when it returns, and [`Theme::revision`] has gone up by one. This changes the
     /// theme only: [`Theme::poll_tx`] also tells Rune how to animate the change.
     pub fn poll(&mut self) -> bool {
-        let Some(fresh) = self.inbox.lock().unwrap().take() else { return false };
+        let Some(fresh) = self.inbox.lock().unwrap().take() else {
+            return false;
+        };
         // The icon store carries over: it re-resolves by itself when the icon theme changed.
         *self = Theme {
             revision: self.revision + 1,
@@ -198,7 +216,9 @@ impl Theme {
         if self.tokens.reduce_motion {
             cx.reduced_motion(true);
         }
-        self.icons.scale.store(cx.env().scale.to_bits(), Ordering::Relaxed);
+        self.icons
+            .scale
+            .store(cx.env().scale.to_bits(), Ordering::Relaxed);
         *self.aliases.lock().unwrap_or_else(|e| e.into_inner()) = Some(aliases::<S>);
     }
 
@@ -229,7 +249,8 @@ impl Theme {
     /// `AppSpec::families`, so rune-kit's sans and mono slots both use the Omarchy font.
     /// Call before `rune::run`; the names live for the process.
     pub fn families(&self) -> (&'static str, &'static str) {
-        let name: &'static str = Box::leak(self.tokens.font.resolved_family.clone().into_boxed_str());
+        let name: &'static str =
+            Box::leak(self.tokens.font.resolved_family.clone().into_boxed_str());
         (name, name)
     }
 
@@ -293,10 +314,14 @@ impl Theme {
     /// The line box matches Qt's (the font's own ascent + descent), so controls built from
     /// it are the same height in both toolkits.
     pub fn text_style(&self, size: i64) -> TextStyle {
-        TextStyle::new(size as f32, 400.0).family(self.family).lh(self.tokens.font.line_px(size) as f32)
+        TextStyle::new(size as f32, 400.0)
+            .family(self.family)
+            .lh(self.tokens.font.line_px(size) as f32)
     }
     pub fn text_style_bold(&self, size: i64) -> TextStyle {
-        TextStyle::new(size as f32, 700.0).family(self.family).lh(self.tokens.font.line_px(size) as f32)
+        TextStyle::new(size as f32, 700.0)
+            .family(self.family)
+            .lh(self.tokens.font.line_px(size) as f32)
     }
 }
 
@@ -318,7 +343,12 @@ struct IconState {
 
 impl Default for Icons {
     fn default() -> Self {
-        Icons { wake: Arc::default(), scale: AtomicU32::new(2.0f32.to_bits()), cache: OnceLock::new(), state: Mutex::default() }
+        Icons {
+            wake: Arc::default(),
+            scale: AtomicU32::new(2.0f32.to_bits()),
+            cache: OnceLock::new(),
+            state: Mutex::default(),
+        }
     }
 }
 
@@ -380,7 +410,11 @@ fn family_for(t: &Tokens) -> Family {
 
 fn build_kit(t: &Tokens, family: Family) -> Kit {
     let p = &t.palette;
-    let mut k = Kit::from_palette(PaletteSeed { bg: color(p.background), fg: color(p.foreground), accent: color(p.accent) });
+    let mut k = Kit::from_palette(PaletteSeed {
+        bg: color(p.background),
+        fg: color(p.foreground),
+        accent: color(p.accent),
+    });
     let c = &t.controls;
 
     // Corners follow Hyprland; small parts cap at 4 like the shell's.
@@ -417,7 +451,11 @@ fn build_kit(t: &Tokens, family: Family) -> Kit {
 
     // One family everywhere, on Omarchy's type scale.
     let f = &t.font;
-    let style = |size: i64, weight: f32| TextStyle::new(size as f32, weight).family(family).lh(f.line_px(size) as f32);
+    let style = |size: i64, weight: f32| {
+        TextStyle::new(size as f32, weight)
+            .family(family)
+            .lh(f.line_px(size) as f32)
+    };
     k.ty.ui = style(f.body, 400.0);
     k.ty.ui_medium = style(f.body, 700.0);
     k.ty.ui_compact = style(f.body, 400.0);

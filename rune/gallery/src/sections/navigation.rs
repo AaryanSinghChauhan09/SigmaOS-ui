@@ -18,8 +18,13 @@ impl Navigation {
     }
 }
 
-const PANELS: [(&str, &str); 5] =
-    [("\u{f07b}", "Files"), ("\u{f002}", "Search"), ("\u{f126}", "Source control"), ("\u{f188}", "Debug"), ("\u{f013}", "Settings")];
+const PANELS: [(&str, &str); 5] = [
+    ("\u{f07b}", "Files"),
+    ("\u{f002}", "Search"),
+    ("\u{f126}", "Source control"),
+    ("\u{f188}", "Debug"),
+    ("\u{f013}", "Settings"),
+];
 
 pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     let tk = t.tokens();
@@ -49,7 +54,9 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
         .on_choose(|s: &mut State, i| s.navigation.tab = i)
         .build(t);
 
-    let rail = IconRail::new(PANELS, n.panel).on_choose(|s: &mut State, i| s.navigation.panel = i).build(t);
+    let rail = IconRail::new(PANELS, n.panel)
+        .on_choose(|s: &mut State, i| s.navigation.panel = i)
+        .build(t);
     let rail_h = {
         let sp = &tk.spacing;
         let size = (sp.control_height + sp.sm * 2) as f32;
@@ -59,8 +66,21 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     let name = PANELS[n.panel].1;
     let style = t.text_style(tk.font.body);
     let w = t.space(320.0);
-    let (x, y) = (((w - rune::text::advance(name, style)) / 2.0).round(), ((rail_h - style.line_height) / 2.0).round());
-    let content = el().size(w, rail_h).child(text(name).font(style).color(t.dim()).single_line().absolute(x, y));
+    let (x, y) = (
+        ((w - rune::text::advance(name, style)) / 2.0).round(),
+        ((rail_h - style.line_height) / 2.0).round(),
+    );
+    let content = el().size(w, rail_h).child(
+        text(name)
+            .font(style)
+            .color(t.dim())
+            .single_line()
+            .absolute(x, y),
+    );
 
-    vec![toolbar, tabs, row().items_start().child(rail).child(content)]
+    vec![
+        toolbar,
+        tabs,
+        row().items_start().child(rail).child(content),
+    ]
 }

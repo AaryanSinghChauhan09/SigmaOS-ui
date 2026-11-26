@@ -21,13 +21,22 @@ impl Tiles {
     pub fn init() -> Tiles {
         let cache = ImageCache::new(Arc::new(|| {}));
         let photo = cache.load(&include_bytes!("../../assets/avatar.png")[..]);
-        let missing = cache.file(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/missing.png"), 48.0, 2.0);
+        let missing = cache.file(
+            concat!(env!("CARGO_MANIFEST_DIR"), "/assets/missing.png"),
+            48.0,
+            2.0,
+        );
         // Decoded before the first frame, so stills always show them.
         let _ = photo.wait();
         let _ = missing.wait();
         let mut cursor = CursorModel::list(8).columns(4);
         cursor.set("", 2);
-        Tiles { _cache: cache, photo, missing, cursor }
+        Tiles {
+            _cache: cache,
+            photo,
+            missing,
+            cursor,
+        }
     }
 }
 
@@ -70,28 +79,79 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     let dots = row()
         .items_center()
         .gap(sp.xxl as f32)
-        .children([Tone::Success, Tone::Warning, Tone::Urgent, Tone::Muted, Tone::Accent].map(|tone| StatusDot::new(tone).build(t)))
-        .child(Avatar::new("Ryan").round(true).status(Tone::Success).ground(bg).build(t))
-        .child(Avatar::new("Photo").image(photo).status(Tone::Warning).ground(bg).build(t))
-        .child(Avatar::new("Server").glyph("\u{F048B}").status(Tone::Urgent).ground(bg).build(t));
+        .children(
+            [
+                Tone::Success,
+                Tone::Warning,
+                Tone::Urgent,
+                Tone::Muted,
+                Tone::Accent,
+            ]
+            .map(|tone| StatusDot::new(tone).build(t)),
+        )
+        .child(
+            Avatar::new("Ryan")
+                .round(true)
+                .status(Tone::Success)
+                .ground(bg)
+                .build(t),
+        )
+        .child(
+            Avatar::new("Photo")
+                .image(photo)
+                .status(Tone::Warning)
+                .ground(bg)
+                .build(t),
+        )
+        .child(
+            Avatar::new("Server")
+                .glyph("\u{F048B}")
+                .status(Tone::Urgent)
+                .ground(bg)
+                .build(t),
+        );
 
     let avatars = row()
         .items_center()
         .gap(sp.xxl as f32)
         .child(Avatar::new("ada").size(AvatarSize::Small).build(t))
         .child(Avatar::new("Basecamp").build(t))
-        .child(Avatar::new("Omarchy").size(AvatarSize::Large).round(true).build(t))
+        .child(
+            Avatar::new("Omarchy")
+                .size(AvatarSize::Large)
+                .round(true)
+                .build(t),
+        )
         .child(Avatar::new("Robot").glyph("\u{F06A9}").build(t))
-        .child(Avatar::new("Photo").image(photo).size(AvatarSize::Small).build(t))
+        .child(
+            Avatar::new("Photo")
+                .image(photo)
+                .size(AvatarSize::Small)
+                .build(t),
+        )
         .child(Avatar::new("Photo").image(photo).round(true).build(t))
-        .child(Avatar::new("Photo").image(photo).size(AvatarSize::Large).build(t))
-        .child(Avatar::new("Missing").image(Some(&s.tiles.missing)).build(t));
+        .child(
+            Avatar::new("Photo")
+                .image(photo)
+                .size(AvatarSize::Large)
+                .build(t),
+        )
+        .child(
+            Avatar::new("Missing")
+                .image(Some(&s.tiles.missing))
+                .build(t),
+        );
 
     // By icon name, from the icon theme (the fixture icon theme under bin/review).
-    let icons = row()
-        .items_center()
-        .gap(sp.xxl as f32)
-        .children(ICONS.map(|(name, label, size, glyph)| Avatar::new(label).icon(name).size(size).glyph(glyph).build(t)));
+    let icons = row().items_center().gap(sp.xxl as f32).children(ICONS.map(
+        |(name, label, size, glyph)| {
+            Avatar::new(label)
+                .icon(name)
+                .size(size)
+                .glyph(glyph)
+                .build(t)
+        },
+    ));
 
     let grid = TileGrid::new([
         Tile::new("Terminal").glyph("\u{F120}"),

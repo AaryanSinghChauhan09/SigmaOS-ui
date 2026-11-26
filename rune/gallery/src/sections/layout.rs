@@ -1,7 +1,9 @@
 //! The `layout` section (spec/gallery.md): a SplitView with a Sidebar, and a Calendar.
 
 use omarchy_rune::Theme;
-use omarchy_rune::ui::{Calendar, Date, SplitPane, Sidebar, SidebarItem, SidebarSection, SplitView};
+use omarchy_rune::ui::{
+    Calendar, Date, Sidebar, SidebarItem, SidebarSection, SplitPane, SplitView,
+};
 use rune::{El, el, row, text};
 
 use crate::State;
@@ -15,7 +17,12 @@ pub struct Layout {
 }
 
 pub fn init() -> Layout {
-    Layout { sidebar: 200.0, place: "recent".into(), month: (2026, 11), day: Date::new(2026, 11, 14) }
+    Layout {
+        sidebar: 200.0,
+        place: "recent".into(),
+        month: (2026, 11),
+        day: Date::new(2026, 11, 14),
+    }
 }
 
 pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
@@ -33,14 +40,21 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
         ),
         SidebarSection::new(
             "Places",
-            [SidebarItem::new("documents", "Documents", "\u{f0219}"), SidebarItem::new("downloads", "Downloads", "\u{f01da}")],
+            [
+                SidebarItem::new("documents", "Documents", "\u{f0219}"),
+                SidebarItem::new("downloads", "Downloads", "\u{f01da}"),
+            ],
         ),
     ])
     .selected(Some(&l.place))
     .key("places")
     .on_select(|s: &mut State, id| s.layout.place = id.to_string())
     .build(t);
-    let content = row().center().child(text("No file selected").font(t.text_style(tk.font.body)).color(t.faint()));
+    let content = row().center().child(
+        text("No file selected")
+            .font(t.text_style(tk.font.body))
+            .color(t.faint()),
+    );
     let split = SplitView::new()
         .pane(SplitPane::new(sidebar).size(l.sidebar).min(120.0))
         .pane(SplitPane::new(content))
@@ -48,7 +62,10 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
         .key("split")
         .build(t);
     // Framed by a track-colored line, so its edges show.
-    let frame = el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).radius(t.radius()).border(tk.spacing.hairline as f32, t.track());
+    let frame = el()
+        .pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+        .radius(t.radius())
+        .border(tk.spacing.hairline as f32, t.track());
     let specimen = el().size(720.0, 220.0).child(split).child(frame);
 
     let calendar = Calendar::new(l.month.0, l.month.1)

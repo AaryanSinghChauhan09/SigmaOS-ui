@@ -12,7 +12,14 @@ use crate::{Theme, border, color};
 /// `OpticalGlyph` centers it: horizontally on the outline's middle, vertically on the line box
 /// (rounded to whole points).
 /// `hot` is the color under the hover group (the control around it), if it changes.
-pub(crate) fn optical(s: &str, style: TextStyle, ink: rune::Color, hot: Option<rune::Color>, w: f32, h: f32) -> El {
+pub(crate) fn optical(
+    s: &str,
+    style: TextStyle,
+    ink: rune::Color,
+    hot: Option<rune::Color>,
+    w: f32,
+    h: f32,
+) -> El {
     let advance = rune::text::advance(s, style);
     let (ix, iw) = match rune::text::ink(s, style).map(|i| i.bounds) {
         Some([x, _, w, _]) if w > 0.0 => (x, w),
@@ -21,7 +28,11 @@ pub(crate) fn optical(s: &str, style: TextStyle, ink: rune::Color, hot: Option<r
     let line = style.line_height;
     let x = w / 2.0 - (ix + iw.max(1.0) / 2.0);
     let y = ((h - line) / 2.0).round();
-    let mut glyph = text(s.to_string()).font(style).color(ink).single_line().absolute(x, y);
+    let mut glyph = text(s.to_string())
+        .font(style)
+        .color(ink)
+        .single_line()
+        .absolute(x, y);
     if let Some(c) = hot {
         glyph = glyph.group_color(c);
     }
@@ -56,7 +67,11 @@ pub fn key_label(key: &str) -> String {
     if !named.is_empty() {
         return named.into();
     }
-    if k.chars().count() == 1 { k.to_uppercase() } else { k.into() }
+    if k.chars().count() == 1 {
+        k.to_uppercase()
+    } else {
+        k.into()
+    }
 }
 
 /// "Ctrl+Shift+S" as its keys; a lone "+" is the plus key ("Ctrl++").
@@ -117,7 +132,14 @@ impl Keycap {
             .fill(color(n.fill))
             .role("img")
             .label(label.clone())
-            .child(optical(&label, t.text_style(tk.font.caption), t.fg(), None, w, h));
+            .child(optical(
+                &label,
+                t.text_style(tk.font.caption),
+                t.fg(),
+                None,
+                w,
+                h,
+            ));
         border(e, &n.border)
     }
 }
@@ -129,12 +151,18 @@ pub struct KeyCombo {
 
 impl KeyCombo {
     pub fn new(combo: impl Into<String>) -> KeyCombo {
-        KeyCombo { combo: combo.into() }
+        KeyCombo {
+            combo: combo.into(),
+        }
     }
 
     pub fn build(self, t: &Theme) -> El {
         let gap = t.tokens().spacing.xxs as f32;
-        row().gap(gap).label(self.combo.clone()).children(split_combo(&self.combo).into_iter().map(|k| Keycap::new(k).build(t)))
+        row().gap(gap).label(self.combo.clone()).children(
+            split_combo(&self.combo)
+                .into_iter()
+                .map(|k| Keycap::new(k).build(t)),
+        )
     }
 }
 
@@ -148,11 +176,23 @@ pub struct ShortcutSheet {
 
 impl ShortcutSheet {
     pub fn new() -> ShortcutSheet {
-        ShortcutSheet { groups: Vec::new(), columns: 2 }
+        ShortcutSheet {
+            groups: Vec::new(),
+            columns: 2,
+        }
     }
     /// A group: its title and (combo, description) rows.
-    pub fn group<C: Into<String>, D: Into<String>>(mut self, title: impl Into<String>, keys: impl IntoIterator<Item = (C, D)>) -> Self {
-        self.groups.push((title.into(), keys.into_iter().map(|(c, d)| (c.into(), d.into())).collect()));
+    pub fn group<C: Into<String>, D: Into<String>>(
+        mut self,
+        title: impl Into<String>,
+        keys: impl IntoIterator<Item = (C, D)>,
+    ) -> Self {
+        self.groups.push((
+            title.into(),
+            keys.into_iter()
+                .map(|(c, d)| (c.into(), d.into()))
+                .collect(),
+        ));
         self
     }
     pub fn columns(mut self, n: usize) -> Self {
@@ -166,19 +206,35 @@ impl ShortcutSheet {
         let n = self.columns.min(self.groups.len()).max(1);
         let mut columns: Vec<Vec<El>> = (0..n).map(|_| Vec::new()).collect();
         for (i, (title, keys)) in self.groups.into_iter().enumerate() {
-            let widest = keys.iter().map(|(c, _)| key_combo_width(t, c)).fold(0.0f32, f32::max);
+            let widest = keys
+                .iter()
+                .map(|(c, _)| key_combo_width(t, c))
+                .fold(0.0f32, f32::max);
             let rows = keys.into_iter().map(|(c, d)| {
                 row()
                     .items_center()
                     .gap(sp.xxl as f32)
                     .child(el().w(widest).child(KeyCombo::new(c).build(t)))
-                    .child(text(d).font(t.text_style(tk.font.body)).color(t.fg()).single_line())
+                    .child(
+                        text(d)
+                            .font(t.text_style(tk.font.body))
+                            .color(t.fg())
+                            .single_line(),
+                    )
             });
-            let group = col().gap(sp.md as f32).child(section_header(t, title)).child(col().gap(sp.md as f32).children(rows));
+            let group = col()
+                .gap(sp.md as f32)
+                .child(section_header(t, title))
+                .child(col().gap(sp.md as f32).children(rows));
             columns[i % n].push(group);
         }
-        let columns = columns.into_iter().map(|groups| col().gap(sp.panel_gap as f32).children(groups));
-        row().items_start().gap((sp.panel_gap * 2) as f32).children(columns)
+        let columns = columns
+            .into_iter()
+            .map(|groups| col().gap(sp.panel_gap as f32).children(groups));
+        row()
+            .items_start()
+            .gap((sp.panel_gap * 2) as f32)
+            .children(columns)
     }
 }
 
@@ -191,7 +247,9 @@ impl Default for ShortcutSheet {
 /// The vertical rule between groups in a Toolbar: 1px in the track color, sm clear each side.
 pub fn toolbar_separator(t: &Theme) -> El {
     let sm = t.tokens().spacing.sm as f32;
-    el().w(sm * 2.0 + 1.0).h(t.space(16.0)).child(el().w(1.0).h_full().ml(sm).fill(t.track()))
+    el().w(sm * 2.0 + 1.0)
+        .h(t.space(16.0))
+        .child(el().w(1.0).h_full().ml(sm).fill(t.track()))
 }
 
 /// An app toolbar: IconButtons and Buttons in three slots (leading at the left, center in the
@@ -210,7 +268,15 @@ pub struct Toolbar {
 
 impl Toolbar {
     pub fn new() -> Toolbar {
-        Toolbar { leading: Vec::new(), center: Vec::new(), trailing: Vec::new(), overflow: false, overflow_cursor: false, divided: true, on_overflow: None }
+        Toolbar {
+            leading: Vec::new(),
+            center: Vec::new(),
+            trailing: Vec::new(),
+            overflow: false,
+            overflow_cursor: false,
+            divided: true,
+            on_overflow: None,
+        }
     }
     pub fn leading(mut self, items: impl IntoIterator<Item = El>) -> Self {
         self.leading.extend(items);
@@ -252,7 +318,9 @@ impl Toolbar {
         let slot = |items: Vec<El>| row().items_center().gap(gap).children(items);
         let mut end = self.trailing;
         if self.overflow {
-            let b = super::IconButton::new("\u{f141}").label("More").cursor(self.overflow_cursor);
+            let b = super::IconButton::new("\u{f141}")
+                .label("More")
+                .cursor(self.overflow_cursor);
             let b = match self.on_overflow {
                 Some(attach) => attach(b.build(t)),
                 None => b.build(t),
@@ -279,7 +347,11 @@ impl Toolbar {
             );
         }
         if self.divided {
-            bar = bar.child(el().pin(Some(0.0), None, Some(0.0), Some(0.0)).h(1.0).fill(t.track()));
+            bar = bar.child(
+                el().pin(Some(0.0), None, Some(0.0), Some(0.0))
+                    .h(1.0)
+                    .fill(t.track()),
+            );
         }
         bar
     }
@@ -335,7 +407,12 @@ pub struct Tabs {
 
 impl Tabs {
     pub fn new<L: Into<String>>(labels: impl IntoIterator<Item = L>, current: usize) -> Tabs {
-        Tabs { labels: labels.into_iter().map(Into::into).collect(), current, cursor: None, choose: None }
+        Tabs {
+            labels: labels.into_iter().map(Into::into).collect(),
+            current,
+            cursor: None,
+            choose: None,
+        }
     }
     /// Force the hover-cursor look on one tab.
     pub fn cursor(mut self, index: Option<usize>) -> Self {
@@ -361,7 +438,11 @@ impl Tabs {
         for (i, label) in self.labels.into_iter().enumerate() {
             let selected = i == self.current;
             let forced = self.cursor == Some(i);
-            let style = if selected { t.text_style_bold(tk.font.body) } else { t.text_style(tk.font.body) };
+            let style = if selected {
+                t.text_style_bold(tk.font.body)
+            } else {
+                t.text_style(tk.font.body)
+            };
             let mut ink = text(label.clone()).font(style).single_line();
             ink = if selected {
                 ink.color(selected_ink)
@@ -372,7 +453,8 @@ impl Tabs {
             };
             // Qt sizes the tab to the label's whole-pixel width and centers it on whole pixels,
             // which puts the label at the padding.
-            let width = rune::text::advance(&label, style).ceil() + (sp.control_padding_x * 2) as f32;
+            let width =
+                rune::text::advance(&label, style).ceil() + (sp.control_padding_x * 2) as f32;
             let base = row()
                 .key(format!("tab-{i}"))
                 .w(width)
@@ -386,7 +468,11 @@ impl Tabs {
                 .focus_selected(selected);
             let mut kids = vec![ink];
             if selected {
-                kids.push(el().pin(Some(0.0), None, Some(0.0), Some(0.0)).h(sp.xxs as f32).fill(t.accent()));
+                kids.push(
+                    el().pin(Some(0.0), None, Some(0.0), Some(0.0))
+                        .h(sp.xxs as f32)
+                        .fill(t.accent()),
+                );
             }
             let tab = chrome(t, base, kids, &rest, &hot, forced, t.radius_small());
             let tab = t.key_map(tab, ends(i, n, Axis::Row));
@@ -396,8 +482,22 @@ impl Tabs {
             });
         }
         // As Qt's Tabs: h and l walk too, Up and Down don't, and the ends don't wrap (above).
-        let tabs = t.key_map(tabs, &[("h", Some(Key::Left)), ("l", Some(Key::Right)), ("Up", None), ("Down", None)]);
-        el().w_full().child(el().pin(Some(0.0), None, Some(0.0), Some(0.0)).h(1.0).fill(t.track())).child(tabs)
+        let tabs = t.key_map(
+            tabs,
+            &[
+                ("h", Some(Key::Left)),
+                ("l", Some(Key::Right)),
+                ("Up", None),
+                ("Down", None),
+            ],
+        );
+        el().w_full()
+            .child(
+                el().pin(Some(0.0), None, Some(0.0), Some(0.0))
+                    .h(1.0)
+                    .fill(t.track()),
+            )
+            .child(tabs)
     }
 }
 
@@ -414,8 +514,19 @@ pub struct IconRail {
 
 impl IconRail {
     /// `items` are (glyph, label) pairs; the label is the accessible name.
-    pub fn new<G: Into<String>, L: Into<String>>(items: impl IntoIterator<Item = (G, L)>, current: usize) -> IconRail {
-        IconRail { items: items.into_iter().map(|(g, l)| (g.into(), l.into())).collect(), current, cursor: None, choose: None }
+    pub fn new<G: Into<String>, L: Into<String>>(
+        items: impl IntoIterator<Item = (G, L)>,
+        current: usize,
+    ) -> IconRail {
+        IconRail {
+            items: items
+                .into_iter()
+                .map(|(g, l)| (g.into(), l.into()))
+                .collect(),
+            current,
+            cursor: None,
+            choose: None,
+        }
     }
     pub fn cursor(mut self, index: Option<usize>) -> Self {
         self.cursor = index;
@@ -470,18 +581,37 @@ impl IconRail {
         let height = pad * 2.0 + n as f32 * size + n.saturating_sub(1) as f32 * gap;
         let mut rail = el()
             .size(size + pad * 2.0 + 1.0, height)
-            .child(el().pin(None, Some(0.0), Some(0.0), Some(0.0)).w(1.0).fill(t.track()))
+            .child(
+                el().pin(None, Some(0.0), Some(0.0), Some(0.0))
+                    .w(1.0)
+                    .fill(t.track()),
+            )
             // As Qt's IconRail: k and j walk too, Left and Right don't, and the ends don't wrap.
-            .child(t.key_map(list, &[("k", Some(Key::Up)), ("j", Some(Key::Down)), ("Left", None), ("Right", None)]).absolute(pad, pad));
+            .child(
+                t.key_map(
+                    list,
+                    &[
+                        ("k", Some(Key::Up)),
+                        ("j", Some(Key::Down)),
+                        ("Left", None),
+                        ("Right", None),
+                    ],
+                )
+                .absolute(pad, pad),
+            );
         if self.current < n {
             let bar = glyph_size as f32;
             let y = pad + self.current as f32 * (size + gap) + ((size - bar) / 2.0).round();
-            rail = rail.child(el().absolute(0.0, y).size(sp.xxs as f32, bar).radius(t.radius().min(1.0)).fill(t.accent()));
+            rail = rail.child(
+                el().absolute(0.0, y)
+                    .size(sp.xxs as f32, bar)
+                    .radius(t.radius().min(1.0))
+                    .fill(t.accent()),
+            );
         }
         rail
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -492,7 +622,25 @@ mod tests {
         assert_eq!(split_combo("Ctrl+Shift+S"), ["Ctrl", "Shift", "S"]);
         assert_eq!(split_combo("Ctrl++"), ["Ctrl", "+"]);
         assert_eq!(split_combo("+"), ["+"]);
-        let labels: Vec<String> = ["super", "ctrl", "Shift", "enter", "backspace", "up", "esc", "k", "F11"].iter().map(|k| key_label(k)).collect();
-        assert_eq!(labels, ["Super", "Ctrl", "\u{21e7}", "\u{23ce}", "\u{232b}", "\u{2191}", "Esc", "K", "F11"]);
+        let labels: Vec<String> = [
+            "super",
+            "ctrl",
+            "Shift",
+            "enter",
+            "backspace",
+            "up",
+            "esc",
+            "k",
+            "F11",
+        ]
+        .iter()
+        .map(|k| key_label(k))
+        .collect();
+        assert_eq!(
+            labels,
+            [
+                "Super", "Ctrl", "\u{21e7}", "\u{23ce}", "\u{232b}", "\u{2191}", "Esc", "K", "F11"
+            ]
+        );
     }
 }

@@ -32,7 +32,11 @@ pub struct BorderSpec {
 
 impl BorderSpec {
     pub fn none() -> Self {
-        Self { color: Rgba::TRANSPARENT, widths: [0.0; 4], gradient: None }
+        Self {
+            color: Rgba::TRANSPARENT,
+            widths: [0.0; 4],
+            gradient: None,
+        }
     }
     pub fn max_width(&self) -> f64 {
         self.widths.iter().copied().fold(0.0, f64::max)
@@ -45,7 +49,10 @@ impl BorderSpec {
     }
     /// The same border at a uniform `width`.
     pub fn with_width(&self, width: f64) -> Self {
-        Self { widths: [width; 4], ..self.clone() }
+        Self {
+            widths: [width; 4],
+            ..self.clone()
+        }
     }
 }
 
@@ -240,7 +247,13 @@ pub struct Motion {
 
 impl Default for Motion {
     fn default() -> Self {
-        Self { fast: 120, press: 160, theme: 280, ease_out: [0.23, 1.0, 0.32, 1.0], ease: [0.25, 0.1, 0.25, 1.0] }
+        Self {
+            fast: 120,
+            press: 160,
+            theme: 280,
+            ease_out: [0.23, 1.0, 0.32, 1.0],
+            ease: [0.25, 0.1, 0.25, 1.0],
+        }
     }
 }
 

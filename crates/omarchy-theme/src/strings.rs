@@ -19,8 +19,12 @@ type Catalog = HashMap<String, HashMap<String, String>>;
 fn catalog() -> &'static Catalog {
     static CATALOG: OnceLock<Catalog> = OnceLock::new();
     CATALOG.get_or_init(|| {
-        let json = STRINGS_JS.lines().find_map(|l| l.strip_prefix("var catalog = ")).unwrap_or("{}");
-        let raw: HashMap<String, HashMap<String, Value>> = serde_json::from_str(json).unwrap_or_default();
+        let json = STRINGS_JS
+            .lines()
+            .find_map(|l| l.strip_prefix("var catalog = "))
+            .unwrap_or("{}");
+        let raw: HashMap<String, HashMap<String, Value>> =
+            serde_json::from_str(json).unwrap_or_default();
         raw.into_iter()
             .map(|(lang, strings)| {
                 let strings = strings
@@ -46,9 +50,14 @@ pub fn language_code(raw: &str) -> String {
     let code = raw.trim();
     let (base, region) = code.split_once('-').unwrap_or((code, ""));
     let base_ok = (2..=3).contains(&base.len()) && base.bytes().all(|b| b.is_ascii_lowercase());
-    let region_ok = region.is_empty() || (region.len() == 2 && region.bytes().all(|b| b.is_ascii_alphabetic()));
+    let region_ok =
+        region.is_empty() || (region.len() == 2 && region.bytes().all(|b| b.is_ascii_alphabetic()));
     let dashed = code.contains('-');
-    if base_ok && region_ok && (!dashed || !region.is_empty()) { code.to_string() } else { "en".to_string() }
+    if base_ok && region_ok && (!dashed || !region.is_empty()) {
+        code.to_string()
+    } else {
+        "en".to_string()
+    }
 }
 
 /// The display language now: `~/.config/omarchy/language`, as a code (`en` when unset).
@@ -61,7 +70,11 @@ pub fn language() -> String {
 pub fn lookup(language: &str, key: &str) -> Option<&'static str> {
     let c = catalog();
     let base = language.split('-').next().unwrap_or(language);
-    [language, base, "en"].into_iter().find_map(|l| c.get(l)?.get(key)).map(String::as_str).filter(|s| !s.is_empty())
+    [language, base, "en"]
+        .into_iter()
+        .find_map(|l| c.get(l)?.get(key))
+        .map(String::as_str)
+        .filter(|s| !s.is_empty())
 }
 
 /// `key` in `language`, or `fallback` (the English the caller would show without a catalog).
@@ -97,11 +110,16 @@ mod tests {
 
     #[test]
     fn the_catalog_has_the_kits_keys_in_every_language() {
-        assert_eq!(lookup("en", "common.noMatchesFor"), Some("No matches for “%1”"));
+        assert_eq!(
+            lookup("en", "common.noMatchesFor"),
+            Some("No matches for “%1”")
+        );
         assert_eq!(lookup("en", "common.search"), Some("Search..."));
         // Every language the harvest carries has the no-matches line, with the query in it.
         for (lang, strings) in catalog() {
-            let s = strings.get("common.noMatchesFor").unwrap_or_else(|| panic!("{lang} lacks common.noMatchesFor"));
+            let s = strings
+                .get("common.noMatchesFor")
+                .unwrap_or_else(|| panic!("{lang} lacks common.noMatchesFor"));
             assert!(s.contains("%1"), "{lang}: {s}");
         }
     }
@@ -109,18 +127,37 @@ mod tests {
     #[test]
     fn lookups_fall_back_as_qt_does() {
         assert_eq!(lookup("de", "common.cancel"), Some("Abbrechen"));
-        assert_eq!(lookup("de-AT", "common.cancel"), lookup("de", "common.cancel"), "region falls back to its base");
-        assert_eq!(lookup("xx", "common.cancel"), Some("Cancel"), "an unknown language is English");
+        assert_eq!(
+            lookup("de-AT", "common.cancel"),
+            lookup("de", "common.cancel"),
+            "region falls back to its base"
+        );
+        assert_eq!(
+            lookup("xx", "common.cancel"),
+            Some("Cancel"),
+            "an unknown language is English"
+        );
         assert_eq!(lookup("en", "no.such.key"), None);
         assert_eq!(t("en", "no.such.key", "Fallback"), "Fallback");
-        assert_eq!(lookup("en", "multiSelect.selectedCount"), Some("%1 selected"), "a plural gives its other form");
+        assert_eq!(
+            lookup("en", "multiSelect.selectedCount"),
+            Some("%1 selected"),
+            "a plural gives its other form"
+        );
     }
 
     #[test]
     fn the_table_falls_back_key_by_key() {
         let de = table("de-AT");
-        assert_eq!(de.get("common.cancel").map(String::as_str), lookup("de", "common.cancel"));
-        assert_eq!(de.len(), table("en").len(), "every English key is there, translated or not");
+        assert_eq!(
+            de.get("common.cancel").map(String::as_str),
+            lookup("de", "common.cancel")
+        );
+        assert_eq!(
+            de.len(),
+            table("en").len(),
+            "every English key is there, translated or not"
+        );
         assert!(table_json("de").starts_with("{\"language\":\"de\""));
     }
 

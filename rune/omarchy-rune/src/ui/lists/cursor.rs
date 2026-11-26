@@ -68,8 +68,23 @@ const GATE: f32 = 1.0;
 impl CursorModel {
     /// A cursor over `sections` (name, row count), at the first row, hidden.
     pub fn new<N: Into<String>>(sections: impl IntoIterator<Item = (N, usize)>) -> CursorModel {
-        let sections = sections.into_iter().map(|(n, c)| CursorSection { name: n.into(), count: c }).collect();
-        let mut m = CursorModel { sections, section: 0, index: 0, active: false, columns: 1, page: 5, gate: None, initial_sample: false };
+        let sections = sections
+            .into_iter()
+            .map(|(n, c)| CursorSection {
+                name: n.into(),
+                count: c,
+            })
+            .collect();
+        let mut m = CursorModel {
+            sections,
+            section: 0,
+            index: 0,
+            active: false,
+            columns: 1,
+            page: 5,
+            gate: None,
+            initial_sample: false,
+        };
         m.settle();
         m
     }
@@ -86,7 +101,9 @@ impl CursorModel {
 
     /// The section the cursor is in.
     pub fn section(&self) -> &str {
-        self.sections.get(self.section).map_or("", |s| s.name.as_str())
+        self.sections
+            .get(self.section)
+            .map_or("", |s| s.name.as_str())
     }
 
     /// The row within the section.
@@ -156,8 +173,12 @@ impl CursorModel {
                 } else if dy > 0 {
                     if let Some(s) = self.neighbour(1) {
                         self.section = s;
-                        self.index = (self.index % self.columns).min(self.count().saturating_sub(1));
-                    } else if self.columns > 1 && self.index / self.columns < (self.count().saturating_sub(1)) / self.columns {
+                        self.index =
+                            (self.index % self.columns).min(self.count().saturating_sub(1));
+                    } else if self.columns > 1
+                        && self.index / self.columns
+                            < (self.count().saturating_sub(1)) / self.columns
+                    {
                         // A short last line: land on its last tile.
                         self.index = self.count() - 1;
                     }
@@ -165,7 +186,8 @@ impl CursorModel {
                     self.section = s;
                     let count = self.count();
                     let last_line = (count.saturating_sub(1) / self.columns) * self.columns;
-                    self.index = (last_line + self.index % self.columns).min(count.saturating_sub(1));
+                    self.index =
+                        (last_line + self.index % self.columns).min(count.saturating_sub(1));
                 }
             }
         }
@@ -333,7 +355,12 @@ pub fn printable(key: &KeyEvent) -> Option<&str> {
         return None;
     }
     match &key.key {
-        Key::Text(t) if t.chars().count() == 1 && t.chars().all(|c| !c.is_control() && !c.is_whitespace()) => Some(t),
+        Key::Text(t)
+            if t.chars().count() == 1
+                && t.chars().all(|c| !c.is_control() && !c.is_whitespace()) =>
+        {
+            Some(t)
+        }
         _ => None,
     }
 }
@@ -344,14 +371,22 @@ mod tests {
     use rune::Mods;
 
     fn key(k: Key) -> KeyEvent {
-        KeyEvent { key: k, mods: Mods::default() }
+        KeyEvent {
+            key: k,
+            mods: Mods::default(),
+        }
     }
     fn text(t: &str) -> KeyEvent {
         key(Key::Text(t.into()))
     }
 
     fn panel() -> CursorModel {
-        CursorModel::new([("header", 1), ("connected", 2), ("known", 0), ("discovered", 3)])
+        CursorModel::new([
+            ("header", 1),
+            ("connected", 2),
+            ("known", 0),
+            ("discovered", 3),
+        ])
     }
 
     #[test]
@@ -371,7 +406,10 @@ mod tests {
         c.apply_key(&key(Key::Down));
         assert!(c.is_at("discovered", 0), "skips the empty known section");
         c.apply_key(&text("k"));
-        assert!(c.is_at("connected", 1), "back to the previous section's last row");
+        assert!(
+            c.is_at("connected", 1),
+            "back to the previous section's last row"
+        );
         c.apply_key(&key(Key::End));
         assert!(c.is_at("discovered", 2));
         c.apply_key(&key(Key::Down));
@@ -434,7 +472,13 @@ mod tests {
         assert_eq!(c.apply_key(&text("x")), CursorKey::Delete);
         assert_eq!(c.apply_key(&text("q")), CursorKey::Text("q".into()));
         assert_eq!(c.apply_key(&text("Ж")), CursorKey::Text("Ж".into()));
-        let ctrl = KeyEvent { key: Key::Text("q".into()), mods: Mods { ctrl: true, ..Mods::default() } };
+        let ctrl = KeyEvent {
+            key: Key::Text("q".into()),
+            mods: Mods {
+                ctrl: true,
+                ..Mods::default()
+            },
+        };
         assert_eq!(c.apply_key(&ctrl), CursorKey::Ignored);
         assert_eq!(printable(&ctrl), None);
         assert_eq!(printable(&key(Key::Tab)), None);

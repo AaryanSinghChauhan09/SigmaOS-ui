@@ -6,15 +6,15 @@
 //! as the shell's `hasCursor` does for keyboard-driven panels.
 
 mod button;
-pub mod feedback;
 mod data;
+mod dialog;
 mod editing;
+pub mod feedback;
 mod field;
+mod forms;
 mod lists;
 mod menu;
 mod navigation;
-mod dialog;
-mod forms;
 mod pickers;
 mod search;
 mod slider;
@@ -23,18 +23,27 @@ mod toggle;
 mod turn;
 
 pub use button::{Button, ButtonGroup, IconButton};
+pub use data::{
+    Calendar, Column, Date, Sidebar, SidebarItem, SidebarSection, SplitPane, SplitView, Table,
+    Tree, TreeNode,
+};
+pub use dialog::Dialog;
+pub use editing::{
+    Clip, ColorPicker, CropFrame, DragHandle, DropIndicator, Edge, Hsva, Scrubber, Timeline,
+    TimelineView, TrimHandle,
+};
 pub use feedback::{Banner, EmptyState, Meter, ProgressBar, Spinner, Toast};
-pub use data::{Calendar, Column, Date, Sidebar, SidebarItem, SidebarSection, SplitPane, SplitView, Table, Tree, TreeNode};
-pub use editing::{Clip, ColorPicker, CropFrame, DragHandle, DropIndicator, Edge, Hsva, Scrubber, Timeline, TimelineView, TrimHandle};
 pub use field::{Dropdown, NumberField, TextField};
+pub use forms::{Checkbox, PasswordField, Radio, RadioGroup, SettingRow, TextArea};
 pub use lists::{
-    Avatar, AvatarSize, Badge, CursorKey, CursorModel, CursorSection, Hero, KeyValue, ListRow, ScrollArea, StatusDot, Tile, TileGrid,
-    Tone, printable,
+    Avatar, AvatarSize, Badge, CursorKey, CursorModel, CursorSection, Hero, KeyValue, ListRow,
+    ScrollArea, StatusDot, Tile, TileGrid, Tone, printable,
 };
 pub use menu::{ContextMenu, Menu, MenuItem};
-pub use navigation::{IconRail, KeyCombo, Keycap, ShortcutSheet, Tabs, Toolbar, key_combo_width, key_label, keycap_width, split_combo, toolbar_separator};
-pub use dialog::Dialog;
-pub use forms::{Checkbox, PasswordField, Radio, RadioGroup, SettingRow, TextArea};
+pub use navigation::{
+    IconRail, KeyCombo, Keycap, ShortcutSheet, Tabs, Toolbar, key_combo_width, key_label,
+    keycap_width, split_combo, toolbar_separator,
+};
 pub use pickers::{ColorWell, MultiSelect, SwatchStrip};
 pub use search::{SEARCH_SECTION, SearchItem, SearchList};
 pub use slider::Slider;
@@ -63,7 +72,10 @@ impl Look {
         Look { fill, border }
     }
     pub fn clear() -> Look {
-        Look { fill: Rgba::TRANSPARENT, border: BorderSpec::none() }
+        Look {
+            fill: Rgba::TRANSPARENT,
+            border: BorderSpec::none(),
+        }
     }
 }
 
@@ -84,9 +96,20 @@ pub(crate) fn reserve(looks: &[&BorderSpec]) -> [f32; 4] {
 /// `children`, cross-faded by the hover group, so the hot look replaces the rest look the way
 /// the shell's state ladder does rather than stacking on it. `base` is the laid-out container
 /// without children.
-pub(crate) fn chrome(t: &Theme, base: El, children: Vec<El>, rest: &Look, hot: &Look, forced: bool, radius: f32) -> El {
+pub(crate) fn chrome(
+    t: &Theme,
+    base: El,
+    children: Vec<El>,
+    rest: &Look,
+    hot: &Look,
+    forced: bool,
+    radius: f32,
+) -> El {
     let layer = |look: &Look| {
-        let e = el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).radius(radius).fill(color(look.fill));
+        let e = el()
+            .pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+            .radius(radius)
+            .fill(color(look.fill));
         border(e, &look.border)
     };
     let pressed = color(t.tokens().controls.pressed.fill);
@@ -94,7 +117,8 @@ pub(crate) fn chrome(t: &Theme, base: El, children: Vec<El>, rest: &Look, hot: &
     let base = if forced {
         base.child(layer(hot))
     } else {
-        base.child(layer(rest).group_opacity(1.0, 0.0)).child(layer(hot).group_opacity(0.0, 1.0))
+        base.child(layer(rest).group_opacity(1.0, 0.0))
+            .child(layer(hot).group_opacity(0.0, 1.0))
     };
     base.children(children)
 }
@@ -106,13 +130,21 @@ pub(crate) fn chrome(t: &Theme, base: El, children: Vec<El>, rest: &Look, hot: &
 pub(crate) fn glyph(t: &Theme, s: &str, size: i64, ink: rune::Color) -> El {
     let style = t.text_style(size);
     let e = text(s.to_string()).font(style).color(ink).single_line();
-    let Some([x, _, w, _]) = rune::text::ink(s, style).map(|i| i.bounds) else { return e };
+    let Some([x, _, w, _]) = rune::text::ink(s, style).map(|i| i.bounds) else {
+        return e;
+    };
     let advance = rune::text::advance(s, style);
     let left = (-x).max(0.0).ceil();
-    let right = if x + w > advance { ((x + w).ceil() - advance).ceil() } else { 0.0 };
+    let right = if x + w > advance {
+        ((x + w).ceil() - advance).ceil()
+    } else {
+        0.0
+    };
     if left == 0.0 && right == 0.0 {
         return e;
     }
     let (_, h) = rune::text::measure(s, &[], style, None);
-    el().w(advance + left + right).h(h).child(e.offset(left, 0.0))
+    el().w(advance + left + right)
+        .h(h)
+        .child(e.offset(left, 0.0))
 }

@@ -56,8 +56,14 @@ static HOOKS: Mutex<Vec<(TypeId, &'static (dyn Any + Send + Sync))>> = Mutex::ne
 
 fn hooks<S: 'static>() -> &'static Hooks<S> {
     let all = HOOKS.lock().unwrap_or_else(|e| e.into_inner());
-    let found = all.iter().rev().find(|(t, _)| *t == TypeId::of::<S>()).map(|(_, h)| *h);
-    found.and_then(|h| h.downcast_ref::<Hooks<S>>()).expect("omarchy_rune::app registers the hooks before Rune calls them")
+    let found = all
+        .iter()
+        .rev()
+        .find(|(t, _)| *t == TypeId::of::<S>())
+        .map(|(_, h)| *h);
+    found
+        .and_then(|h| h.downcast_ref::<Hooks<S>>())
+        .expect("omarchy_rune::app registers the hooks before Rune calls them")
 }
 
 fn view<S: Themed>(s: &S, cx: &mut Cx<S>) -> El {
@@ -95,7 +101,11 @@ pub fn app<S: Themed>(mut spec: AppSpec<S>) -> AppSpec<S> {
     if std::ptr::fn_addr_eq(spec.view, view::<S> as View<S>) {
         return spec;
     }
-    let own: &'static Hooks<S> = Box::leak(Box::new(Hooks { view: spec.view, setup: spec.setup, poll: spec.poll }));
+    let own: &'static Hooks<S> = Box::leak(Box::new(Hooks {
+        view: spec.view,
+        setup: spec.setup,
+        poll: spec.poll,
+    }));
     {
         let mut all = HOOKS.lock().unwrap_or_else(|e| e.into_inner());
         all.retain(|(t, _)| *t != TypeId::of::<S>());

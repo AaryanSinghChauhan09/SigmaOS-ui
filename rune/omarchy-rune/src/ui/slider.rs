@@ -17,7 +17,15 @@ pub struct Slider {
 
 impl Slider {
     pub fn new(value: f32) -> Slider {
-        Slider { value, min: 0.0, max: 1.0, ticks: 0, width: None, cursor: false, change: None }
+        Slider {
+            value,
+            min: 0.0,
+            max: 1.0,
+            ticks: 0,
+            width: None,
+            cursor: false,
+            change: None,
+        }
     }
     pub fn range(mut self, min: f32, max: f32) -> Self {
         self.min = min;
@@ -57,11 +65,18 @@ impl Slider {
         let track_h = 4f32.max((sp.control_height as f32 * 0.11).round());
         let knob = 14f32.max((sp.control_height as f32 * 0.38).round());
         let height = t.space(22.0).max(knob + sp.md as f32);
-        let progress = if self.max > self.min { ((self.value - self.min) / (self.max - self.min)).clamp(0.0, 1.0) } else { 0.0 };
+        let progress = if self.max > self.min {
+            ((self.value - self.min) / (self.max - self.min)).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
         let track_w = width - knob;
         let mid = height / 2.0;
 
-        let track_color = tk.palette.foreground.with_alpha(tk.controls.selected.fill.a as f64 / 255.0);
+        let track_color = tk
+            .palette
+            .foreground
+            .with_alpha(tk.controls.selected.fill.a as f64 / 255.0);
         let mut e = el()
             .w(width)
             .h(height)
@@ -69,10 +84,14 @@ impl Slider {
             .range_value(self.value as f64, self.min as f64, self.max as f64)
             .focusable(true)
             .hit()
-            .child(el().absolute(knob / 2.0, mid - track_h / 2.0).size(track_w, track_h).radius(track_h / 2.0).fill(color(track_color)))
             .child(
-                el()
-                    .key("fill")
+                el().absolute(knob / 2.0, mid - track_h / 2.0)
+                    .size(track_w, track_h)
+                    .radius(track_h / 2.0)
+                    .fill(color(track_color)),
+            )
+            .child(
+                el().key("fill")
                     .absolute(knob / 2.0, mid - track_h / 2.0)
                     .size(track_w * progress, track_h)
                     .radius(track_h / 2.0)
@@ -83,15 +102,22 @@ impl Slider {
             let th = track_h + t.space(4.0);
             for i in 0..self.ticks {
                 let x = knob / 2.0 + track_w * (i as f32 / (self.ticks - 1) as f32) - tw / 2.0;
-                e = e.child(el().absolute(x, mid - th / 2.0).size(tw, th).radius(1.0).fill(color(surface)));
+                e = e.child(
+                    el().absolute(x, mid - th / 2.0)
+                        .size(tw, th)
+                        .radius(1.0)
+                        .fill(color(surface)),
+                );
             }
         }
         let ring = 1f32.max(t.space(2.0));
         let scale = if self.cursor { 1.15 } else { 1.0 };
         e = e.child(
-            el()
-                .key("knob")
-                .absolute(knob / 2.0 + track_w * progress - knob / 2.0, mid - knob / 2.0)
+            el().key("knob")
+                .absolute(
+                    knob / 2.0 + track_w * progress - knob / 2.0,
+                    mid - knob / 2.0,
+                )
                 .size(knob, knob)
                 .radius(knob / 2.0)
                 .fill(t.fg())

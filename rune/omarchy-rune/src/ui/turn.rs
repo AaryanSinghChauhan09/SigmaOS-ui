@@ -12,23 +12,37 @@ use std::process::Command as Process;
 use std::sync::Mutex;
 
 use rune::text::Icon;
+use swash::FontRef;
 use swash::scale::ScaleContext;
 use swash::zeno::{Command, PathData};
-use swash::FontRef;
 
 /// Turned glyphs made so far, by glyph, font, size and placement; each lives for the process
 /// (a handful: one per spinner look).
-static MADE: Mutex<Option<HashMap<(String, String, u32, [i32; 2]), Option<&'static Icon>>>> = Mutex::new(None);
+static MADE: Mutex<Option<HashMap<(String, String, u32, [i32; 2]), Option<&'static Icon>>>> =
+    Mutex::new(None);
 
 /// `glyph` in `family` at `size` points, its outline's ink centred on `ink_centre` inside a
 /// `side`-point square. `None` when no font has it (or it has no outline), and the caller
 /// draws text instead.
-pub(crate) fn glyph_icon(glyph: &str, family: &str, size: f32, side: f32, ink_centre: [f32; 2]) -> Option<&'static Icon> {
+pub(crate) fn glyph_icon(
+    glyph: &str,
+    family: &str,
+    size: f32,
+    side: f32,
+    ink_centre: [f32; 2],
+) -> Option<&'static Icon> {
     let mut chars = glyph.chars();
-    let (ch, None) = (chars.next()?, chars.next()) else { return None };
+    let (ch, None) = (chars.next()?, chars.next()) else {
+        return None;
+    };
     // Placement to 1/64 pt, as Rune snaps element rects.
     let at = ink_centre.map(|v| (v * 64.0).round() as i32);
-    let key = (glyph.to_string(), family.to_string(), (size * 64.0).round() as u32, at);
+    let key = (
+        glyph.to_string(),
+        family.to_string(),
+        (size * 64.0).round() as u32,
+        at,
+    );
     let mut made = MADE.lock().unwrap_or_else(|e| e.into_inner());
     let made = made.get_or_insert_with(HashMap::new);
     if let Some(&icon) = made.get(&key) {
@@ -62,7 +76,10 @@ fn path(data: &[u8], index: u32, ch: char, size: f32, centre: [f32; 2]) -> Optio
         return None;
     }
     // Font units are y-up from the baseline; the square is y-down from its top-left.
-    let (dx, dy) = (centre[0] - (b.min.x + b.max.x) / 2.0, centre[1] + (b.min.y + b.max.y) / 2.0);
+    let (dx, dy) = (
+        centre[0] - (b.min.x + b.max.x) / 2.0,
+        centre[1] + (b.min.y + b.max.y) / 2.0,
+    );
     let p = |pt: swash::zeno::Point| format!("{:.3} {:.3}", pt.x + dx, dy - pt.y);
     let mut d = String::new();
     for c in outline.path().commands() {
@@ -80,10 +97,16 @@ fn path(data: &[u8], index: u32, ch: char, size: f32, centre: [f32; 2]) -> Optio
 /// The font file (and face index) fontconfig draws `ch` from in `family`.
 fn font_for(family: &str, ch: char) -> Option<(PathBuf, u32)> {
     let pattern = format!("{family}:charset={:x}", ch as u32);
-    let out = Process::new("fc-match").args(["-f", "%{file}\n%{index}", &pattern]).output().ok()?;
+    let out = Process::new("fc-match")
+        .args(["-f", "%{file}\n%{index}", &pattern])
+        .output()
+        .ok()?;
     let out = String::from_utf8_lossy(&out.stdout).into_owned();
     let mut lines = out.lines();
     let file = PathBuf::from(lines.next()?.trim());
-    let index = lines.next().and_then(|i| i.trim().parse().ok()).unwrap_or(0);
+    let index = lines
+        .next()
+        .and_then(|i| i.trim().parse().ok())
+        .unwrap_or(0);
     file.exists().then_some((file, index))
 }

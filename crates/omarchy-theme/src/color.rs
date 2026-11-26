@@ -13,7 +13,12 @@ pub struct Rgba {
 }
 
 impl Rgba {
-    pub const TRANSPARENT: Rgba = Rgba { r: 0, g: 0, b: 0, a: 0 };
+    pub const TRANSPARENT: Rgba = Rgba {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0,
+    };
 
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b, a: 255 }
@@ -21,12 +26,18 @@ impl Rgba {
 
     /// The same color at `alpha` (0–1), replacing its own alpha, as the shell's `Util.alpha` does.
     pub fn with_alpha(self, alpha: f64) -> Self {
-        Self { a: alpha_byte(alpha), ..self }
+        Self {
+            a: alpha_byte(alpha),
+            ..self
+        }
     }
 
     /// The color's own alpha multiplied by `alpha` (0–1).
     pub fn times_alpha(self, alpha: f64) -> Self {
-        Self { a: alpha_byte(self.a as f64 / 255.0 * alpha), ..self }
+        Self {
+            a: alpha_byte(self.a as f64 / 255.0 * alpha),
+            ..self
+        }
     }
 
     pub fn alpha_f(self) -> f32 {
@@ -35,7 +46,12 @@ impl Rgba {
 
     /// Channels as 0–1 floats, for frameworks that take them that way.
     pub fn to_f32(self) -> [f32; 4] {
-        [self.r as f32 / 255.0, self.g as f32 / 255.0, self.b as f32 / 255.0, self.a as f32 / 255.0]
+        [
+            self.r as f32 / 255.0,
+            self.g as f32 / 255.0,
+            self.b as f32 / 255.0,
+            self.a as f32 / 255.0,
+        ]
     }
 
     /// `#rrggbbaa`, lowercase: the canonical form in token dumps.
@@ -47,7 +63,11 @@ impl Rgba {
     pub fn luminance(self) -> f64 {
         let lin = |c: u8| {
             let c = c as f64 / 255.0;
-            if c <= 0.04045 { c / 12.92 } else { ((c + 0.055) / 1.055).powf(2.4) }
+            if c <= 0.04045 {
+                c / 12.92
+            } else {
+                ((c + 0.055) / 1.055).powf(2.4)
+            }
         };
         0.2126 * lin(self.r) + 0.7152 * lin(self.g) + 0.0722 * lin(self.b)
     }
@@ -65,10 +85,20 @@ impl Rgba {
             return self; // lighter(); the kit never asks for it
         }
         const MAX: f32 = 65535.0;
-        let q_round = |d: f32| if d >= 0.0 { (d + 0.5) as i64 } else { (d - 0.5) as i64 };
+        let q_round = |d: f32| {
+            if d >= 0.0 {
+                (d + 0.5) as i64
+            } else {
+                (d - 0.5) as i64
+            }
+        };
         let fuzzy_eq = |a: f32, b: f32| (a - b).abs() * 100000.0 <= a.abs().min(b.abs());
         // toHsv()
-        let (r, g, b) = (self.r as f32 * 257.0 / MAX, self.g as f32 * 257.0 / MAX, self.b as f32 * 257.0 / MAX);
+        let (r, g, b) = (
+            self.r as f32 * 257.0 / MAX,
+            self.g as f32 * 257.0 / MAX,
+            self.b as f32 * 257.0 / MAX,
+        );
         let max = r.max(g).max(b);
         let min = r.min(g).min(b);
         let delta = max - min;
@@ -92,7 +122,11 @@ impl Rgba {
         };
         // value / factor, then toRgb()
         let v16 = (value * 100) / factor as u32;
-        let h = if hue == u16::MAX as i64 { 0.0 } else { hue as f32 / 6000.0 };
+        let h = if hue == u16::MAX as i64 {
+            0.0
+        } else {
+            hue as f32 / 6000.0
+        };
         let s = sat as f32 / MAX;
         let v = v16 as f32 / MAX;
         let (rr, gg, bb) = if s == 0.0 {
@@ -122,14 +156,24 @@ impl Rgba {
             let c16 = q_round(c * MAX).clamp(0, 65535) as f64;
             (c16 / 65535.0 * 255.0).round() as u8
         };
-        Rgba { r: byte(rr), g: byte(gg), b: byte(bb), a: self.a }
+        Rgba {
+            r: byte(rr),
+            g: byte(gg),
+            b: byte(bb),
+            a: self.a,
+        }
     }
 
     /// Mix toward `other` by `t` (0 keeps self, 1 is other), in sRGB like the theme templates' `mix`.
     pub fn mix(self, other: Rgba, t: f64) -> Rgba {
         let t = t.clamp(0.0, 1.0);
         let m = |a: u8, b: u8| (a as f64 + (b as f64 - a as f64) * t).round() as u8;
-        Rgba { r: m(self.r, other.r), g: m(self.g, other.g), b: m(self.b, other.b), a: m(self.a, other.a) }
+        Rgba {
+            r: m(self.r, other.r),
+            g: m(self.g, other.g),
+            b: m(self.b, other.b),
+            a: m(self.a, other.a),
+        }
     }
 }
 
@@ -146,7 +190,11 @@ impl serde::Serialize for Rgba {
 }
 
 pub(crate) fn clamp_alpha(v: f64) -> f64 {
-    if v.is_finite() { v.clamp(0.0, 1.0) } else { 0.0 }
+    if v.is_finite() {
+        v.clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
 }
 
 fn alpha_byte(alpha: f64) -> u8 {
@@ -169,11 +217,19 @@ fn hex6(s: &str) -> Option<(u8, u8, u8)> {
 pub fn parse_color(value: &str, alpha: f64) -> Option<Rgba> {
     let s = value.trim();
     let a = clamp_alpha(alpha);
-    let mk = |(r, g, b): (u8, u8, u8), own: f64| Rgba { r, g, b, a: alpha_byte(own * a) };
+    let mk = |(r, g, b): (u8, u8, u8), own: f64| Rgba {
+        r,
+        g,
+        b,
+        a: alpha_byte(own * a),
+    };
 
     if let Some(h) = s.strip_prefix('#') {
         if h.len() == 3 && h.bytes().all(|b| b.is_ascii_hexdigit()) {
-            let d: Vec<u8> = h.chars().map(|c| hex2(&format!("{c}{c}")).unwrap()).collect();
+            let d: Vec<u8> = h
+                .chars()
+                .map(|c| hex2(&format!("{c}{c}")).unwrap())
+                .collect();
             return Some(mk((d[0], d[1], d[2]), 1.0));
         }
         if h.len() == 6 {
@@ -187,7 +243,10 @@ pub fn parse_color(value: &str, alpha: f64) -> Option<Rgba> {
     }
 
     let lower = s.to_ascii_lowercase();
-    if let Some(inner) = lower.strip_prefix("rgba(").and_then(|r| r.strip_suffix(')')) {
+    if let Some(inner) = lower
+        .strip_prefix("rgba(")
+        .and_then(|r| r.strip_suffix(')'))
+    {
         if inner.len() == 8 && !inner.contains(',') {
             let own = hex2(&inner[6..8])? as f64 / 255.0;
             return hex6(&inner[0..6]).map(|c| mk(c, own));
@@ -196,7 +255,10 @@ pub fn parse_color(value: &str, alpha: f64) -> Option<Rgba> {
         if parts.len() == 4 {
             let ch = |p: &str| p.parse::<u32>().ok().map(|n| n.min(255) as u8);
             let own: f64 = parts[3].parse().ok()?;
-            return Some(mk((ch(parts[0])?, ch(parts[1])?, ch(parts[2])?), clamp_alpha(own)));
+            return Some(mk(
+                (ch(parts[0])?, ch(parts[1])?, ch(parts[2])?),
+                clamp_alpha(own),
+            ));
         }
         return None;
     }
@@ -227,13 +289,35 @@ mod tests {
     #[test]
     fn parses_every_hyprland_form() {
         assert_eq!(parse_color("#abc", 1.0), Some(Rgba::rgb(0xaa, 0xbb, 0xcc)));
-        assert_eq!(parse_color("#7aa2f7", 1.0), Some(Rgba::rgb(0x7a, 0xa2, 0xf7)));
+        assert_eq!(
+            parse_color("#7aa2f7", 1.0),
+            Some(Rgba::rgb(0x7a, 0xa2, 0xf7))
+        );
         assert_eq!(parse_color("#7aa2f780", 1.0).unwrap().a, 0x80);
-        assert_eq!(parse_color("rgba(33ccffee)", 1.0), Some(Rgba { r: 0x33, g: 0xcc, b: 0xff, a: 0xee }));
-        assert_eq!(parse_color("rgb(33ccff)", 1.0), Some(Rgba::rgb(0x33, 0xcc, 0xff)));
+        assert_eq!(
+            parse_color("rgba(33ccffee)", 1.0),
+            Some(Rgba {
+                r: 0x33,
+                g: 0xcc,
+                b: 0xff,
+                a: 0xee
+            })
+        );
+        assert_eq!(
+            parse_color("rgb(33ccff)", 1.0),
+            Some(Rgba::rgb(0x33, 0xcc, 0xff))
+        );
         assert_eq!(parse_color("rgb(1,2,3)", 1.0), Some(Rgba::rgb(1, 2, 3)));
         assert_eq!(parse_color("rgba(1,2,3,0.5)", 1.0).unwrap().a, 128);
-        assert_eq!(parse_color("0x80ff0000", 1.0), Some(Rgba { r: 255, g: 0, b: 0, a: 0x80 }));
+        assert_eq!(
+            parse_color("0x80ff0000", 1.0),
+            Some(Rgba {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 0x80
+            })
+        );
         assert_eq!(parse_color("accent", 1.0), None);
     }
 

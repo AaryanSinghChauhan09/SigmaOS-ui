@@ -111,8 +111,12 @@ impl Dialog {
 
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
-        let secondary = self.secondary.unwrap_or_else(|| tk.string("common.cancel", "Cancel"));
-        let primary = self.primary.unwrap_or_else(|| tk.string("common.confirm", "Confirm"));
+        let secondary = self
+            .secondary
+            .unwrap_or_else(|| tk.string("common.cancel", "Cancel"));
+        let primary = self
+            .primary
+            .unwrap_or_else(|| tk.string("common.confirm", "Confirm"));
         let p = &tk.palette;
         let line = tk.controls.normal.border.max_width().max(1.0);
         let accent = tk.surfaces.menu.selected_text;
@@ -123,14 +127,30 @@ impl Dialog {
             let urgent = destructive && index == 1;
             let (fill, edge, ink) = if urgent {
                 (
-                    if selected { p.urgent.with_alpha(0.22) } else { Rgba::TRANSPARENT },
-                    if selected { p.urgent } else { p.urgent.with_alpha(0.56) },
+                    if selected {
+                        p.urgent.with_alpha(0.22)
+                    } else {
+                        Rgba::TRANSPARENT
+                    },
+                    if selected {
+                        p.urgent
+                    } else {
+                        p.urgent.with_alpha(0.56)
+                    },
                     if selected { p.urgent } else { p.foreground },
                 )
             } else {
                 (
-                    if selected { tk.surfaces.menu.selected_background } else { Rgba::TRANSPARENT },
-                    if selected { accent } else { p.foreground.with_alpha(0.38) },
+                    if selected {
+                        tk.surfaces.menu.selected_background
+                    } else {
+                        Rgba::TRANSPARENT
+                    },
+                    if selected {
+                        accent
+                    } else {
+                        p.foreground.with_alpha(0.38)
+                    },
                     if selected { accent } else { p.foreground },
                 )
             };
@@ -141,7 +161,11 @@ impl Dialog {
                 .border(line as f32, color(edge))
                 .role("button")
                 .label(label.clone())
-                .child(text(label).font(t.text_style(tk.font.caption)).color(color(ink)));
+                .child(
+                    text(label)
+                        .font(t.text_style(tk.font.caption))
+                        .color(color(ink)),
+                );
             if selected && attach.is_some() {
                 b = b.default_button();
             }
@@ -153,21 +177,40 @@ impl Dialog {
 
         let mut content = col().w_full().gap(t.space(10.0));
         if !self.title.is_empty() {
-            content = content.child(text(self.title.clone()).font(t.text_style_bold(tk.font.title)).color(t.fg()).wrap().role("heading"));
+            content = content.child(
+                text(self.title.clone())
+                    .font(t.text_style_bold(tk.font.title))
+                    .color(t.fg())
+                    .wrap()
+                    .role("heading"),
+            );
         }
         if !self.message.is_empty() {
-            content = content.child(text(self.message).font(t.text_style(tk.font.body)).color(t.fg()).wrap());
+            content = content.child(
+                text(self.message)
+                    .font(t.text_style(tk.font.body))
+                    .color(t.fg())
+                    .wrap(),
+            );
         }
         content = content.children(self.body);
 
         let pad = t.space(18.0);
-        let card_border = BorderSpec { color: accent, widths: [line; 4], gradient: None };
+        let card_border = BorderSpec {
+            color: accent,
+            widths: [line; 4],
+            gradient: None,
+        };
         let mut card = col()
             .gap(t.space(20.0))
             .padding(pad + line as f32)
             .fill(color(p.background))
             .radius(t.radius())
-            .role(if self.destructive { "alertdialog" } else { "dialog" })
+            .role(if self.destructive {
+                "alertdialog"
+            } else {
+                "dialog"
+            })
             .label(self.title);
         card = border(card, &card_border);
         card = card.w(self.width.unwrap_or_else(|| t.space(370.0)));
@@ -187,6 +230,10 @@ impl Dialog {
         if !self.scrim {
             return card;
         }
-        rune::el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).fill(t.scrim()).center().child(card)
+        rune::el()
+            .pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+            .fill(t.scrim())
+            .center()
+            .child(card)
     }
 }

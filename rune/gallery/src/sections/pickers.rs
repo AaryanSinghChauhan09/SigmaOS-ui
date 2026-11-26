@@ -56,10 +56,20 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .open(p.notify_open)
         .search(&p.search)
         .highlighted(p.notify_row)
-        .on_state(|s: &mut State| (&mut s.pickers.notify_open, &mut s.pickers.search, &mut s.pickers.notify_row))
+        .on_state(|s: &mut State| {
+            (
+                &mut s.pickers.notify_open,
+                &mut s.pickers.search,
+                &mut s.pickers.notify_row,
+            )
+        })
         .on_choose(|s: &mut State, v: &str| flip(&mut s.pickers.notify, v))
         .build(t, layer);
-    let selects = row().items_start().gap(sp.xxl as f32).child(closed).child(col().h(280.0).child(open));
+    let selects = row()
+        .items_start()
+        .gap(sp.xxl as f32)
+        .child(closed)
+        .child(col().h(280.0).child(open));
 
     let wells = row()
         .items_center()
@@ -67,9 +77,21 @@ pub fn build(s: &State, t: &Theme, layer: &mut Vec<El>) -> Vec<El> {
         .child(ColorWell::new(t.accent()).build(t))
         .child(ColorWell::new(t.success()).cursor(true).build(t))
         .child(ColorWell::new(t.urgent()).build(t));
-    let strip = SwatchStrip::new([t.accent(), t.urgent(), t.warning(), t.success(), t.fg(), t.dim(), t.faint(), t.muted()], Some(p.swatch))
-        .on_pick(|s: &mut State, i| s.pickers.swatch = i)
-        .build(t);
+    let strip = SwatchStrip::new(
+        [
+            t.accent(),
+            t.urgent(),
+            t.warning(),
+            t.success(),
+            t.fg(),
+            t.dim(),
+            t.faint(),
+            t.muted(),
+        ],
+        Some(p.swatch),
+    )
+    .on_pick(|s: &mut State, i| s.pickers.swatch = i)
+    .build(t);
 
     // Held open over the content it would cover, so the scrim shows.
     let behind = Card::new()

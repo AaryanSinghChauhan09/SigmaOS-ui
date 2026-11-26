@@ -23,11 +23,22 @@ pub enum Edge {
 
 impl Edge {
     /// The eight crop handles, in CropFrame's order.
-    pub const ALL: [Edge; 8] =
-        [Edge::TopLeft, Edge::Top, Edge::TopRight, Edge::Left, Edge::Right, Edge::BottomLeft, Edge::Bottom, Edge::BottomRight];
+    pub const ALL: [Edge; 8] = [
+        Edge::TopLeft,
+        Edge::Top,
+        Edge::TopRight,
+        Edge::Left,
+        Edge::Right,
+        Edge::BottomLeft,
+        Edge::Bottom,
+        Edge::BottomRight,
+    ];
 
     pub fn is_corner(self) -> bool {
-        matches!(self, Edge::TopLeft | Edge::TopRight | Edge::BottomLeft | Edge::BottomRight)
+        matches!(
+            self,
+            Edge::TopLeft | Edge::TopRight | Edge::BottomLeft | Edge::BottomRight
+        )
     }
     fn is_left(self) -> bool {
         matches!(self, Edge::Left | Edge::TopLeft | Edge::BottomLeft)
@@ -84,11 +95,21 @@ pub struct TrimHandle {
 impl TrimHandle {
     /// A trim cap on `edge` (`Left` or `Right`).
     pub fn new(edge: Edge) -> TrimHandle {
-        TrimHandle { edge, crop: false, height: None, cursor: false, drag: None, nudge: None }
+        TrimHandle {
+            edge,
+            crop: false,
+            height: None,
+            cursor: false,
+            drag: None,
+            nudge: None,
+        }
     }
     /// A crop handle: a bar on a side, an L bracket on a corner.
     pub fn crop(edge: Edge) -> TrimHandle {
-        TrimHandle { crop: true, ..TrimHandle::new(edge) }
+        TrimHandle {
+            crop: true,
+            ..TrimHandle::new(edge)
+        }
     }
     /// A trim cap's height: the clip's (default `space(40)`).
     pub fn height(mut self, h: f32) -> Self {
@@ -144,7 +165,11 @@ impl TrimHandle {
     /// The handle's size: trim caps are `space(8)` × the height, crop bars `space(4)` ×
     /// `space(18)`, corners `space(18)` square.
     pub fn size(&self, t: &Theme) -> (f32, f32) {
-        let thick = if self.crop { t.space(4.0) } else { t.space(8.0) };
+        let thick = if self.crop {
+            t.space(4.0)
+        } else {
+            t.space(8.0)
+        };
         let len = t.space(18.0);
         if !self.crop {
             return (thick, self.height.unwrap_or(t.space(40.0)));
@@ -164,38 +189,61 @@ impl TrimHandle {
         let rest = color(accent);
         // Rest and hot colors cross-fade with the hover group (the Qt handle tints under the
         // pointer or keyboard focus).
-        let mut e = el().w(w).h(h).hover_group_focus().focusable(true).cursor(self.edge.cursor()).key(format!("handle-{}", self.edge.key()));
+        let mut e = el()
+            .w(w)
+            .h(h)
+            .hover_group_focus()
+            .focusable(true)
+            .cursor(self.edge.cursor())
+            .key(format!("handle-{}", self.edge.key()));
         let piece = |x: f32, y: f32, pw: f32, ph: f32, r: f32| -> El {
             let base = el().absolute(x, y).size(pw, ph).radius(r);
             if self.cursor {
                 base.fill(ink)
             } else {
-                base.fill(rest).child(el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).radius(r).fill(ink).group_opacity(0.0, 1.0))
+                base.fill(rest).child(
+                    el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+                        .radius(r)
+                        .fill(ink)
+                        .group_opacity(0.0, 1.0),
+                )
             }
         };
         if !self.crop {
             // The cap: rounded outside, square inside.
             let half = (w / 2.0).floor();
             e = e.child(piece(0.0, 0.0, w, h, small));
-            let inner_x = if self.edge == Edge::Right { 0.0 } else { w - half };
+            let inner_x = if self.edge == Edge::Right {
+                0.0
+            } else {
+                w - half
+            };
             e = e.child(piece(inner_x, 0.0, half, h, 0.0));
             // The grip line, cut in the background color, longer when hot.
             let gw = 1f32.max(t.space(2.0));
             let grip = |frac: f32| {
                 let gh = (h * frac).round();
-                el().absolute(((w - gw) / 2.0).round(), ((h - gh) / 2.0).round()).size(gw, gh).radius(small.min(gw / 2.0)).fill(t.bg())
+                el().absolute(((w - gw) / 2.0).round(), ((h - gh) / 2.0).round())
+                    .size(gw, gh)
+                    .radius(small.min(gw / 2.0))
+                    .fill(t.bg())
             };
             e = if self.cursor {
                 e.child(grip(0.6))
             } else {
-                e.child(grip(0.4).group_opacity(1.0, 0.0)).child(grip(0.6).group_opacity(0.0, 1.0))
+                e.child(grip(0.4).group_opacity(1.0, 0.0))
+                    .child(grip(0.6).group_opacity(0.0, 1.0))
             };
         } else {
             let thick = t.space(4.0);
             let r = small.min(thick / 2.0);
             let edge = self.edge;
             if edge.is_corner() || matches!(edge, Edge::Top | Edge::Bottom) {
-                let y = if edge.is_corner() && edge.is_bottom() { h - thick } else { 0.0 };
+                let y = if edge.is_corner() && edge.is_bottom() {
+                    h - thick
+                } else {
+                    0.0
+                };
                 e = e.child(piece(0.0, y, w, thick, r));
             } else {
                 e = e.child(piece(0.0, 0.0, thick, h, r));
@@ -226,7 +274,12 @@ pub struct CropFrame {
 
 impl CropFrame {
     pub fn new(width: f32, height: f32) -> CropFrame {
-        CropFrame { width, height, cursor: None, drag: None }
+        CropFrame {
+            width,
+            height,
+            cursor: None,
+            drag: None,
+        }
     }
     /// Draw this handle hot, as if under the pointer.
     pub fn cursor(mut self, edge: Option<Edge>) -> Self {
@@ -248,10 +301,21 @@ impl CropFrame {
         let track = t.track();
         let mut e = el().w(w).h(h);
         for i in 1..=2 {
-            e = e.child(el().absolute((w * i as f32 / 3.0).round(), 0.0).size(1.0, h).fill(track));
-            e = e.child(el().absolute(0.0, (h * i as f32 / 3.0).round()).size(w, 1.0).fill(track));
+            e = e.child(
+                el().absolute((w * i as f32 / 3.0).round(), 0.0)
+                    .size(1.0, h)
+                    .fill(track),
+            );
+            e = e.child(
+                el().absolute(0.0, (h * i as f32 / 3.0).round())
+                    .size(w, 1.0)
+                    .fill(track),
+            );
         }
-        e = e.child(el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).border(1.0, t.accent()));
+        e = e.child(
+            el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+                .border(1.0, t.accent()),
+        );
         for edge in Edge::ALL {
             let mut handle = TrimHandle::crop(edge).cursor(self.cursor == Some(edge));
             if let Some(d) = &self.drag {
@@ -288,7 +352,11 @@ pub struct DragHandle {
 
 impl DragHandle {
     pub fn new() -> DragHandle {
-        DragHandle { cursor: false, drag: None, step: None }
+        DragHandle {
+            cursor: false,
+            drag: None,
+            step: None,
+        }
     }
     pub fn cursor(mut self, on: bool) -> Self {
         self.cursor = on;
@@ -330,14 +398,28 @@ impl DragHandle {
         let r = t.radius_small().min(dot / 2.0);
         let x0 = ((w - (dot * 2.0 + gap)) / 2.0).round();
         let y0 = ((h - (dot * 3.0 + gap * 2.0)) / 2.0).round();
-        let mut e = el().w(w).h(h).hover_group_focus().focusable(true).cursor(Cursor::Grab).key("drag-handle");
+        let mut e = el()
+            .w(w)
+            .h(h)
+            .hover_group_focus()
+            .focusable(true)
+            .cursor(Cursor::Grab)
+            .key("drag-handle");
         for i in 0..6 {
             let (c, r_) = ((i % 2) as f32, (i / 2) as f32);
-            let d = el().absolute(x0 + c * (dot + gap), y0 + r_ * (dot + gap)).size(dot, dot).radius(r);
+            let d = el()
+                .absolute(x0 + c * (dot + gap), y0 + r_ * (dot + gap))
+                .size(dot, dot)
+                .radius(r);
             e = e.child(if self.cursor {
                 d.fill(t.fg())
             } else {
-                d.fill(t.dim()).child(el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0)).radius(r).fill(t.fg()).group_opacity(0.0, 1.0))
+                d.fill(t.dim()).child(
+                    el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
+                        .radius(r)
+                        .fill(t.fg())
+                        .group_opacity(0.0, 1.0),
+                )
             });
         }
         if let Some(d) = &self.drag {
@@ -372,6 +454,9 @@ impl DropIndicator {
     }
     pub fn build(self, t: &Theme) -> El {
         let h = DropIndicator::thickness(t);
-        el().w(self.width).h(h).radius(t.radius_small().min(h / 2.0)).fill(t.accent())
+        el().w(self.width)
+            .h(h)
+            .radius(t.radius_small().min(h / 2.0))
+            .fill(t.accent())
     }
 }

@@ -113,11 +113,22 @@ fn dashes(c: char) -> Option<(bool, i64, bool)> {
 /// Draw `c` into the cell at (`x0`, `y0`), `w` × `h` pixels, if it's one of the characters drawn
 /// as pixels; false leaves it to the font. `t` is the light line thickness.
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn draw(img: &mut Image, c: char, x0: i64, y0: i64, w: i64, h: i64, t: i64, ink: [u8; 3]) -> bool {
+pub(crate) fn draw(
+    img: &mut Image,
+    c: char,
+    x0: i64,
+    y0: i64,
+    w: i64,
+    h: i64,
+    t: i64,
+    ink: [u8; 3],
+) -> bool {
     let thick = |weight: u8| if weight >= 2 { 2 * t } else { t };
     // A stroke of thickness `s` centered across a length `len`: its start.
     let center = |len: i64, s: i64| (len - s) / 2;
-    let rect = |img: &mut Image, l: i64, tp: i64, r: i64, b: i64, a: f32| img.fill(x0 + l, y0 + tp, x0 + r, y0 + b, ink, a);
+    let rect = |img: &mut Image, l: i64, tp: i64, r: i64, b: i64, a: f32| {
+        img.fill(x0 + l, y0 + tp, x0 + r, y0 + b, ink, a)
+    };
 
     if let Some([l, r, u, d]) = arms(c) {
         // The stroke the horizontal arms meet the vertical ones in.
@@ -125,7 +136,12 @@ pub(crate) fn draw(img: &mut Image, c: char, x0: i64, y0: i64, w: i64, h: i64, t
         let hs = thick(l.max(r)).max(if l.max(r) == 0 { thick(u.max(d)) } else { 0 });
         let vx = center(w, vs);
         let hy = center(h, hs);
-        for (weight, horizontal, first) in [(l, true, true), (r, true, false), (u, false, true), (d, false, false)] {
+        for (weight, horizontal, first) in [
+            (l, true, true),
+            (r, true, false),
+            (u, false, true),
+            (d, false, false),
+        ] {
             if weight == 0 {
                 continue;
             }
@@ -233,7 +249,12 @@ pub(crate) fn draw(img: &mut Image, c: char, x0: i64, y0: i64, w: i64, h: i64, t
                     0x259E => [false, true, true, false],
                     _ => [false, true, true, true],
                 };
-                let boxes = [(0, 0, hx, hy), (hx, 0, w, hy), (0, hy, hx, h), (hx, hy, w, h)];
+                let boxes = [
+                    (0, 0, hx, hy),
+                    (hx, 0, w, hy),
+                    (0, hy, hx, h),
+                    (hx, hy, w, h),
+                ];
                 for (on, (l, tp, r, b)) in q.iter().zip(boxes) {
                     if *on {
                         rect(img, l, tp, r, b, 1.0);
@@ -247,7 +268,16 @@ pub(crate) fn draw(img: &mut Image, c: char, x0: i64, y0: i64, w: i64, h: i64, t
     if (0x2800..=0x28FF).contains(&n) {
         let bits = n - 0x2800;
         // Dot (column, row) for bits 0..8: 1 2 3 then 4 5 6 down the columns, then 7 and 8.
-        const DOTS: [(i64, i64); 8] = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (0, 3), (1, 3)];
+        const DOTS: [(i64, i64); 8] = [
+            (0, 0),
+            (0, 1),
+            (0, 2),
+            (1, 0),
+            (1, 1),
+            (1, 2),
+            (0, 3),
+            (1, 3),
+        ];
         let d = (w as f32 / 4.0).round().max(1.0);
         let rad = d / 2.0;
         for (i, (col, row)) in DOTS.iter().enumerate() {
@@ -260,7 +290,8 @@ pub(crate) fn draw(img: &mut Image, c: char, x0: i64, y0: i64, w: i64, h: i64, t
             let (tp, b) = ((cy - rad).floor() as i64 - 1, (cy + rad).ceil() as i64 + 1);
             for py in tp..b {
                 for px in l..r {
-                    let dist = ((px as f32 + 0.5 - cx).powi(2) + (py as f32 + 0.5 - cy).powi(2)).sqrt();
+                    let dist =
+                        ((px as f32 + 0.5 - cx).powi(2) + (py as f32 + 0.5 - cy).powi(2)).sqrt();
                     let cov = (rad + 0.5 - dist).clamp(0.0, 1.0);
                     if cov > 0.0 && px >= 0 && px < w && py >= 0 && py < h {
                         img.blend(x0 + px, y0 + py, ink, cov);

@@ -117,7 +117,11 @@ pub fn watch(initial: Tokens, mut on_change: impl FnMut(Tokens) + Send + 'static
         })
         .ok();
 
-    Watch { _watcher: watcher, stop, wake: tx }
+    Watch {
+        _watcher: watcher,
+        stop,
+        wake: tx,
+    }
 }
 
 fn hypr_events(tx: mpsc::Sender<()>) {

@@ -18,7 +18,10 @@ pub struct Faces {
 }
 
 fn fc_match(pattern: &str) -> Option<(String, PathBuf)> {
-    let out = Command::new("fc-match").args(["-f", "%{family}\n%{file}", pattern]).output().ok()?;
+    let out = Command::new("fc-match")
+        .args(["-f", "%{family}\n%{file}", pattern])
+        .output()
+        .ok()?;
     if !out.status.success() {
         return None;
     }
@@ -46,7 +49,12 @@ impl Faces {
                 .map(|(_, f)| f)
                 .filter(|f| *f != regular)
         };
-        Ok(Faces { bold: style("Bold"), italic: style("Italic"), bold_italic: style("Bold Italic"), regular })
+        Ok(Faces {
+            bold: style("Bold"),
+            italic: style("Italic"),
+            bold_italic: style("Bold Italic"),
+            regular,
+        })
     }
 }
 
@@ -88,7 +96,13 @@ pub struct Image {
 
 impl Image {
     fn new(width: u32, height: u32, cell_width: u32, cell_height: u32) -> Image {
-        Image { width, height, rgba: vec![255; (width * height * 4) as usize], cell_width, cell_height }
+        Image {
+            width,
+            height,
+            rgba: vec![255; (width * height * 4) as usize],
+            cell_width,
+            cell_height,
+        }
     }
 
     /// `out = round(ink × c + under × (1 − c))` per channel, sRGB 8-bit.
@@ -134,7 +148,12 @@ impl Fonts {
     fn new(f: &Faces) -> Result<Fonts, String> {
         let opt = |p: &Option<PathBuf>| p.as_deref().and_then(|p| load(p).ok());
         Ok(Fonts {
-            faces: [Some(load(&f.regular)?), opt(&f.bold), opt(&f.italic), opt(&f.bold_italic)],
+            faces: [
+                Some(load(&f.regular)?),
+                opt(&f.bold),
+                opt(&f.italic),
+                opt(&f.bold_italic),
+            ],
             fallback: HashMap::new(),
             fallback_fonts: Vec::new(),
             fallback_paths: HashMap::new(),
@@ -148,7 +167,14 @@ impl Fonts {
             (false, true) => 2,
             (true, true) => 3,
         };
-        self.faces[i].as_ref().or(if bold && italic { self.faces[1].as_ref() } else { None }).unwrap_or(self.faces[0].as_ref().unwrap())
+        self.faces[i]
+            .as_ref()
+            .or(if bold && italic {
+                self.faces[1].as_ref()
+            } else {
+                None
+            })
+            .unwrap_or(self.faces[0].as_ref().unwrap())
     }
 
     /// The face to draw `c` with: the styled face, else the regular one, else a fallback font
@@ -195,8 +221,13 @@ fn metrics(font: &FontVec, p: f32) -> Metrics {
     let upem = font.units_per_em().unwrap_or(1000.0);
     let k = p / upem;
     let adv = font.h_advance_unscaled(font.glyph_id('M')) * k;
-    let h = (font.ascent_unscaled() - font.descent_unscaled() + font.line_gap_unscaled().max(0.0)) * k;
-    Metrics { cell_w: (adv.round() as u32).max(1), cell_h: (h.ceil() as u32).max(1), baseline: (font.ascent_unscaled() * k).round() as i64 }
+    let h =
+        (font.ascent_unscaled() - font.descent_unscaled() + font.line_gap_unscaled().max(0.0)) * k;
+    Metrics {
+        cell_w: (adv.round() as u32).max(1),
+        cell_h: (h.ceil() as u32).max(1),
+        baseline: (font.ascent_unscaled() * k).round() as i64,
+    }
 }
 
 /// Rasterize `grid`.
@@ -265,7 +296,9 @@ pub fn render(grid: &Grid, opts: &RenderOptions) -> Result<Image, String> {
             let first = chars.next();
             let single = first.is_some() && chars.next().is_none();
             let drawn = match (single, first) {
-                (true, Some(c)) => boxdraw::draw(&mut img, c, x0, y0, cw as i64, ch as i64, light, ink),
+                (true, Some(c)) => {
+                    boxdraw::draw(&mut img, c, x0, y0, cw as i64, ch as i64, light, ink)
+                }
                 _ => false,
             };
             if !drawn && cell.text != " " {
@@ -275,18 +308,22 @@ pub fn render(grid: &Grid, opts: &RenderOptions) -> Result<Image, String> {
                         Some(font) => {
                             let scale = px_scale(font, p);
                             let id = font.glyph_id(c);
-                            let glyph = id.with_scale_and_position(scale, point(x, (y0 + m.baseline) as f32));
+                            let glyph = id
+                                .with_scale_and_position(scale, point(x, (y0 + m.baseline) as f32));
                             if let Some(out) = font.outline_glyph(glyph) {
                                 let b = out.px_bounds();
                                 let (bx, by) = (b.min.x as i64, b.min.y as i64);
-                                out.draw(|gx, gy, c| img.blend(bx + gx as i64, by + gy as i64, ink, c));
+                                out.draw(|gx, gy, c| {
+                                    img.blend(bx + gx as i64, by + gy as i64, ink, c)
+                                });
                             }
                             let upem = font.units_per_em().unwrap_or(1000.0);
                             x += font.h_advance_unscaled(id) * p / upem;
                         }
                         None => {
                             // No font has it: an outlined box in the cell.
-                            let (l, t, r, btm) = (x as i64 + 1, y0 + 2, x as i64 + wpx - 1, y0 + ch as i64 - 2);
+                            let (l, t, r, btm) =
+                                (x as i64 + 1, y0 + 2, x as i64 + wpx - 1, y0 + ch as i64 - 2);
                             img.fill(l, t, r, t + 1, ink, 1.0);
                             img.fill(l, btm - 1, r, btm, ink, 1.0);
                             img.fill(l, t, l + 1, btm, ink, 1.0);
@@ -298,7 +335,14 @@ pub fn render(grid: &Grid, opts: &RenderOptions) -> Result<Image, String> {
             }
             if cell.attrs.underline {
                 let top = y0 + m.baseline + ((p * 0.1).round() as i64).max(1);
-                img.fill(x0, top, x0 + wpx, (top + deco).min(y0 + ch as i64), ink, 1.0);
+                img.fill(
+                    x0,
+                    top,
+                    x0 + wpx,
+                    (top + deco).min(y0 + ch as i64),
+                    ink,
+                    1.0,
+                );
             }
             if cell.attrs.crossed {
                 let top = y0 + m.baseline - (p * 0.3).round() as i64;

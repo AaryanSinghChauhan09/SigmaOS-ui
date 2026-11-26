@@ -35,8 +35,14 @@ impl Date {
     pub fn weekday(self) -> u32 {
         // Sakamoto's method: 0 is Sunday.
         const T: [i32; 12] = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
-        let y = if self.month < 3 { self.year - 1 } else { self.year };
-        let sunday0 = (y + y / 4 - y / 100 + y / 400 + T[self.month as usize - 1] + self.day as i32).rem_euclid(7);
+        let y = if self.month < 3 {
+            self.year - 1
+        } else {
+            self.year
+        };
+        let sunday0 =
+            (y + y / 4 - y / 100 + y / 400 + T[self.month as usize - 1] + self.day as i32)
+                .rem_euclid(7);
         ((sunday0 + 6) % 7) as u32
     }
 
@@ -71,8 +77,20 @@ impl Date {
     }
 }
 
-const MONTHS: [&str; 12] =
-    ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS: [&str; 12] = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
 const WEEKDAYS: [&str; 7] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 type PickFn = Box<dyn Fn(El, Date) -> El>;
@@ -92,7 +110,16 @@ pub struct Calendar {
 impl Calendar {
     /// The month on screen; `month` is 1–12.
     pub fn new(year: i32, month: u32) -> Calendar {
-        Calendar { year, month: month.clamp(1, 12), today: None, selected: None, cursor: None, pick: None, step: None, key: None }
+        Calendar {
+            year,
+            month: month.clamp(1, 12),
+            today: None,
+            selected: None,
+            cursor: None,
+            pick: None,
+            step: None,
+            key: None,
+        }
     }
     /// The day to ring; the app passes it, so a still render never reads the clock.
     pub fn today(mut self, d: Date) -> Self {
@@ -160,28 +187,51 @@ impl Calendar {
                 row()
                     .pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0))
                     .items_center()
-                    .child(text(title).font(t.text_style(tk.font.body)).color(t.dim()).align(Align::Center).w_full().single_line()),
+                    .child(
+                        text(title)
+                            .font(t.text_style(tk.font.body))
+                            .color(t.dim())
+                            .align(Align::Center)
+                            .w_full()
+                            .single_line(),
+                    ),
             )
             .child(
                 row()
                     .w_full()
                     .items_center()
                     .justify_between()
-                    .child(stepper("\u{f0141}", &tk.string("clock.previousMonth", "Previous month"), -1))
-                    .child(stepper("\u{f0142}", &tk.string("clock.nextMonth", "Next month"), 1)),
+                    .child(stepper(
+                        "\u{f0141}",
+                        &tk.string("clock.previousMonth", "Previous month"),
+                        -1,
+                    ))
+                    .child(stepper(
+                        "\u{f0142}",
+                        &tk.string("clock.nextMonth", "Next month"),
+                        1,
+                    )),
             );
 
         // ---- Weekdays
         let mut weekdays = row().gap(gap);
         for w in WEEKDAYS {
             weekdays = weekdays.child(
-                row().w(cw).h(t.space(16.0)).center().child(text(w.to_uppercase()).font(t.text_style_bold(tk.font.caption)).color(t.dim())),
+                row().w(cw).h(t.space(16.0)).center().child(
+                    text(w.to_uppercase())
+                        .font(t.text_style_bold(tk.font.caption))
+                        .color(t.dim()),
+                ),
             );
         }
 
         // ---- Six weeks from the Monday on or before the 1st.
         let start = first.add_days(-(first.weekday() as i32));
-        let ring = BorderSpec { color: tk.palette.accent, widths: [sp.hairline as f64; 4], gradient: None };
+        let ring = BorderSpec {
+            color: tk.palette.accent,
+            widths: [sp.hairline as f64; 4],
+            gradient: None,
+        };
         let mut grid = col().gap(gap).child(weekdays).role("grid").focus_group();
         let mut day = start;
         for _ in 0..6 {
@@ -199,9 +249,24 @@ impl Calendar {
                 } else {
                     color(fg)
                 };
-                let style = if is_selected || is_today { t.text_style_bold(tk.font.body) } else { t.text_style(tk.font.body) };
-                let edge = if is_today { ring.clone() } else { BorderSpec::none() };
-                let rest = Look::new(if is_selected { c.selected.fill } else { Rgba::TRANSPARENT }, edge.clone());
+                let style = if is_selected || is_today {
+                    t.text_style_bold(tk.font.body)
+                } else {
+                    t.text_style(tk.font.body)
+                };
+                let edge = if is_today {
+                    ring.clone()
+                } else {
+                    BorderSpec::none()
+                };
+                let rest = Look::new(
+                    if is_selected {
+                        c.selected.fill
+                    } else {
+                        Rgba::TRANSPARENT
+                    },
+                    edge.clone(),
+                );
                 let hot = Look::new(c.hover.fill, edge);
                 let base = row()
                     .size(cw, ch)
@@ -211,7 +276,15 @@ impl Calendar {
                     .focusable(true)
                     .focus_selected(is_selected);
                 let label = text(day.day.to_string()).font(style).color(ink);
-                let mut cell = chrome(t, base, vec![label], &rest, &hot, self.cursor == Some(day), t.radius());
+                let mut cell = chrome(
+                    t,
+                    base,
+                    vec![label],
+                    &rest,
+                    &hot,
+                    self.cursor == Some(day),
+                    t.radius(),
+                );
                 if let Some(k) = &self.key {
                     cell = cell.key(format!("{k}-{}-{:02}-{:02}", day.year, day.month, day.day));
                 }
@@ -239,6 +312,9 @@ mod tests {
         assert_eq!(Date::new(2024, 2, 29).weekday(), 3); // a Thursday
         assert_eq!(Date::new(2026, 11, 1).add_days(-6), Date::new(2026, 10, 26));
         assert_eq!(Date::new(2026, 12, 31).add_days(1), Date::new(2027, 1, 1));
-        assert_eq!(Date::new(2026, 1, 15).add_months(-1), Date::new(2025, 12, 1));
+        assert_eq!(
+            Date::new(2026, 1, 15).add_months(-1),
+            Date::new(2025, 12, 1)
+        );
     }
 }

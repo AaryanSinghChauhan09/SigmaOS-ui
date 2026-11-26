@@ -32,8 +32,16 @@ impl Hsva {
             return None;
         }
         let byte = |i: usize| u8::from_str_radix(&hex[i..i + 2], 16).ok();
-        let (r, g, b) = (byte(0)? as f32 / 255.0, byte(2)? as f32 / 255.0, byte(4)? as f32 / 255.0);
-        let a = if hex.len() == 8 { byte(6)? as f32 / 255.0 } else { 1.0 };
+        let (r, g, b) = (
+            byte(0)? as f32 / 255.0,
+            byte(2)? as f32 / 255.0,
+            byte(4)? as f32 / 255.0,
+        );
+        let a = if hex.len() == 8 {
+            byte(6)? as f32 / 255.0
+        } else {
+            1.0
+        };
         let max = r.max(g).max(b);
         let min = r.min(g).min(b);
         let d = max - min;
@@ -50,7 +58,12 @@ impl Hsva {
                 h += 1.0;
             }
         }
-        Some(Hsva { h, s: if max > 0.0 { d / max } else { 0.0 }, v: max, a })
+        Some(Hsva {
+            h,
+            s: if max > 0.0 { d / max } else { 0.0 },
+            v: max,
+            a,
+        })
     }
     /// The 0–255 channels, by the same arithmetic as the Qt picker.
     pub fn rgb8(self) -> [u8; 3] {
@@ -71,7 +84,12 @@ impl Hsva {
     }
     pub fn rgba(self) -> Rgba {
         let [r, g, b] = self.rgb8();
-        Rgba { r, g, b, a: (self.a * 255.0).round() as u8 }
+        Rgba {
+            r,
+            g,
+            b,
+            a: (self.a * 255.0).round() as u8,
+        }
     }
     /// `#rrggbb`, or `#rrggbbaa` when alpha is under 1.
     pub fn hex(self) -> String {
@@ -113,15 +131,34 @@ fn attach<S: 'static>(set: SetFn<S>, e: El, part: Part, cur: Hsva) -> El {
             e.on_drag(move |s: &mut S, d: &mut Drag, _tx| {
                 let sat = (d.x / d.w.max(1.0)).clamp(0.0, 1.0);
                 let val = 1.0 - (d.y / d.h.max(1.0)).clamp(0.0, 1.0);
-                set(s, Hsva { s: sat, v: val, ..cur });
+                set(
+                    s,
+                    Hsva {
+                        s: sat,
+                        v: val,
+                        ..cur
+                    },
+                );
             })
             .on_key(move |s: &mut S, k, _tx: &mut Tx| {
                 let st = step(k);
                 let next = match k.key {
-                    Key::Left => Hsva { s: (cur.s - st).max(0.0), ..cur },
-                    Key::Right => Hsva { s: (cur.s + st).min(1.0), ..cur },
-                    Key::Up => Hsva { v: (cur.v + st).min(1.0), ..cur },
-                    Key::Down => Hsva { v: (cur.v - st).max(0.0), ..cur },
+                    Key::Left => Hsva {
+                        s: (cur.s - st).max(0.0),
+                        ..cur
+                    },
+                    Key::Right => Hsva {
+                        s: (cur.s + st).min(1.0),
+                        ..cur
+                    },
+                    Key::Up => Hsva {
+                        v: (cur.v + st).min(1.0),
+                        ..cur
+                    },
+                    Key::Down => Hsva {
+                        v: (cur.v - st).max(0.0),
+                        ..cur
+                    },
                     _ => return false,
                 };
                 keys(s, next);
@@ -130,11 +167,20 @@ fn attach<S: 'static>(set: SetFn<S>, e: El, part: Part, cur: Hsva) -> El {
         }
         Part::Hue { inset } | Part::Alpha { inset } => {
             let hue = matches!(part, Part::Hue { .. });
-            let with = move |fr: f32| if hue { Hsva { h: fr.min(0.9999), ..cur } } else { Hsva { a: 1.0 - fr, ..cur } };
+            let with = move |fr: f32| {
+                if hue {
+                    Hsva {
+                        h: fr.min(0.9999),
+                        ..cur
+                    }
+                } else {
+                    Hsva { a: 1.0 - fr, ..cur }
+                }
+            };
             let now = if hue { cur.h } else { 1.0 - cur.a };
             let keys = set.clone();
-            e.on_drag(move |s: &mut S, d: &mut Drag, _tx| set(s, with(strip_fraction(d, inset)))).on_key(
-                move |s: &mut S, k, _tx: &mut Tx| {
+            e.on_drag(move |s: &mut S, d: &mut Drag, _tx| set(s, with(strip_fraction(d, inset))))
+                .on_key(move |s: &mut S, k, _tx: &mut Tx| {
                     let fr = match k.key {
                         Key::Up => (now - step(k)).max(0.0),
                         Key::Down => (now + step(k)).min(1.0),
@@ -142,8 +188,7 @@ fn attach<S: 'static>(set: SetFn<S>, e: El, part: Part, cur: Hsva) -> El {
                     };
                     keys(s, with(fr));
                     true
-                },
-            )
+                })
         }
         Part::Swatch(v) => e.on_press(move |s: &mut S| set(s, Hsva { a: cur.a, ..v })),
     }
@@ -152,7 +197,9 @@ fn attach<S: 'static>(set: SetFn<S>, e: El, part: Part, cur: Hsva) -> El {
 /// A fill inside a border `bw` wide, as Qt's Rectangle paints one: a translucent border shows
 /// what's behind the element, not its own fill.
 fn inset_fill(fill: rune::Color, bw: f32, radius: f32) -> El {
-    el().pin(Some(bw), Some(bw), Some(bw), Some(bw)).radius((radius - bw).max(0.0)).fill(fill)
+    el().pin(Some(bw), Some(bw), Some(bw), Some(bw))
+        .radius((radius - bw).max(0.0))
+        .fill(fill)
 }
 
 /// An HSV color picker: a saturation/value square over the hue, a hue strip, an optional alpha
@@ -177,7 +224,18 @@ impl ColorPicker {
             alpha: true,
             width: None,
             height: None,
-            palette: ["red", "orange", "yellow", "green", "cyan", "blue", "magenta", "foreground"].map(String::from).to_vec(),
+            palette: [
+                "red",
+                "orange",
+                "yellow",
+                "green",
+                "cyan",
+                "blue",
+                "magenta",
+                "foreground",
+            ]
+            .map(String::from)
+            .to_vec(),
             cursor: false,
             hex: TextEdit::new(value.hex()),
             attach: None,
@@ -228,18 +286,22 @@ impl ColorPicker {
                 f(s, v);
             })
         };
-        self.attach = Some(Rc::new(move |e: El, part: Part, cur: Hsva| attach(set.clone(), e, part, cur)));
+        self.attach = Some(Rc::new(move |e: El, part: Part, cur: Hsva| {
+            attach(set.clone(), e, part, cur)
+        }));
         let hue = self.value.h;
         let read = hex.clone();
         self.field = Some(Rc::new(move |input: TextInput| {
             let f = f.clone();
             let read = read.clone();
-            input.on_edit(hex.clone()).on_change(move |s: &mut S, _tx: &mut Tx| {
-                let typed = read(s).text.clone();
-                if let Some(v) = Hsva::from_hex(&typed, hue) {
-                    f(s, v);
-                }
-            })
+            input
+                .on_edit(hex.clone())
+                .on_change(move |s: &mut S, _tx: &mut Tx| {
+                    let typed = read(s).text.clone();
+                    if let Some(v) = Hsva::from_hex(&typed, hue) {
+                        f(s, v);
+                    }
+                })
         }));
         self
     }
@@ -270,35 +332,99 @@ impl ColorPicker {
             None => e,
         };
         let knob_el = |x: f32, y: f32, fill: rune::Color, hot: bool| {
-            el().absolute(x, y).size(knob, knob).radius(knob / 2.0).fill(fill).border(ring, surface).scale(if hot { 1.15 } else { 1.0 })
+            el().absolute(x, y)
+                .size(knob, knob)
+                .radius(knob / 2.0)
+                .fill(fill)
+                .border(ring, surface)
+                .scale(if hot { 1.15 } else { 1.0 })
         };
         let pin = || el().pin(Some(0.0), Some(0.0), Some(0.0), Some(0.0));
 
         // ---- the square: hue, white from the left, black from the bottom
-        let [hr, hg, hb] = Hsva { s: 1.0, v: 1.0, ..v }.rgb8();
+        let [hr, hg, hb] = Hsva {
+            s: 1.0,
+            v: 1.0,
+            ..v
+        }
+        .rgb8();
         let white = rune::Color::WHITE;
-        let clear_white = color(Rgba { r: 255, g: 255, b: 255, a: 0 });
-        let black = color(Rgba { r: 0, g: 0, b: 0, a: 255 });
-        let clear_black = color(Rgba { r: 0, g: 0, b: 0, a: 0 });
+        let clear_white = color(Rgba {
+            r: 255,
+            g: 255,
+            b: 255,
+            a: 0,
+        });
+        let black = color(Rgba {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 255,
+        });
+        let clear_black = color(Rgba {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0,
+        });
         let square = el()
             .w(square_w)
             .h(square_h)
             .focusable(true)
             .cursor(Cursor::Crosshair)
             .key("color-square")
-            .child(pin().radius(small).fill(color(Rgba { r: hr, g: hg, b: hb, a: 255 })))
-            .child(pin().radius(small).linear_gradient(PI / 2.0, [(0.0, white), (1.0, clear_white)]))
+            .child(pin().radius(small).fill(color(Rgba {
+                r: hr,
+                g: hg,
+                b: hb,
+                a: 255,
+            })))
+            .child(
+                pin()
+                    .radius(small)
+                    .linear_gradient(PI / 2.0, [(0.0, white), (1.0, clear_white)]),
+            )
             .child(pin().radius(small).gradient(clear_black, black))
-            .child(knob_el((v.s * square_w - knob / 2.0).round(), ((1.0 - v.v) * square_h - knob / 2.0).round(), opaque, self.cursor));
+            .child(knob_el(
+                (v.s * square_w - knob / 2.0).round(),
+                ((1.0 - v.v) * square_h - knob / 2.0).round(),
+                opaque,
+                self.cursor,
+            ));
         let square = wire(square, Part::Square);
 
         // ---- strips with Slider knobs
-        let strip_knob = |fr: f32| knob_el(((strip_w - knob) / 2.0).round(), (fr * (square_h - knob)).round(), t.fg(), false);
-        let hue_stops: Vec<(f32, rune::Color)> = [[255, 0, 0], [255, 255, 0], [0, 255, 0], [0, 255, 255], [0, 0, 255], [255, 0, 255], [255, 0, 0]]
-            .iter()
-            .enumerate()
-            .map(|(i, [r, g, b])| (i as f32 / 6.0, color(Rgba { r: *r, g: *g, b: *b, a: 255 })))
-            .collect();
+        let strip_knob = |fr: f32| {
+            knob_el(
+                ((strip_w - knob) / 2.0).round(),
+                (fr * (square_h - knob)).round(),
+                t.fg(),
+                false,
+            )
+        };
+        let hue_stops: Vec<(f32, rune::Color)> = [
+            [255, 0, 0],
+            [255, 255, 0],
+            [0, 255, 0],
+            [0, 255, 255],
+            [0, 0, 255],
+            [255, 0, 255],
+            [255, 0, 0],
+        ]
+        .iter()
+        .enumerate()
+        .map(|(i, [r, g, b])| {
+            (
+                i as f32 / 6.0,
+                color(Rgba {
+                    r: *r,
+                    g: *g,
+                    b: *b,
+                    a: 255,
+                }),
+            )
+        })
+        .collect();
         let hue = el()
             .w(strip_w)
             .h(square_h)
@@ -317,15 +443,27 @@ impl ColorPicker {
                 .cursor(Cursor::Pointer)
                 .key("color-alpha")
                 .child(pin().radius(small).fill(t.track()))
-                .child(pin().radius(small).gradient(opaque, color(Rgba { r, g, b, a: 0 })))
+                .child(
+                    pin()
+                        .radius(small)
+                        .gradient(opaque, color(Rgba { r, g, b, a: 0 })),
+                )
                 .child(strip_knob(1.0 - v.a));
             top = top.child(wire(alpha, Part::Alpha { inset: knob / 2.0 }));
         }
 
         // ---- preview and hex field
-        let preview = el().w(field_h).h(field_h).radius(small).border(1.0, color(c.normal.border.color)).child(inset_fill(color(v.rgba()), 1.0, small));
+        let preview = el()
+            .w(field_h)
+            .h(field_h)
+            .radius(small)
+            .border(1.0, color(c.normal.border.color))
+            .child(inset_fill(color(v.rgba()), 1.0, small));
         let style = t.text_style(tk.font.body);
-        let mut input = TextInput::new(&self.hex).plain().width(None).text_style(style);
+        let mut input = TextInput::new(&self.hex)
+            .plain()
+            .width(None)
+            .text_style(style);
         if let Some(field) = &self.field {
             input = field(input);
         }
@@ -337,32 +475,71 @@ impl ColorPicker {
             .grow(1.0);
         let rest = Look::new(c.normal.fill, c.normal.border.clone());
         let hot = Look::new(c.hover.fill, c.hover.border.clone());
-        let field = chrome(t, base, vec![input.build(t.kit()).grow(1.0)], &rest, &hot, false, t.radius());
+        let field = chrome(
+            t,
+            base,
+            vec![input.build(t.kit()).grow(1.0)],
+            &rest,
+            &hot,
+            false,
+            t.radius(),
+        );
         let middle = row().w(w).gap(md).child(preview).child(field);
 
         // ---- the theme's palette
         let current = &v.hex()[..7];
         let mut swatches = row().gap(md);
         for name in &self.palette {
-            let Some(rgba) = tk.palette.named.get(name) else { continue };
+            let Some(rgba) = tk.palette.named.get(name) else {
+                continue;
+            };
             let hex = format!("#{:02x}{:02x}{:02x}", rgba.r, rgba.g, rgba.b);
             let chosen = hex == current;
-            let one = |width: f64, c: Rgba| BorderSpec { color: c, widths: [width; 4], gradient: None };
+            let one = |width: f64, c: Rgba| BorderSpec {
+                color: c,
+                widths: [width; 4],
+                gradient: None,
+            };
             let (rest, hot) = if chosen {
-                let look = Look::new(Rgba::TRANSPARENT, one(1f64.max(t.space(2.0) as f64), tk.palette.foreground));
+                let look = Look::new(
+                    Rgba::TRANSPARENT,
+                    one(1f64.max(t.space(2.0) as f64), tk.palette.foreground),
+                );
                 (look.clone(), look)
             } else {
-                (Look::new(Rgba::TRANSPARENT, one(1.0, c.normal.border.color)), Look::new(Rgba::TRANSPARENT, one(1.0, c.hover.border.color)))
+                (
+                    Look::new(Rgba::TRANSPARENT, one(1.0, c.normal.border.color)),
+                    Look::new(Rgba::TRANSPARENT, one(1.0, c.hover.border.color)),
+                )
             };
             let ring = if chosen { 1f32.max(t.space(2.0)) } else { 1.0 };
-            let base = el().w(swatch).h(swatch).focusable(true).cursor(Cursor::Pointer).key(format!("swatch-{name}"));
+            let base = el()
+                .w(swatch)
+                .h(swatch)
+                .focusable(true)
+                .cursor(Cursor::Pointer)
+                .key(format!("swatch-{name}"));
             let base = match Hsva::from_hex(&hex, v.h) {
                 Some(sv) => wire(base, Part::Swatch(sv)),
                 None => base,
             };
-            swatches = swatches.child(chrome(t, base.radius(small), vec![inset_fill(color(*rgba), ring, small)], &rest, &hot, chosen, small));
+            swatches = swatches.child(chrome(
+                t,
+                base.radius(small),
+                vec![inset_fill(color(*rgba), ring, small)],
+                &rest,
+                &hot,
+                chosen,
+                small,
+            ));
         }
 
-        col().w(w).h(h).gap(lg).child(top).child(middle).child(swatches)
+        col()
+            .w(w)
+            .h(h)
+            .gap(lg)
+            .child(top)
+            .child(middle)
+            .child(swatches)
     }
 }

@@ -21,7 +21,15 @@ pub struct Button {
 
 impl Button {
     pub fn new(label: impl Into<String>) -> Button {
-        Button { label: label.into(), icon: None, bordered: false, selected: false, cursor: false, key: None, press: None }
+        Button {
+            label: label.into(),
+            icon: None,
+            bordered: false,
+            selected: false,
+            cursor: false,
+            key: None,
+            press: None,
+        }
     }
     /// A glyph before the label (a Nerd Font codepoint, as the shell uses).
     pub fn icon(mut self, glyph: impl Into<String>) -> Self {
@@ -62,7 +70,14 @@ impl Button {
         } else {
             BorderSpec::none()
         };
-        let rest = Look::new(if self.selected { c.selected.fill } else { Rgba::TRANSPARENT }, rest_border);
+        let rest = Look::new(
+            if self.selected {
+                c.selected.fill
+            } else {
+                Rgba::TRANSPARENT
+            },
+            rest_border,
+        );
         let hot = Look::new(c.hover.fill, c.hover.border.clone());
         let mut looks = vec![&c.hover.border, &c.selected.border, &c.focus.border];
         if self.bordered {
@@ -70,14 +85,27 @@ impl Button {
         }
         let [rt, rr, rb, rl] = reserve(&looks);
 
-        let ink = if self.selected { color(c.selected.text) } else { t.fg() };
-        let style = if self.selected { t.text_style_bold(tk.font.body) } else { t.text_style(tk.font.body) };
+        let ink = if self.selected {
+            color(c.selected.text)
+        } else {
+            t.fg()
+        };
+        let style = if self.selected {
+            t.text_style_bold(tk.font.body)
+        } else {
+            t.text_style(tk.font.body)
+        };
         let mut kids = Vec::new();
         if let Some(icon) = &self.icon {
             kids.push(glyph(t, icon, tk.font.icon, ink));
         }
         if !self.label.is_empty() {
-            kids.push(text(self.label.clone()).font(style).color(ink).single_line());
+            kids.push(
+                text(self.label.clone())
+                    .font(style)
+                    .color(ink)
+                    .single_line(),
+            );
         }
 
         let base = row()
@@ -115,7 +143,13 @@ pub struct IconButton {
 
 impl IconButton {
     pub fn new(glyph: impl Into<String>) -> IconButton {
-        IconButton { glyph: glyph.into(), label: String::new(), bordered: false, cursor: false, press: None }
+        IconButton {
+            glyph: glyph.into(),
+            label: String::new(),
+            bordered: false,
+            cursor: false,
+            press: None,
+        }
     }
     /// The accessible name (and what a tooltip would say).
     pub fn label(mut self, label: impl Into<String>) -> Self {
@@ -139,10 +173,27 @@ impl IconButton {
         let tk = t.tokens();
         let c = &tk.controls;
         let icon = tk.font.icon;
-        let size = ((t.space(22.0)).max((icon + tk.spacing.sm * 2) as f32).round() as i64 | 1) as f32;
-        let rest = Look::new(Rgba::TRANSPARENT, if self.bordered { c.normal.border.clone() } else { BorderSpec::none() });
+        let size = ((t.space(22.0))
+            .max((icon + tk.spacing.sm * 2) as f32)
+            .round() as i64
+            | 1) as f32;
+        let rest = Look::new(
+            Rgba::TRANSPARENT,
+            if self.bordered {
+                c.normal.border.clone()
+            } else {
+                BorderSpec::none()
+            },
+        );
         // PanelActionButton shows the hover border only when bordered.
-        let hot = Look::new(c.hover.fill, if self.bordered { c.hover.border.clone() } else { BorderSpec::none() });
+        let hot = Look::new(
+            c.hover.fill,
+            if self.bordered {
+                c.hover.border.clone()
+            } else {
+                BorderSpec::none()
+            },
+        );
         let base = row()
             .size(size, size)
             .center()
@@ -169,9 +220,20 @@ pub struct ButtonGroup {
 
 impl ButtonGroup {
     /// `options` are (value, label) pairs.
-    pub fn new<V: Into<String>, L: Into<String>>(options: impl IntoIterator<Item = (V, L)>, value: impl Into<String>) -> ButtonGroup {
-        let options = options.into_iter().map(|(v, l)| (v.into(), l.into())).collect();
-        ButtonGroup { options, value: value.into(), cursor: None, choose: None }
+    pub fn new<V: Into<String>, L: Into<String>>(
+        options: impl IntoIterator<Item = (V, L)>,
+        value: impl Into<String>,
+    ) -> ButtonGroup {
+        let options = options
+            .into_iter()
+            .map(|(v, l)| (v.into(), l.into()))
+            .collect();
+        ButtonGroup {
+            options,
+            value: value.into(),
+            cursor: None,
+            choose: None,
+        }
     }
     /// Force the hover-cursor look on one option.
     pub fn cursor(mut self, index: Option<usize>) -> Self {
@@ -190,7 +252,11 @@ impl ButtonGroup {
         let gap = t.tokens().spacing.md as f32;
         let mut r = row().gap(gap).role("radiogroup");
         for (i, (value, label)) in self.options.into_iter().enumerate() {
-            let b = Button::new(label).bordered(true).selected(value == self.value).cursor(self.cursor == Some(i)).build(t);
+            let b = Button::new(label)
+                .bordered(true)
+                .selected(value == self.value)
+                .cursor(self.cursor == Some(i))
+                .build(t);
             r = r.child(match &self.choose {
                 Some(attach) => attach(b, value),
                 None => b,

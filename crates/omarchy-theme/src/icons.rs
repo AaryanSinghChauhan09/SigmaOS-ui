@@ -42,13 +42,17 @@ pub fn theme_name() -> String {
     {
         return v.trim().to_string();
     }
-    read_theme_name(&source::theme_dir().join("icons.theme")).unwrap_or_else(|| DEFAULT_THEME.to_string())
+    read_theme_name(&source::theme_dir().join("icons.theme"))
+        .unwrap_or_else(|| DEFAULT_THEME.to_string())
 }
 
 /// The first non-empty line of an `icons.theme` file, trimmed.
 pub fn read_theme_name(path: &Path) -> Option<String> {
     let text = std::fs::read_to_string(path).ok()?;
-    text.lines().map(str::trim).find(|l| !l.is_empty()).map(str::to_string)
+    text.lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .map(str::to_string)
 }
 
 /// The search roots, in order: `OMARCHY_UI_ICON_DIRS` when set, else `$XDG_DATA_HOME/icons`,
@@ -58,16 +62,30 @@ pub fn search_dirs() -> Vec<PathBuf> {
     if let Ok(v) = std::env::var("OMARCHY_UI_ICON_DIRS")
         && !v.trim().is_empty()
     {
-        return v.split(':').filter(|d| !d.is_empty()).map(PathBuf::from).collect();
+        return v
+            .split(':')
+            .filter(|d| !d.is_empty())
+            .map(PathBuf::from)
+            .collect();
     }
-    let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("/"));
+    let home = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("/"));
     let data_home = std::env::var_os("XDG_DATA_HOME")
         .filter(|d| !d.is_empty())
         .map(PathBuf::from)
         .unwrap_or_else(|| home.join(".local/share"));
-    let data_dirs = std::env::var("XDG_DATA_DIRS").ok().filter(|d| !d.is_empty()).unwrap_or_else(|| "/usr/local/share:/usr/share".into());
+    let data_dirs = std::env::var("XDG_DATA_DIRS")
+        .ok()
+        .filter(|d| !d.is_empty())
+        .unwrap_or_else(|| "/usr/local/share:/usr/share".into());
     let mut dirs = vec![data_home.join("icons")];
-    dirs.extend(data_dirs.split(':').filter(|d| !d.is_empty()).map(|d| Path::new(d).join("icons")));
+    dirs.extend(
+        data_dirs
+            .split(':')
+            .filter(|d| !d.is_empty())
+            .map(|d| Path::new(d).join("icons")),
+    );
     dirs.push(home.join(".icons"));
     dirs.push(PathBuf::from("/usr/share/pixmaps"));
     dirs
@@ -96,7 +114,9 @@ struct Subdir {
 fn is_app_dir(context: Option<&str>, path: &str) -> bool {
     match context {
         Some(c) => c == "Applications" || c == "Devices",
-        None => path.split('/').any(|part| part == "apps" || part == "devices"),
+        None => path
+            .split('/')
+            .any(|part| part == "apps" || part == "devices"),
     }
 }
 
@@ -119,11 +139,21 @@ fn parse_index(text: &str) -> Index {
             continue;
         }
         if let Some((k, v)) = line.split_once('=') {
-            groups.entry(group.clone()).or_default().insert(k.trim().to_string(), v.trim().to_string());
+            groups
+                .entry(group.clone())
+                .or_default()
+                .insert(k.trim().to_string(), v.trim().to_string());
         }
     }
     let list = |v: Option<&String>| -> Vec<String> {
-        v.map(|v| v.split(',').map(str::trim).filter(|s| !s.is_empty()).map(str::to_string).collect()).unwrap_or_default()
+        v.map(|v| {
+            v.split(',')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
     };
     let head = groups.get("Icon Theme");
     let mut names = list(head.and_then(|h| h.get("Directories")));
@@ -142,10 +172,18 @@ fn parse_index(text: &str) -> Index {
                 _ => Kind::Threshold,
             };
             let app = is_app_dir(g.get("Context").map(String::as_str), &name);
-            Some(Subdir { path: name, pixels: size * num("Scale").unwrap_or(1).max(1), kind, app })
+            Some(Subdir {
+                path: name,
+                pixels: size * num("Scale").unwrap_or(1).max(1),
+                kind,
+                app,
+            })
         })
         .collect();
-    Index { inherits: list(head.and_then(|h| h.get("Inherits"))), dirs }
+    Index {
+        inherits: list(head.and_then(|h| h.get("Inherits"))),
+        dirs,
+    }
 }
 
 /// An icon theme ready to search: its inheritance chain resolved once, and every answer cached.
@@ -165,7 +203,12 @@ impl IconLookup {
         let mut seen = HashSet::new();
         Self::visit(&theme, &roots, &mut seen, &mut chain);
         Self::visit("hicolor", &roots, &mut seen, &mut chain);
-        IconLookup { theme, roots, chain, found: Mutex::new(HashMap::new()) }
+        IconLookup {
+            theme,
+            roots,
+            chain,
+            found: Mutex::new(HashMap::new()),
+        }
     }
 
     /// The active Omarchy theme's icon theme ([`theme_name`]) under the usual roots
@@ -175,11 +218,19 @@ impl IconLookup {
     }
 
     /// A theme, then its parents depth-first. Themes that aren't installed are skipped.
-    fn visit(name: &str, roots: &[PathBuf], seen: &mut HashSet<String>, chain: &mut Vec<(String, Index)>) {
+    fn visit(
+        name: &str,
+        roots: &[PathBuf],
+        seen: &mut HashSet<String>,
+        chain: &mut Vec<(String, Index)>,
+    ) {
         if !seen.insert(name.to_string()) {
             return;
         }
-        let Some(text) = roots.iter().find_map(|r| std::fs::read_to_string(r.join(name).join("index.theme")).ok()) else {
+        let Some(text) = roots
+            .iter()
+            .find_map(|r| std::fs::read_to_string(r.join(name).join("index.theme")).ok())
+        else {
             return;
         };
         let index = parse_index(&text);
@@ -224,22 +275,49 @@ impl IconLookup {
         if name.contains('/') {
             return None;
         }
-        let themed = |apps: bool| self.chain.iter().find_map(|(theme, index)| self.in_theme(theme, index, name, size, apps));
+        let themed = |apps: bool| {
+            self.chain
+                .iter()
+                .find_map(|(theme, index)| self.in_theme(theme, index, name, size, apps))
+        };
         // Loose files in a root: /usr/share/pixmaps.
-        let loose = || self.roots.iter().find_map(|r| EXTENSIONS.iter().map(|e| r.join(format!("{name}.{e}"))).find(|p| p.is_file()));
+        let loose = || {
+            self.roots.iter().find_map(|r| {
+                EXTENSIONS
+                    .iter()
+                    .map(|e| r.join(format!("{name}.{e}")))
+                    .find(|p| p.is_file())
+            })
+        };
         themed(true).or_else(loose).or_else(|| themed(false))
     }
 
     /// `name` in one theme, from its app and device directories only when `apps`.
-    fn in_theme(&self, theme: &str, index: &Index, name: &str, size: u32, apps: bool) -> Option<PathBuf> {
+    fn in_theme(
+        &self,
+        theme: &str,
+        index: &Index,
+        name: &str,
+        size: u32,
+        apps: bool,
+    ) -> Option<PathBuf> {
         // Every directory's file, from the first root that has one.
         let mut svgs: Vec<(&Subdir, PathBuf)> = Vec::new();
         let mut pngs: Vec<(&Subdir, PathBuf)> = Vec::new();
         for dir in index.dirs.iter().filter(|d| d.app || !apps) {
             for ext in EXTENSIONS {
                 let file = format!("{name}.{ext}");
-                if let Some(p) = self.roots.iter().map(|r| r.join(theme).join(&dir.path).join(&file)).find(|p| p.is_file()) {
-                    if ext == "svg" { svgs.push((dir, p)) } else { pngs.push((dir, p)) }
+                if let Some(p) = self
+                    .roots
+                    .iter()
+                    .map(|r| r.join(theme).join(&dir.path).join(&file))
+                    .find(|p| p.is_file())
+                {
+                    if ext == "svg" {
+                        svgs.push((dir, p))
+                    } else {
+                        pngs.push((dir, p))
+                    }
                 }
             }
         }
@@ -253,7 +331,10 @@ impl IconLookup {
 /// The smallest directory at or above `size`, else the largest; the first in the theme's order
 /// on a tie.
 fn nearest(found: &[(&Subdir, PathBuf)], size: u32) -> Option<PathBuf> {
-    let above = found.iter().filter(|(d, _)| d.pixels >= size).min_by_key(|(d, _)| d.pixels);
+    let above = found
+        .iter()
+        .filter(|(d, _)| d.pixels >= size)
+        .min_by_key(|(d, _)| d.pixels);
     let pick = above.or_else(|| found.iter().rev().max_by_key(|(d, _)| d.pixels))?;
     Some(pick.1.clone())
 }
@@ -270,8 +351,13 @@ mod tests {
     // chromium only in hicolor, btop in local/ and in the parent, steam only in pixmaps; zoom an
     // action in Fixture-Accent and an app in hicolor, edit-copy only an action, printer a device.
     fn fixture() -> (PathBuf, IconLookup) {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/icons").canonicalize().unwrap();
-        let roots = ["local", "system", "pixmaps"].map(|d| root.join(d)).to_vec();
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/icons")
+            .canonicalize()
+            .unwrap();
+        let roots = ["local", "system", "pixmaps"]
+            .map(|d| root.join(d))
+            .to_vec();
         (root, IconLookup::new("Fixture-Accent", roots))
     }
 
@@ -283,37 +369,70 @@ mod tests {
     fn follows_inherits_then_hicolor() {
         let (_, icons) = fixture();
         // Fixture-Base names a theme that isn't installed (skipped) and hicolor (not repeated).
-        assert_eq!(icons.themes(), ["Fixture-Accent", "Fixture-Base", "hicolor"]);
+        assert_eq!(
+            icons.themes(),
+            ["Fixture-Accent", "Fixture-Base", "hicolor"]
+        );
         let (root, _) = fixture();
-        assert_eq!(rel(&root, icons.find("firefox", 48)).as_deref(), Some("system/Fixture-Base/scalable/apps/firefox.svg"));
-        assert_eq!(rel(&root, icons.find("chromium", 48)).as_deref(), Some("system/hicolor/scalable/apps/chromium.svg"));
+        assert_eq!(
+            rel(&root, icons.find("firefox", 48)).as_deref(),
+            Some("system/Fixture-Base/scalable/apps/firefox.svg")
+        );
+        assert_eq!(
+            rel(&root, icons.find("chromium", 48)).as_deref(),
+            Some("system/hicolor/scalable/apps/chromium.svg")
+        );
     }
 
     #[test]
     fn hicolor_without_the_theme() {
         let (root, _) = fixture();
-        let icons = IconLookup::new("Not-Installed", ["system", "pixmaps"].map(|d| root.join(d)).to_vec());
+        let icons = IconLookup::new(
+            "Not-Installed",
+            ["system", "pixmaps"].map(|d| root.join(d)).to_vec(),
+        );
         assert_eq!(icons.themes(), ["hicolor"]);
-        assert_eq!(rel(&root, icons.find("chromium", 16)).as_deref(), Some("system/hicolor/scalable/apps/chromium.svg"));
+        assert_eq!(
+            rel(&root, icons.find("chromium", 16)).as_deref(),
+            Some("system/hicolor/scalable/apps/chromium.svg")
+        );
     }
 
     #[test]
     fn prefers_scalable_svg() {
         let (root, icons) = fixture();
         // A 32px PNG sits beside it, nearer the request.
-        assert_eq!(rel(&root, icons.find("org.gnome.Nautilus", 32)).as_deref(), Some("system/Fixture-Accent/scalable/apps/org.gnome.Nautilus.svg"));
+        assert_eq!(
+            rel(&root, icons.find("org.gnome.Nautilus", 32)).as_deref(),
+            Some("system/Fixture-Accent/scalable/apps/org.gnome.Nautilus.svg")
+        );
     }
 
     #[test]
     fn picks_the_nearest_size_at_or_above() {
         let (root, icons) = fixture();
         let at = |size| rel(&root, icons.find("utilities-terminal", size));
-        assert_eq!(at(8).as_deref(), Some("system/Fixture-Accent/16x16/apps/utilities-terminal.png"));
-        assert_eq!(at(16).as_deref(), Some("system/Fixture-Accent/16x16/apps/utilities-terminal.png"));
-        assert_eq!(at(17).as_deref(), Some("system/Fixture-Accent/48x48/apps/utilities-terminal.png"));
-        assert_eq!(at(56).as_deref(), Some("system/Fixture-Accent/96x96/apps/utilities-terminal.png"));
+        assert_eq!(
+            at(8).as_deref(),
+            Some("system/Fixture-Accent/16x16/apps/utilities-terminal.png")
+        );
+        assert_eq!(
+            at(16).as_deref(),
+            Some("system/Fixture-Accent/16x16/apps/utilities-terminal.png")
+        );
+        assert_eq!(
+            at(17).as_deref(),
+            Some("system/Fixture-Accent/48x48/apps/utilities-terminal.png")
+        );
+        assert_eq!(
+            at(56).as_deref(),
+            Some("system/Fixture-Accent/96x96/apps/utilities-terminal.png")
+        );
         // Nothing big enough: the largest. The parent's SVG never wins over the theme's own PNGs.
-        assert_eq!(at(200).as_deref(), Some("system/Fixture-Accent/96x96/apps/utilities-terminal.png"));
+        assert_eq!(
+            at(200).as_deref(),
+            Some("system/Fixture-Accent/96x96/apps/utilities-terminal.png")
+        );
     }
 
     #[test]
@@ -321,7 +440,10 @@ mod tests {
         let (root, icons) = fixture();
         // Fixture-Accent's index.theme is under system/, but local/ adds an icon to it, which
         // wins over the parent theme's copy.
-        assert_eq!(rel(&root, icons.find("btop", 48)).as_deref(), Some("local/Fixture-Accent/48x48/apps/btop.png"));
+        assert_eq!(
+            rel(&root, icons.find("btop", 48)).as_deref(),
+            Some("local/Fixture-Accent/48x48/apps/btop.png")
+        );
     }
 
     #[test]
@@ -329,18 +451,30 @@ mod tests {
         let (root, icons) = fixture();
         // Fixture-Accent has a zoom action (a magnifier); the zoom app's icon is hicolor's, two
         // themes down the chain. The app wins, as in the shell's app library.
-        assert_eq!(rel(&root, icons.find("zoom", 48)).as_deref(), Some("system/hicolor/48x48/apps/zoom.png"));
+        assert_eq!(
+            rel(&root, icons.find("zoom", 48)).as_deref(),
+            Some("system/hicolor/48x48/apps/zoom.png")
+        );
         // Devices count as apps (a printer settings entry names one).
-        assert_eq!(rel(&root, icons.find("printer", 48)).as_deref(), Some("system/Fixture-Base/48x48/devices/printer.png"));
+        assert_eq!(
+            rel(&root, icons.find("printer", 48)).as_deref(),
+            Some("system/Fixture-Base/48x48/devices/printer.png")
+        );
         // An icon only in another context is still found, after everything else.
-        assert_eq!(rel(&root, icons.find("edit-copy", 48)).as_deref(), Some("system/Fixture-Accent/scalable/actions/edit-copy.svg"));
+        assert_eq!(
+            rel(&root, icons.find("edit-copy", 48)).as_deref(),
+            Some("system/Fixture-Accent/scalable/actions/edit-copy.svg")
+        );
     }
 
     #[test]
     fn app_dirs_by_context_else_path() {
         assert!(is_app_dir(Some("Applications"), "x"));
         assert!(is_app_dir(Some("Devices"), "x"));
-        assert!(!is_app_dir(Some("Actions"), "48x48/apps"), "the Context decides when there is one");
+        assert!(
+            !is_app_dir(Some("Actions"), "48x48/apps"),
+            "the Context decides when there is one"
+        );
         assert!(is_app_dir(None, "48x48/apps"));
         assert!(is_app_dir(None, "devices/scalable"));
         assert!(!is_app_dir(None, "48x48/actions"));
@@ -350,7 +484,10 @@ mod tests {
     #[test]
     fn falls_back_to_pixmaps() {
         let (root, icons) = fixture();
-        assert_eq!(rel(&root, icons.find("steam", 48)).as_deref(), Some("pixmaps/steam.png"));
+        assert_eq!(
+            rel(&root, icons.find("steam", 48)).as_deref(),
+            Some("pixmaps/steam.png")
+        );
     }
 
     #[test]

@@ -18,7 +18,13 @@ pub struct ToggleSwitch {
 
 impl ToggleSwitch {
     pub fn new(checked: bool) -> ToggleSwitch {
-        ToggleSwitch { key: None, checked, cursor: false, interactive: true, toggle: None }
+        ToggleSwitch {
+            key: None,
+            checked,
+            cursor: false,
+            interactive: true,
+            toggle: None,
+        }
     }
     pub fn key(mut self, key: impl Into<String>) -> Self {
         self.key = Some(key.into());
@@ -49,25 +55,50 @@ impl ToggleSwitch {
         let pad = if self.interactive { t.space(6.0) } else { 0.0 };
 
         let state = if self.checked { &c.selected } else { &c.normal };
-        let knob_color = if self.checked { c.selected.text } else { tk.palette.foreground.darker(1.25) };
+        let knob_color = if self.checked {
+            c.selected.text
+        } else {
+            tk.palette.foreground.darker(1.25)
+        };
         let knob_el = el()
             .key("knob")
             .size(knob, knob)
             .radius(if rounded { knob / 2.0 } else { 0.0 })
             .fill(color(knob_color))
-            .absolute(if self.checked { track_w - knob - inset } else { inset }, (track_h - knob) / 2.0);
+            .absolute(
+                if self.checked {
+                    track_w - knob - inset
+                } else {
+                    inset
+                },
+                (track_h - knob) / 2.0,
+            );
         let track = border(
-            el().size(track_w, track_h).radius(if rounded { track_h / 2.0 } else { 0.0 }).fill(color(state.fill)),
+            el().size(track_w, track_h)
+                .radius(if rounded { track_h / 2.0 } else { 0.0 })
+                .fill(color(state.fill)),
             &state.border,
         )
         .child(knob_el);
 
-        let base = row().center().padding(pad).role("switch").checked(self.checked);
+        let base = row()
+            .center()
+            .padding(pad)
+            .role("switch")
+            .checked(self.checked);
         if !self.interactive {
             return base.child(track);
         }
         let ring = Look::new(Rgba::TRANSPARENT, c.hover.border.clone());
-        let mut e = chrome(t, base.focusable(true), vec![track], &Look::clear(), &ring, self.cursor, t.radius());
+        let mut e = chrome(
+            t,
+            base.focusable(true),
+            vec![track],
+            &Look::clear(),
+            &ring,
+            self.cursor,
+            t.radius(),
+        );
         if let Some(k) = self.key {
             e = e.key(k);
         }
@@ -91,7 +122,14 @@ pub struct Toggle {
 
 impl Toggle {
     pub fn new(label: impl Into<String>) -> Toggle {
-        Toggle { label: label.into(), description: String::new(), checked: false, cursor: false, width: None, toggle: None }
+        Toggle {
+            label: label.into(),
+            description: String::new(),
+            checked: false,
+            cursor: false,
+            width: None,
+            toggle: None,
+        }
     }
     pub fn description(mut self, d: impl Into<String>) -> Self {
         self.description = d.into();
@@ -124,10 +162,19 @@ impl Toggle {
         let bw = c.normal.border.max_width() as f32;
 
         let mut words = col().grow(1.0).min_w(0.0).gap(sp.xs as f32).child(
-            text(self.label.clone()).font(t.text_style_bold(tk.font.subtitle)).color(t.fg()).single_line().truncate(),
+            text(self.label.clone())
+                .font(t.text_style_bold(tk.font.subtitle))
+                .color(t.fg())
+                .single_line()
+                .truncate(),
         );
         if !self.description.is_empty() {
-            words = words.child(text(self.description).font(t.text_style(tk.font.caption)).color(t.dim()).wrap());
+            words = words.child(
+                text(self.description)
+                    .font(t.text_style(tk.font.caption))
+                    .color(t.dim())
+                    .wrap(),
+            );
         }
         let switch = ToggleSwitch::new(self.checked).interactive(false).build(t);
 
@@ -145,7 +192,15 @@ impl Toggle {
             Some(w) => base.w(w),
             None => base.w_full(),
         };
-        let e = chrome(t, base, vec![words, switch], &rest, &hot, self.cursor, t.radius());
+        let e = chrome(
+            t,
+            base,
+            vec![words, switch],
+            &rest,
+            &hot,
+            self.cursor,
+            t.radius(),
+        );
         match self.toggle {
             Some(attach) => attach(e),
             None => e,

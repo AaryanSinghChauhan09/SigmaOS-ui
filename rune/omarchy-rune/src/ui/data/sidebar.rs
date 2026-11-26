@@ -16,8 +16,16 @@ pub struct SidebarItem {
 }
 
 impl SidebarItem {
-    pub fn new(id: impl Into<String>, label: impl Into<String>, glyph: impl Into<String>) -> SidebarItem {
-        SidebarItem { id: id.into(), label: label.into(), glyph: glyph.into() }
+    pub fn new(
+        id: impl Into<String>,
+        label: impl Into<String>,
+        glyph: impl Into<String>,
+    ) -> SidebarItem {
+        SidebarItem {
+            id: id.into(),
+            label: label.into(),
+            glyph: glyph.into(),
+        }
     }
 }
 
@@ -29,8 +37,14 @@ pub struct SidebarSection {
 }
 
 impl SidebarSection {
-    pub fn new(title: impl Into<String>, items: impl IntoIterator<Item = SidebarItem>) -> SidebarSection {
-        SidebarSection { title: title.into(), items: items.into_iter().collect() }
+    pub fn new(
+        title: impl Into<String>,
+        items: impl IntoIterator<Item = SidebarItem>,
+    ) -> SidebarSection {
+        SidebarSection {
+            title: title.into(),
+            items: items.into_iter().collect(),
+        }
     }
 }
 
@@ -48,7 +62,15 @@ pub struct Sidebar {
 
 impl Sidebar {
     pub fn new(sections: impl IntoIterator<Item = SidebarSection>) -> Sidebar {
-        Sidebar { sections: sections.into_iter().collect(), selected: None, cursor: None, collapsed: false, width: None, select: None, key: None }
+        Sidebar {
+            sections: sections.into_iter().collect(),
+            selected: None,
+            cursor: None,
+            collapsed: false,
+            width: None,
+            select: None,
+            key: None,
+        }
     }
     pub fn selected(mut self, id: Option<&str>) -> Self {
         self.selected = id.map(str::to_string);
@@ -100,19 +122,51 @@ impl Sidebar {
         for s in self.sections {
             let mut section = col().w_full();
             if !self.collapsed && !s.title.is_empty() {
-                section = section.child(section_header(t, s.title).pl(inset).pb(sp.xxs as f32).truncate());
+                section = section.child(
+                    section_header(t, s.title)
+                        .pl(inset)
+                        .pb(sp.xxs as f32)
+                        .truncate(),
+                );
             }
             for item in s.items {
                 let is_selected = self.selected.as_deref() == Some(item.id.as_str());
                 let ink = if is_selected { selected_ink } else { t.fg() };
                 let mut line = row().w_full().h_full().items_center().px(inset);
-                line = line.child(row().w(offset).h_full().items_center().child(glyph(t, &item.glyph, tk.font.icon, if is_selected { ink } else { t.dim() })));
+                line = line.child(row().w(offset).h_full().items_center().child(glyph(
+                    t,
+                    &item.glyph,
+                    tk.font.icon,
+                    if is_selected { ink } else { t.dim() },
+                )));
                 if !self.collapsed {
-                    let style = if is_selected { t.text_style_bold(tk.font.body) } else { t.text_style(tk.font.body) };
-                    line = line.child(text(item.label.clone()).font(style).color(ink).truncate().grow(1.0));
+                    let style = if is_selected {
+                        t.text_style_bold(tk.font.body)
+                    } else {
+                        t.text_style(tk.font.body)
+                    };
+                    line = line.child(
+                        text(item.label.clone())
+                            .font(style)
+                            .color(ink)
+                            .truncate()
+                            .grow(1.0),
+                    );
                 }
-                let base = el().w_full().h(h).role("listitem").focusable(true).focus_selected(is_selected).label(item.label.clone());
-                let mut e = row_chrome(t, base, vec![line], is_selected, self.cursor.as_deref() == Some(item.id.as_str()));
+                let base = el()
+                    .w_full()
+                    .h(h)
+                    .role("listitem")
+                    .focusable(true)
+                    .focus_selected(is_selected)
+                    .label(item.label.clone());
+                let mut e = row_chrome(
+                    t,
+                    base,
+                    vec![line],
+                    is_selected,
+                    self.cursor.as_deref() == Some(item.id.as_str()),
+                );
                 if let Some(k) = &self.key {
                     e = e.key(format!("{k}-{}", item.id));
                 }
@@ -123,7 +177,12 @@ impl Sidebar {
             }
             sections = sections.child(section);
         }
-        let mut bar = col().h_full().padding(sp.sm as f32).role("list").focus_group().child(sections);
+        let mut bar = col()
+            .h_full()
+            .padding(sp.sm as f32)
+            .role("list")
+            .focus_group()
+            .child(sections);
         bar = if self.collapsed {
             bar.w(Sidebar::rail_width(t))
         } else {

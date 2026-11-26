@@ -40,7 +40,12 @@ fn split(args: &[String]) -> Result<(Vec<String>, Opts), Fail> {
         if let Some(name) = a.strip_prefix("--") {
             let (k, v) = match name.split_once('=') {
                 Some((k, v)) => (k.to_string(), v.to_string()),
-                None => (name.to_string(), it.next().ok_or_else(|| Fail::Usage(format!("--{name} needs a value")))?.clone()),
+                None => (
+                    name.to_string(),
+                    it.next()
+                        .ok_or_else(|| Fail::Usage(format!("--{name} needs a value")))?
+                        .clone(),
+                ),
             };
             opts.push((k, v));
         } else {
@@ -51,13 +56,20 @@ fn split(args: &[String]) -> Result<(Vec<String>, Opts), Fail> {
 }
 
 fn opt<'a>(opts: &'a [(String, String)], key: &str) -> Option<&'a str> {
-    opts.iter().rev().find(|(k, _)| k == key).map(|(_, v)| v.as_str())
+    opts.iter()
+        .rev()
+        .find(|(k, _)| k == key)
+        .map(|(_, v)| v.as_str())
 }
 
 fn number(opts: &[(String, String)], key: &str, default: f32) -> Result<f32, Fail> {
     match opt(opts, key) {
         None => Ok(default),
-        Some(v) => v.parse::<f32>().ok().filter(|n| *n > 0.0).ok_or_else(|| Fail::Usage(format!("--{key} {v}: not a positive number"))),
+        Some(v) => v
+            .parse::<f32>()
+            .ok()
+            .filter(|n| *n > 0.0)
+            .ok_or_else(|| Fail::Usage(format!("--{key} {v}: not a positive number"))),
     }
 }
 
@@ -77,9 +89,17 @@ fn known(opts: &[(String, String)], allowed: &[&str]) -> Result<(), Fail> {
 }
 
 fn run(args: &[String]) -> Result<(), Fail> {
-    let Some(cmd) = args.first() else { return Err(Fail::Usage(String::new())) };
+    let Some(cmd) = args.first() else {
+        return Err(Fail::Usage(String::new()));
+    };
     let (pos, opts) = split(&args[1..])?;
-    let want = |n: usize| if pos.len() == n { Ok(()) } else { Err(Fail::Usage(format!("{cmd} takes {n} file argument(s)"))) };
+    let want = |n: usize| {
+        if pos.len() == n {
+            Ok(())
+        } else {
+            Err(Fail::Usage(format!("{cmd} takes {n} file argument(s)")))
+        }
+    };
     match cmd.as_str() {
         "size" => {
             want(1)?;
@@ -92,13 +112,20 @@ fn run(args: &[String]) -> Result<(), Fail> {
             known(&opts, &["size"])?;
             let g = read(&pos[0])?;
             if let Some(size) = opt(&opts, "size") {
-                let (c, r) = size.split_once('x').ok_or_else(|| Fail::Usage(format!("--size {size}: not COLSxROWS")))?;
+                let (c, r) = size
+                    .split_once('x')
+                    .ok_or_else(|| Fail::Usage(format!("--size {size}: not COLSxROWS")))?;
                 let (c, r): (usize, usize) = (
-                    c.parse().map_err(|_| Fail::Usage(format!("--size {size}: not COLSxROWS")))?,
-                    r.parse().map_err(|_| Fail::Usage(format!("--size {size}: not COLSxROWS")))?,
+                    c.parse()
+                        .map_err(|_| Fail::Usage(format!("--size {size}: not COLSxROWS")))?,
+                    r.parse()
+                        .map_err(|_| Fail::Usage(format!("--size {size}: not COLSxROWS")))?,
                 );
                 if (c, r) != (g.cols, g.rows) {
-                    return Err(Fail::Error(format!("{}: {}x{}, want {c}x{r}", pos[0], g.cols, g.rows)));
+                    return Err(Fail::Error(format!(
+                        "{}: {}x{}, want {c}x{r}",
+                        pos[0], g.cols, g.rows
+                    )));
                 }
             }
             println!("ok {}x{}", g.cols, g.rows);
@@ -122,7 +149,10 @@ fn run(args: &[String]) -> Result<(), Fail> {
             let (a, b) = (read(&pos[0])?, read(&pos[1])?);
             let tokens = omarchy_theme::load();
             let p = &tokens.palette;
-            let (fg, bg) = ([p.foreground.r, p.foreground.g, p.foreground.b], [p.background.r, p.background.g, p.background.b]);
+            let (fg, bg) = (
+                [p.foreground.r, p.foreground.g, p.foreground.b],
+                [p.background.r, p.background.g, p.background.b],
+            );
             let d = diff(&a, &b, fg, bg);
             if let Some(out) = opt(&opts, "png") {
                 // The cell size the png command renders at, over the union of the two grids.

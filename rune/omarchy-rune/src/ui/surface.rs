@@ -19,7 +19,9 @@ pub fn section_header(t: &Theme, label: impl Into<String>) -> El {
 
 /// A 1px rule in the foreground at 12%.
 pub fn separator(t: &Theme) -> El {
-    el().w_full().h(1.0).fill(color(t.tokens().palette.foreground.with_alpha(0.12)))
+    el().w_full()
+        .h(1.0)
+        .fill(color(t.tokens().palette.foreground.with_alpha(0.12)))
 }
 
 /// A raised surface: [popups] background and border (Hyprland's active border by default),
@@ -32,7 +34,11 @@ pub struct Card {
 
 impl Card {
     pub fn new() -> Card {
-        Card { title: String::new(), width: None, children: Vec::new() }
+        Card {
+            title: String::new(),
+            width: None,
+            children: Vec::new(),
+        }
     }
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = title.into();
@@ -71,7 +77,12 @@ impl Card {
         if !self.title.is_empty() {
             c = c.child(section_header(t, self.title));
         }
-        c.child(col().w_full().gap(tk.spacing.panel_gap as f32).children(self.children))
+        c.child(
+            col()
+                .w_full()
+                .gap(tk.spacing.panel_gap as f32)
+                .children(self.children),
+        )
     }
 }
 
@@ -106,7 +117,13 @@ pub struct Heading {
 
 impl Heading {
     pub fn new(text: impl Into<String>) -> Heading {
-        Heading { text: text.into(), subtitle: String::new(), level: HeadingLevel::Title, centered: false, trailing: Vec::new() }
+        Heading {
+            text: text.into(),
+            subtitle: String::new(),
+            level: HeadingLevel::Title,
+            centered: false,
+            trailing: Vec::new(),
+        }
     }
     pub fn subtitle(mut self, s: impl Into<String>) -> Self {
         self.subtitle = s.into();
@@ -135,16 +152,41 @@ impl Heading {
             HeadingLevel::Heading => (f.heading, f.body),
             HeadingLevel::Display => (f.display, f.subtitle),
         };
-        let align = if self.centered { Align::Center } else { Align::Start };
+        let align = if self.centered {
+            Align::Center
+        } else {
+            Align::Start
+        };
         let mut lines = col().grow(1.0).min_w(0.0).gap(sp.xxs as f32).child(
-            text(self.text.clone()).font(t.text_style_bold(size)).color(t.fg()).single_line().truncate().align(align),
+            text(self.text.clone())
+                .font(t.text_style_bold(size))
+                .color(t.fg())
+                .single_line()
+                .truncate()
+                .align(align),
         );
         if !self.subtitle.is_empty() {
-            lines = lines.child(text(self.subtitle).font(t.text_style(sub)).color(t.dim()).single_line().truncate().align(align));
+            lines = lines.child(
+                text(self.subtitle)
+                    .font(t.text_style(sub))
+                    .color(t.dim())
+                    .single_line()
+                    .truncate()
+                    .align(align),
+            );
         }
-        let mut e = row().items_center().role("heading").label(self.text).child(lines);
+        let mut e = row()
+            .items_center()
+            .role("heading")
+            .label(self.text)
+            .child(lines);
         if !self.trailing.is_empty() {
-            e = e.gap(sp.control_gap as f32).child(row().items_center().gap(sp.xxs as f32).children(self.trailing));
+            e = e.gap(sp.control_gap as f32).child(
+                row()
+                    .items_center()
+                    .gap(sp.xxs as f32)
+                    .children(self.trailing),
+            );
         }
         e
     }
@@ -170,7 +212,15 @@ pub struct Pane {
 
 impl Pane {
     pub fn new() -> Pane {
-        Pane { title: String::new(), subtitle: String::new(), actions: Vec::new(), bordered: false, divider: None, width: None, children: Vec::new() }
+        Pane {
+            title: String::new(),
+            subtitle: String::new(),
+            actions: Vec::new(),
+            bordered: false,
+            divider: None,
+            width: None,
+            children: Vec::new(),
+        }
     }
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = title.into();
@@ -215,8 +265,18 @@ impl Pane {
         let pad = sp.panel_padding as f32;
         let gap = sp.panel_gap as f32;
         let hair = sp.hairline as f32;
-        let bw = if self.bordered { normal.border.widths.map(|w| w as f32) } else { [0.0; 4] };
-        let rule = |side: Side| if self.divider == Some(side) { hair } else { 0.0 };
+        let bw = if self.bordered {
+            normal.border.widths.map(|w| w as f32)
+        } else {
+            [0.0; 4]
+        };
+        let rule = |side: Side| {
+            if self.divider == Some(side) {
+                hair
+            } else {
+                0.0
+            }
+        };
         let mut c = col()
             .gap(gap)
             .pt(pad + bw[0] + rule(Side::Top))
@@ -224,7 +284,10 @@ impl Pane {
             .pb(pad + bw[2] + rule(Side::Bottom))
             .pl(pad + bw[3] + rule(Side::Left));
         if self.bordered {
-            c = border(c.fill(color(normal.fill)).radius(t.radius()), &normal.border);
+            c = border(
+                c.fill(color(normal.fill)).radius(t.radius()),
+                &normal.border,
+            );
         }
         if let Some(w) = self.width {
             c = c.w(w);
@@ -239,7 +302,13 @@ impl Pane {
             c = c.child(line.fill(t.track()));
         }
         if !self.title.is_empty() {
-            c = c.child(Heading::new(self.title).subtitle(self.subtitle).trailing(self.actions).build(t).w_full());
+            c = c.child(
+                Heading::new(self.title)
+                    .subtitle(self.subtitle)
+                    .trailing(self.actions)
+                    .build(t)
+                    .w_full(),
+            );
         }
         c.child(col().w_full().gap(gap).children(self.children))
     }
@@ -262,7 +331,12 @@ pub struct MenuRow {
 
 impl MenuRow {
     pub fn new(label: impl Into<String>) -> MenuRow {
-        MenuRow { label: label.into(), checked: false, highlighted: false, press: None }
+        MenuRow {
+            label: label.into(),
+            checked: false,
+            highlighted: false,
+            press: None,
+        }
     }
     pub fn checked(mut self, on: bool) -> Self {
         self.checked = on;
@@ -288,13 +362,24 @@ impl MenuRow {
             .justify_between()
             .px(sp.control_padding_x as f32)
             .radius(t.radius())
-            .fill(if self.highlighted { hover } else { color(Rgba::TRANSPARENT) })
+            .fill(if self.highlighted {
+                hover
+            } else {
+                color(Rgba::TRANSPARENT)
+            })
             .hover(hover)
             .role("menuitem")
             .label(self.label.clone())
-            .child(text(self.label).font(t.text_style(tk.font.body)).color(color(tk.surfaces.popups.text)).single_line());
+            .child(
+                text(self.label)
+                    .font(t.text_style(tk.font.body))
+                    .color(color(tk.surfaces.popups.text))
+                    .single_line(),
+            );
         if self.checked {
-            r = r.checked(true).child(super::glyph(t, "\u{2713}", tk.font.body, t.accent()));
+            r = r
+                .checked(true)
+                .child(super::glyph(t, "\u{2713}", tk.font.body, t.accent()));
         }
         match self.press {
             Some(attach) => attach(r),
@@ -312,7 +397,10 @@ pub struct Tooltip {
 
 impl Tooltip {
     pub fn new(label: impl Into<String>) -> Tooltip {
-        Tooltip { label: label.into(), shortcut: None }
+        Tooltip {
+            label: label.into(),
+            shortcut: None,
+        }
     }
     /// A key combination shown after the text, as a KeyCombo ("Ctrl+S").
     pub fn shortcut(mut self, combo: impl Into<String>) -> Self {
@@ -330,9 +418,16 @@ impl Tooltip {
             .py(sp.control_padding_y as f32 + bw)
             .fill(color(s.background))
             .radius(t.radius())
-            .child(text(self.label).font(t.text_style(tk.font.body_small)).color(color(s.text)));
+            .child(
+                text(self.label)
+                    .font(t.text_style(tk.font.body_small))
+                    .color(color(s.text)),
+            );
         let e = match self.shortcut {
-            Some(combo) => e.items_center().gap(sp.control_gap as f32).child(super::KeyCombo::new(combo).build(t)),
+            Some(combo) => e
+                .items_center()
+                .gap(sp.control_gap as f32)
+                .child(super::KeyCombo::new(combo).build(t)),
             None => e,
         };
         border(e, &s.border)
@@ -387,8 +482,14 @@ impl ConfirmDialog {
 
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
-        let message = text(self.message).font(t.text_style(tk.font.title)).color(t.fg()).wrap();
-        let mut d = super::Dialog::new("").body(message).destructive(true).selected(self.selected);
+        let message = text(self.message)
+            .font(t.text_style(tk.font.title))
+            .color(t.fg())
+            .wrap();
+        let mut d = super::Dialog::new("")
+            .body(message)
+            .destructive(true)
+            .selected(self.selected);
         if let Some((cancel, confirm)) = self.labels {
             d = d.labels(cancel, confirm);
         }

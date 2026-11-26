@@ -1,7 +1,10 @@
 //! The `lists` section (spec/gallery.md).
 
 use omarchy_rune::Theme;
-use omarchy_rune::ui::{Avatar, AvatarSize, Badge, CursorKey, CursorModel, Hero, KeyValue, ListRow, ScrollArea, ToggleSwitch, Tone};
+use omarchy_rune::ui::{
+    Avatar, AvatarSize, Badge, CursorKey, CursorModel, Hero, KeyValue, ListRow, ScrollArea,
+    ToggleSwitch, Tone,
+};
 use rune::{El, col};
 
 use crate::State;
@@ -39,9 +42,20 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
             .value("5 GHz")
             .trailing_glyph("\u{F033E}", Tone::Neutral)
             .build(t),
-        row(s, 1, "Basecamp Guest").glyph("\u{F0925}").subtitle("Open").build(t),
-        row(s, 2, "Basecamp").glyph("\u{F0928}").status("Connected", Tone::Success).current(true).build(t),
-        row(s, 3, "Neighbor 5G").glyph("\u{F091F}").subtitle("Out of range").disabled(true).build(t),
+        row(s, 1, "Basecamp Guest")
+            .glyph("\u{F0925}")
+            .subtitle("Open")
+            .build(t),
+        row(s, 2, "Basecamp")
+            .glyph("\u{F0928}")
+            .status("Connected", Tone::Success)
+            .current(true)
+            .build(t),
+        row(s, 3, "Neighbor 5G")
+            .glyph("\u{F091F}")
+            .subtitle("Out of range")
+            .disabled(true)
+            .build(t),
         row(s, 4, "Messages")
             .leading(Avatar::new("Messages").size(AvatarSize::Small).build(t))
             .subtitle("From Basecamp")
@@ -66,7 +80,10 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
             .trailing_glyph("\u{F033E}", Tone::Neutral)
             .action("\u{F0159}", true)
             .build(t),
-        row(s, 8, "Airport Free WiFi").glyph("\u{F091F}").subtitle("Open").build(t),
+        row(s, 8, "Airport Free WiFi")
+            .glyph("\u{F091F}")
+            .subtitle("Open")
+            .build(t),
     ];
     let scroll = ScrollArea::new("lists-scroll")
         .width(WIDTH)
@@ -85,8 +102,16 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
         });
     // Trailing glyphs that stay: drill-in chevrons and a check.
     let glyphs = col().w(WIDTH).gap(sp.xxs as f32).children([
-        ListRow::new("Appearance").glyph("\u{F03D8}").subtitle("Theme, font, rounding").trailing_glyph("\u{F0142}", Tone::Neutral).build(t),
-        ListRow::new("Display").glyph("\u{F0379}").subtitle("2560 × 1440").trailing_glyph("\u{F0142}", Tone::Neutral).build(t),
+        ListRow::new("Appearance")
+            .glyph("\u{F03D8}")
+            .subtitle("Theme, font, rounding")
+            .trailing_glyph("\u{F0142}", Tone::Neutral)
+            .build(t),
+        ListRow::new("Display")
+            .glyph("\u{F0379}")
+            .subtitle("2560 × 1440")
+            .trailing_glyph("\u{F0142}", Tone::Neutral)
+            .build(t),
         ListRow::new("Headphones")
             .glyph("\u{F02CB}")
             .subtitle("Output")
@@ -97,8 +122,17 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     vec![
         scroll,
         glyphs,
-        Hero::new("\u{F0928}", "Wi-Fi").status("Connected to Basecamp").trailing(ToggleSwitch::new(true).build(t)).build(t).w(WIDTH),
-        Hero::new("\u{F00B2}", "Bluetooth").status("No adapter found").error(true).glyph_opacity(0.5).build(t).w(WIDTH),
+        Hero::new("\u{F0928}", "Wi-Fi")
+            .status("Connected to Basecamp")
+            .trailing(ToggleSwitch::new(true).build(t))
+            .build(t)
+            .w(WIDTH),
+        Hero::new("\u{F00B2}", "Bluetooth")
+            .status("No adapter found")
+            .error(true)
+            .glyph_opacity(0.5)
+            .build(t)
+            .w(WIDTH),
         KeyValue::new()
             .columns(2)
             .pair("Ping", "18 ms")

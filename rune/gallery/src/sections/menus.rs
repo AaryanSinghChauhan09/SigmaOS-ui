@@ -16,27 +16,53 @@ pub struct Menus {
 
 impl Menus {
     pub fn init() -> Menus {
-        Menus { sidebar: true, wrap: false, sort: 0, ran: None }
+        Menus {
+            sidebar: true,
+            wrap: false,
+            sort: 0,
+            ran: None,
+        }
     }
 }
 
 pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
     let sp = &t.tokens().spacing;
     let m = &s.menus;
-    let run = |label: &'static str| MenuItem::new(label).on_press(move |s: &mut State| s.menus.ran = Some(label));
+    let run = |label: &'static str| {
+        MenuItem::new(label).on_press(move |s: &mut State| s.menus.ran = Some(label))
+    };
 
     // A menu held open: section labels, leading glyphs, shortcut hints, a check, a disabled
     // row, separators, a submenu row, and the keyboard cursor on "Open…".
     let menu = Menu::new()
         .section("File")
-        .item(run("New").icon("\u{f15b}").shortcut("Ctrl+N").key("menu-new"))
-        .item(run("Open…").icon("\u{f07b}").shortcut("Ctrl+O").cursor(true))
+        .item(
+            run("New")
+                .icon("\u{f15b}")
+                .shortcut("Ctrl+N")
+                .key("menu-new"),
+        )
+        .item(
+            run("Open…")
+                .icon("\u{f07b}")
+                .shortcut("Ctrl+O")
+                .cursor(true),
+        )
         .item(run("Save").icon("\u{f0c7}").shortcut("Ctrl+S"))
         .item(MenuItem::new("Duplicate").icon("\u{f0c5}").disabled(true))
         .separator()
         .section("View")
-        .item(MenuItem::new("Sidebar").check(m.sidebar).key("menu-sidebar").on_press(|s: &mut State| s.menus.sidebar ^= true))
-        .item(MenuItem::new("Word wrap").check(m.wrap).on_press(|s: &mut State| s.menus.wrap ^= true))
+        .item(
+            MenuItem::new("Sidebar")
+                .check(m.sidebar)
+                .key("menu-sidebar")
+                .on_press(|s: &mut State| s.menus.sidebar ^= true),
+        )
+        .item(
+            MenuItem::new("Word wrap")
+                .check(m.wrap)
+                .on_press(|s: &mut State| s.menus.wrap ^= true),
+        )
         .separator()
         .item(MenuItem::new("Export").icon("\u{f064}").submenu(true))
         .build(t);
@@ -47,13 +73,33 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
         .item(run("Copy").shortcut("Ctrl+C"))
         .item(run("Paste").shortcut("Ctrl+V"))
         .separator()
-        .item(MenuItem::new("By name").radio(m.sort == 0).on_press(|s: &mut State| s.menus.sort = 0))
-        .item(MenuItem::new("By date").radio(m.sort == 1).on_press(|s: &mut State| s.menus.sort = 1))
+        .item(
+            MenuItem::new("By name")
+                .radio(m.sort == 0)
+                .on_press(|s: &mut State| s.menus.sort = 0),
+        )
+        .item(
+            MenuItem::new("By date")
+                .radio(m.sort == 1)
+                .on_press(|s: &mut State| s.menus.sort = 1),
+        )
         .separator()
         .item(run("Delete").shortcut("Del").destructive(true))
         .build(t);
 
-    let keys = ["Super", "Ctrl", "Alt", "Shift", "Tab", "Esc", "Enter", "Backspace", "Up", "Space", "K"];
+    let keys = [
+        "Super",
+        "Ctrl",
+        "Alt",
+        "Shift",
+        "Tab",
+        "Esc",
+        "Enter",
+        "Backspace",
+        "Up",
+        "Space",
+        "K",
+    ];
     vec![
         row()
             .items_start()
@@ -67,8 +113,22 @@ pub fn build(s: &State, t: &Theme, _layer: &mut Vec<El>) -> Vec<El> {
             .children(keys.iter().map(|k| Keycap::new(*k).build(t)))
             .child(KeyCombo::new("Ctrl+Shift+P").build(t)),
         ShortcutSheet::new()
-            .group("File", [("Ctrl+N", "New file"), ("Ctrl+O", "Open"), ("Ctrl+S", "Save")])
-            .group("View", [("Ctrl+B", "Sidebar"), ("Ctrl+Shift+P", "Commands"), ("F11", "Full screen")])
+            .group(
+                "File",
+                [
+                    ("Ctrl+N", "New file"),
+                    ("Ctrl+O", "Open"),
+                    ("Ctrl+S", "Save"),
+                ],
+            )
+            .group(
+                "View",
+                [
+                    ("Ctrl+B", "Sidebar"),
+                    ("Ctrl+Shift+P", "Commands"),
+                    ("F11", "Full screen"),
+                ],
+            )
             .build(t),
     ]
 }

@@ -10,12 +10,19 @@ use crate::{Theme, border, color};
 
 fn rest_and_hot(t: &Theme) -> (Look, Look) {
     let c = &t.tokens().controls;
-    (Look::new(c.normal.fill, c.normal.border.clone()), Look::new(c.hover.fill, c.hover.border.clone()))
+    (
+        Look::new(c.normal.fill, c.normal.border.clone()),
+        Look::new(c.hover.fill, c.hover.border.clone()),
+    )
 }
 
 fn field_label(t: &Theme, label: &str, bold: bool) -> El {
     let size = t.tokens().font.body_small;
-    let style = if bold { t.text_style_bold(size) } else { t.text_style(size) };
+    let style = if bold {
+        t.text_style_bold(size)
+    } else {
+        t.text_style(size)
+    };
     text(label.to_string()).font(style).color(t.dim())
 }
 
@@ -32,7 +39,14 @@ pub struct TextField {
 
 impl TextField {
     pub fn new(edit: &TextEdit) -> TextField {
-        TextField { edit: edit.clone(), placeholder: String::new(), width: None, cursor: false, secure: false, access: None }
+        TextField {
+            edit: edit.clone(),
+            placeholder: String::new(),
+            width: None,
+            cursor: false,
+            secure: false,
+            access: None,
+        }
     }
     pub fn placeholder(mut self, p: impl Into<String>) -> Self {
         self.placeholder = p.into();
@@ -53,7 +67,10 @@ impl TextField {
         self
     }
     /// Where the app keeps this field's `TextEdit`, so typing edits it.
-    pub fn on_edit<S: 'static>(mut self, f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static) -> Self {
+    pub fn on_edit<S: 'static>(
+        mut self,
+        f: impl for<'a> Fn(&'a mut S) -> &'a mut TextEdit + 'static,
+    ) -> Self {
         self.access = Some(Box::new(move |i: TextInput| i.on_edit(f)));
         self
     }
@@ -62,9 +79,18 @@ impl TextField {
         let tk = t.tokens();
         let sp = &tk.spacing;
         let (rest, hot) = rest_and_hot(t);
-        let bw = tk.controls.normal.border.max_width().max(tk.controls.hover.border.max_width()) as f32;
+        let bw = tk
+            .controls
+            .normal
+            .border
+            .max_width()
+            .max(tk.controls.hover.border.max_width()) as f32;
         let style = t.text_style(tk.font.body);
-        let mut input = TextInput::new(&self.edit).plain().width(None).text_style(style).placeholder(self.placeholder);
+        let mut input = TextInput::new(&self.edit)
+            .plain()
+            .width(None)
+            .text_style(style)
+            .placeholder(self.placeholder);
         if self.secure {
             input = input.secure();
         }
@@ -83,7 +109,15 @@ impl TextField {
             Some(w) => base.w(w),
             None => base.w_full(),
         };
-        chrome(t, base, vec![inner.grow(1.0)], &rest, &hot, self.cursor, t.radius())
+        chrome(
+            t,
+            base,
+            vec![inner.grow(1.0)],
+            &rest,
+            &hot,
+            self.cursor,
+            t.radius(),
+        )
     }
 }
 
@@ -100,7 +134,15 @@ pub struct NumberField {
 
 impl NumberField {
     pub fn new(label: impl Into<String>, value: i64) -> NumberField {
-        NumberField { label: label.into(), value, from: 0, to: 100, step: 1, cursor: false, change: None }
+        NumberField {
+            label: label.into(),
+            value,
+            from: 0,
+            to: 100,
+            step: 1,
+            cursor: false,
+            change: None,
+        }
     }
     pub fn range(mut self, from: i64, to: i64) -> Self {
         self.from = from;
@@ -141,17 +183,45 @@ impl NumberField {
                 .role("button")
                 .label(glyph.to_string())
                 .opacity(if enabled { 1.0 } else { 0.4 })
-                .child(text(glyph.to_string()).font(t.text_style(tk.font.body)).color(t.fg()));
+                .child(
+                    text(glyph.to_string())
+                        .font(t.text_style(tk.font.body))
+                        .color(t.fg()),
+                );
             match (&self.change, enabled) {
                 (Some(attach), true) => attach(b, target),
                 _ => b,
             }
         };
-        let down = step_button("\u{2212}", (self.value - self.step).max(self.from), self.value > self.from);
-        let up = step_button("+", (self.value + self.step).min(self.to), self.value < self.to);
-        let value = text(self.value.to_string()).font(t.text_style(tk.font.body)).color(t.fg());
-        let base = row().w(sp.number_field_width as f32).h(h).items_center().justify_between().px(inset).role("spinbutton");
-        let field = chrome(t, base, vec![down, value, up], &rest, &hot, self.cursor, t.radius());
+        let down = step_button(
+            "\u{2212}",
+            (self.value - self.step).max(self.from),
+            self.value > self.from,
+        );
+        let up = step_button(
+            "+",
+            (self.value + self.step).min(self.to),
+            self.value < self.to,
+        );
+        let value = text(self.value.to_string())
+            .font(t.text_style(tk.font.body))
+            .color(t.fg());
+        let base = row()
+            .w(sp.number_field_width as f32)
+            .h(h)
+            .items_center()
+            .justify_between()
+            .px(inset)
+            .role("spinbutton");
+        let field = chrome(
+            t,
+            base,
+            vec![down, value, up],
+            &rest,
+            &hot,
+            self.cursor,
+            t.radius(),
+        );
         let mut out = col().gap(sp.md as f32);
         if !self.label.is_empty() {
             out = out.child(field_label(t, &self.label, false));
@@ -176,11 +246,18 @@ pub struct Dropdown {
 
 impl Dropdown {
     /// `key` names the trigger (the list anchors to it); `options` are (value, label) pairs.
-    pub fn new<V: Into<String>, L: Into<String>>(key: impl Into<String>, options: impl IntoIterator<Item = (V, L)>, value: impl Into<String>) -> Dropdown {
+    pub fn new<V: Into<String>, L: Into<String>>(
+        key: impl Into<String>,
+        options: impl IntoIterator<Item = (V, L)>,
+        value: impl Into<String>,
+    ) -> Dropdown {
         Dropdown {
             key: key.into(),
             label: String::new(),
-            options: options.into_iter().map(|(v, l)| (v.into(), l.into())).collect(),
+            options: options
+                .into_iter()
+                .map(|(v, l)| (v.into(), l.into()))
+                .collect(),
             value: value.into(),
             open: false,
             cursor: false,
@@ -223,9 +300,20 @@ impl Dropdown {
         let (rest, hot) = rest_and_hot(t);
         let width = self.width.unwrap_or(sp.dropdown_width as f32);
         let bw = tk.controls.normal.border.max_width() as f32;
-        let current = self.options.iter().find(|(v, _)| *v == self.value).map(|(_, l)| l.clone()).unwrap_or_default();
+        let current = self
+            .options
+            .iter()
+            .find(|(v, _)| *v == self.value)
+            .map(|(_, l)| l.clone())
+            .unwrap_or_default();
 
-        let words = text(current).font(t.text_style(tk.font.body)).color(t.fg()).single_line().truncate().grow(1.0).min_w(0.0);
+        let words = text(current)
+            .font(t.text_style(tk.font.body))
+            .color(t.fg())
+            .single_line()
+            .truncate()
+            .grow(1.0)
+            .min_w(0.0);
         let chevron = super::glyph(t, "\u{f0140}", tk.font.body, t.fg_darker(1.2));
         let base = row()
             .key(self.key.clone())
@@ -239,15 +327,31 @@ impl Dropdown {
             .label(self.label.clone())
             .expanded(self.open)
             .focusable(true);
-        let mut trigger = chrome(t, base, vec![words, chevron], &rest, &hot, self.cursor || self.open, t.radius());
+        let mut trigger = chrome(
+            t,
+            base,
+            vec![words, chevron],
+            &rest,
+            &hot,
+            self.cursor || self.open,
+            t.radius(),
+        );
         if let Some(attach) = self.toggle {
             trigger = attach(trigger);
         }
 
         if self.open {
             let pop = &tk.surfaces.popups;
-            let mut list = col().w(width).padding(tk.controls.normal.border.max_width() as f32).fill(color(pop.background)).radius(t.radius());
-            list = border(list, &pop.border.with_width(tk.controls.normal.border.max_width().max(1.0)));
+            let mut list = col()
+                .w(width)
+                .padding(tk.controls.normal.border.max_width() as f32)
+                .fill(color(pop.background))
+                .radius(t.radius());
+            list = border(
+                list,
+                &pop.border
+                    .with_width(tk.controls.normal.border.max_width().max(1.0)),
+            );
             for (value, label) in self.options {
                 let checked = value == self.value;
                 let row_el = super::MenuRow::new(label).checked(checked).build(t);

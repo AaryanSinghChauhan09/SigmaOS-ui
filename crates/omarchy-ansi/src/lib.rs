@@ -70,7 +70,11 @@ pub struct Cell {
 
 impl Cell {
     pub fn blank() -> Cell {
-        Cell { text: " ".into(), width: 1, ..Default::default() }
+        Cell {
+            text: " ".into(),
+            width: 1,
+            ..Default::default()
+        }
     }
 }
 
@@ -84,7 +88,11 @@ pub struct Grid {
 
 impl Grid {
     pub fn new(cols: usize, rows: usize) -> Grid {
-        Grid { cols, rows, cells: vec![Cell::blank(); cols * rows] }
+        Grid {
+            cols,
+            rows,
+            cells: vec![Cell::blank(); cols * rows],
+        }
     }
     pub fn get(&self, col: usize, row: usize) -> Option<&Cell> {
         (col < self.cols && row < self.rows).then(|| &self.cells[row * self.cols + col])
@@ -107,7 +115,14 @@ fn apply_sgr(style: &mut Style, params: &str) -> Result<(), String> {
     } else {
         params
             .split(';')
-            .map(|p| if p.is_empty() { Ok(0) } else { p.parse::<u32>().map_err(|_| format!("bad SGR parameter {p:?}")) })
+            .map(|p| {
+                if p.is_empty() {
+                    Ok(0)
+                } else {
+                    p.parse::<u32>()
+                        .map_err(|_| format!("bad SGR parameter {p:?}"))
+                }
+            })
             .collect::<Result<_, _>>()?
     };
     let mut i = 0;
@@ -138,13 +153,22 @@ fn apply_sgr(style: &mut Style, params: &str) -> Result<(), String> {
             38 | 48 => {
                 let c = match nums.get(i + 1) {
                     Some(2) => {
-                        let ch = |k: usize| nums.get(i + k).copied().filter(|v| *v <= 255).ok_or("bad truecolor SGR");
+                        let ch = |k: usize| {
+                            nums.get(i + k)
+                                .copied()
+                                .filter(|v| *v <= 255)
+                                .ok_or("bad truecolor SGR")
+                        };
                         let c = Color::Rgb(ch(2)? as u8, ch(3)? as u8, ch(4)? as u8);
                         i += 4;
                         c
                     }
                     Some(5) => {
-                        let v = nums.get(i + 2).copied().filter(|v| *v <= 255).ok_or("bad 256-color SGR")?;
+                        let v = nums
+                            .get(i + 2)
+                            .copied()
+                            .filter(|v| *v <= 255)
+                            .ok_or("bad 256-color SGR")?;
                         i += 2;
                         Color::Indexed(v as u8)
                     }
@@ -180,35 +204,62 @@ pub fn parse(text: &str) -> Result<Grid, String> {
         while let Some(c) = chars.next() {
             if c == '\x1b' {
                 if chars.next() != Some('[') {
-                    return Err(format!("line {lineno}, column {}: an escape other than SGR", cells.len() + 1));
+                    return Err(format!(
+                        "line {lineno}, column {}: an escape other than SGR",
+                        cells.len() + 1
+                    ));
                 }
                 let mut params = String::new();
                 loop {
                     match chars.next() {
                         Some('m') => break,
                         Some(p) if p.is_ascii_digit() || p == ';' => params.push(p),
-                        Some(p) => return Err(format!("line {lineno}, column {}: CSI ending in {p:?} isn't SGR", cells.len() + 1)),
+                        Some(p) => {
+                            return Err(format!(
+                                "line {lineno}, column {}: CSI ending in {p:?} isn't SGR",
+                                cells.len() + 1
+                            ));
+                        }
                         None => return Err(format!("line {lineno}: unterminated escape")),
                     }
                 }
-                apply_sgr(&mut style, &params).map_err(|e| format!("line {lineno}, column {}: {e}", cells.len() + 1))?;
+                apply_sgr(&mut style, &params)
+                    .map_err(|e| format!("line {lineno}, column {}: {e}", cells.len() + 1))?;
                 continue;
             }
             if c == '\r' || (c.is_control() && c != '\t') || c == '\t' {
-                return Err(format!("line {lineno}, column {}: control character U+{:04X}", cells.len() + 1, c as u32));
+                return Err(format!(
+                    "line {lineno}, column {}: control character U+{:04X}",
+                    cells.len() + 1,
+                    c as u32
+                ));
             }
             let w = c.width().unwrap_or(0);
             if w == 0 {
                 // A combining mark or zero-width character joins the previous cell.
                 let Some(prev) = cells.iter_mut().rev().find(|c| c.width > 0) else {
-                    return Err(format!("line {lineno}: a zero-width character starts the line"));
+                    return Err(format!(
+                        "line {lineno}: a zero-width character starts the line"
+                    ));
                 };
                 prev.text.push(c);
                 continue;
             }
-            cells.push(Cell { text: c.to_string(), width: w as u8, fg: style.fg, bg: style.bg, attrs: style.attrs });
+            cells.push(Cell {
+                text: c.to_string(),
+                width: w as u8,
+                fg: style.fg,
+                bg: style.bg,
+                attrs: style.attrs,
+            });
             if w == 2 {
-                cells.push(Cell { text: String::new(), width: 0, fg: style.fg, bg: style.bg, attrs: style.attrs });
+                cells.push(Cell {
+                    text: String::new(),
+                    width: 0,
+                    fg: style.fg,
+                    bg: style.bg,
+                    attrs: style.attrs,
+                });
             }
         }
         lines.push(cells);
@@ -216,18 +267,30 @@ pub fn parse(text: &str) -> Result<Grid, String> {
     let cols = lines[0].len();
     for (i, l) in lines.iter().enumerate() {
         if l.len() != cols {
-            return Err(format!("line {} is {} columns wide, line 1 is {cols}", i + 1, l.len()));
+            return Err(format!(
+                "line {} is {} columns wide, line 1 is {cols}",
+                i + 1,
+                l.len()
+            ));
         }
     }
     if cols == 0 {
         return Err("lines are empty".into());
     }
     let rows = lines.len();
-    Ok(Grid { cols, rows, cells: lines.into_iter().flatten().collect() })
+    Ok(Grid {
+        cols,
+        rows,
+        cells: lines.into_iter().flatten().collect(),
+    })
 }
 
 fn normalized(c: &Cell) -> Style {
-    let mut s = Style { fg: c.fg, bg: c.bg, attrs: c.attrs };
+    let mut s = Style {
+        fg: c.fg,
+        bg: c.bg,
+        attrs: c.attrs,
+    };
     if c.text == " " && !c.attrs.underline && !c.attrs.reverse && !c.attrs.crossed {
         s.fg = Color::Default;
         s.attrs.bold = false;
@@ -259,7 +322,14 @@ pub fn write_canonical(grid: &Grid) -> String {
             if s != prev {
                 out.push_str("\x1b[0");
                 let a = s.attrs;
-                for (on, code) in [(a.bold, ";1"), (a.faint, ";2"), (a.italic, ";3"), (a.underline, ";4"), (a.reverse, ";7"), (a.crossed, ";9")] {
+                for (on, code) in [
+                    (a.bold, ";1"),
+                    (a.faint, ";2"),
+                    (a.italic, ";3"),
+                    (a.underline, ";4"),
+                    (a.reverse, ";7"),
+                    (a.crossed, ";9"),
+                ] {
                     if on {
                         out.push_str(code);
                     }
@@ -391,7 +461,9 @@ pub fn diff(a: &Grid, b: &Grid, palette_fg: [u8; 3], palette_bg: [u8; 3]) -> Dif
     for row in 0..rows {
         for col in 0..cols {
             let same = match (a.get(col, row), b.get(col, row)) {
-                (Some(x), Some(y)) => resolve(x, palette_fg, palette_bg) == resolve(y, palette_fg, palette_bg),
+                (Some(x), Some(y)) => {
+                    resolve(x, palette_fg, palette_bg) == resolve(y, palette_fg, palette_bg)
+                }
                 _ => false,
             };
             if !same {
@@ -401,12 +473,29 @@ pub fn diff(a: &Grid, b: &Grid, palette_fg: [u8; 3], palette_bg: [u8; 3]) -> Dif
         }
     }
     let total = cols * rows;
-    let percent = if total == 0 { 0.0 } else { (10000.0 * differing as f64 / total as f64).round() / 100.0 };
-    Diff { cols, rows, size_matches: a.cols == b.cols && a.rows == b.rows, differing, total, percent, mask }
+    let percent = if total == 0 {
+        0.0
+    } else {
+        (10000.0 * differing as f64 / total as f64).round() / 100.0
+    };
+    Diff {
+        cols,
+        rows,
+        size_matches: a.cols == b.cols && a.rows == b.rows,
+        differing,
+        total,
+        percent,
+        mask,
+    }
 }
 
 /// Write RGBA pixels as a PNG.
-pub fn write_png(path: &std::path::Path, width: u32, height: u32, rgba: &[u8]) -> Result<(), String> {
+pub fn write_png(
+    path: &std::path::Path,
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+) -> Result<(), String> {
     let file = std::fs::File::create(path).map_err(|e| format!("{}: {e}", path.display()))?;
     let mut enc = png::Encoder::new(std::io::BufWriter::new(file), width, height);
     enc.set_color(png::ColorType::Rgba);

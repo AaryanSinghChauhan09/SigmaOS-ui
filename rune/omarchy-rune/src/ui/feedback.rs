@@ -106,37 +106,74 @@ impl Meter {
         let tk = t.tokens();
         let sp = &tk.spacing;
         let th = sp.meter_thickness as f32;
-        let ink = if self.alarming { t.urgent() } else { self.tone.color(t) };
+        let ink = if self.alarming {
+            t.urgent()
+        } else {
+            self.tone.color(t)
+        };
         let radius = t.radius_small().min(th / 2.0);
-        let markers = if self.indeterminate { Vec::new() } else { self.markers };
+        let markers = if self.indeterminate {
+            Vec::new()
+        } else {
+            self.markers
+        };
         let tick_w = 2f32.max((th * 0.5).round());
         let tick_h = (th * 2.5).round();
-        let bar_h = if markers.is_empty() { th } else { th.max(tick_h) };
+        let bar_h = if markers.is_empty() {
+            th
+        } else {
+            th.max(tick_h)
+        };
 
         let mut track = row().w_full().h(th).radius(radius).fill(t.track());
         if self.indeterminate {
             // A quarter of the track sweeps across it and wraps; reduced motion holds it in the
             // middle (3/8 along), as the Qt binding does.
-            let segment = el().h_full().w_frac(0.25).radius(radius).fill(ink).looping(LoopSpec::slide(1.4, [-1.0, 0.0], [4.0, 0.0]));
+            let segment = el()
+                .h_full()
+                .w_frac(0.25)
+                .radius(radius)
+                .fill(ink)
+                .looping(LoopSpec::slide(1.4, [-1.0, 0.0], [4.0, 0.0]));
             track = track.clip_rounded(radius).child(segment);
         } else {
-            track = track.child(el().h_full().w_frac(self.value.clamp(0.0, 1.0)).radius(radius).fill(ink));
+            track = track.child(
+                el().h_full()
+                    .w_frac(self.value.clamp(0.0, 1.0))
+                    .radius(radius)
+                    .fill(ink),
+            );
         }
         let top = ((bar_h - th) / 2.0).round();
-        let mut bar = el().w_full().h(bar_h).child(track.pin(Some(0.0), Some(top), Some(0.0), None));
+        let mut bar =
+            el().w_full()
+                .h(bar_h)
+                .child(track.pin(Some(0.0), Some(top), Some(0.0), None));
         for at in markers {
             // Measured so the first and last ticks sit inside the track's ends.
-            let tick = el().w(tick_w).h(tick_h).radius(t.radius_small().min(tick_w / 2.0)).fill(ink);
+            let tick = el()
+                .w(tick_w)
+                .h(tick_h)
+                .radius(t.radius_small().min(tick_w / 2.0))
+                .fill(ink);
             bar = bar.child(
                 row()
-                    .pin(Some(0.0), Some(((bar_h - tick_h) / 2.0).round()), Some(tick_w), None)
+                    .pin(
+                        Some(0.0),
+                        Some(((bar_h - tick_h) / 2.0).round()),
+                        Some(tick_w),
+                        None,
+                    )
                     .h(tick_h)
                     .child(el().w_frac(at.clamp(0.0, 1.0)).h(tick_h))
                     .child(tick),
             );
         }
 
-        let mut e = col().gap(sp.md as f32).role("progressbar").label(self.label.clone());
+        let mut e = col()
+            .gap(sp.md as f32)
+            .role("progressbar")
+            .label(self.label.clone());
         if !self.indeterminate {
             let v = self.value.clamp(0.0, 1.0);
             e = e.range_value(v as f64, 0.0, 1.0);
@@ -152,8 +189,18 @@ impl Meter {
                     .w_full()
                     .justify_between()
                     .gap(sp.control_gap as f32)
-                    .child(text(self.label).font(t.text_style(size)).color(t.fg()).single_line())
-                    .child(text(self.value_text).font(t.text_style(size)).color(t.dim()).single_line()),
+                    .child(
+                        text(self.label)
+                            .font(t.text_style(size))
+                            .color(t.fg())
+                            .single_line(),
+                    )
+                    .child(
+                        text(self.value_text)
+                            .font(t.text_style(size))
+                            .color(t.dim())
+                            .single_line(),
+                    ),
             );
         }
         e.child(bar)
@@ -168,7 +215,9 @@ pub struct ProgressBar {
 
 impl ProgressBar {
     pub fn new(value: f32) -> ProgressBar {
-        ProgressBar { meter: Meter::new(value).tone(Tone::Info) }
+        ProgressBar {
+            meter: Meter::new(value).tone(Tone::Info),
+        }
     }
     /// Work of unknown length: a quarter-track segment sweeps across, still under reduced motion.
     pub fn indeterminate() -> ProgressBar {
@@ -209,7 +258,12 @@ pub struct Spinner {
 
 impl Spinner {
     pub fn new() -> Spinner {
-        Spinner { glyph: "\u{f0996}".into(), size: None, pulse: false, color: None }
+        Spinner {
+            glyph: "\u{f0996}".into(),
+            size: None,
+            pulse: false,
+            color: None,
+        }
     }
     pub fn glyph(mut self, g: impl Into<String>) -> Self {
         self.glyph = g.into();
@@ -251,12 +305,17 @@ impl Spinner {
         let mark = el().size(side, side).role("progressbar").label("Busy");
         let still = tk.reduce_motion;
         if self.pulse {
-            let text = text(self.glyph).font(style).color(ink).single_line().absolute(left, top);
+            let text = text(self.glyph)
+                .font(style)
+                .color(ink)
+                .single_line()
+                .absolute(left, top);
             // Rises from half to full and back, as Qt's SequentialAnimation does from its 0.5.
             return if still {
                 mark.child(text.opacity(0.5))
             } else {
-                mark.child(text).looping(LoopSpec::opacity(Self::PULSE, 0.0, 0.5, 1.0))
+                mark.child(text)
+                    .looping(LoopSpec::opacity(Self::PULSE, 0.0, 0.5, 1.0))
             };
         }
         // Rune repeats a turn only for an icon, so the glyph turns as its own outline, its ink
@@ -267,9 +326,18 @@ impl Spinner {
         });
         match outline {
             Some(glyph) => mark.child(
-                rune::icon(glyph, side).absolute(0.0, 0.0).color(ink).looping(LoopSpec::rotation(Self::TURN)),
+                rune::icon(glyph, side)
+                    .absolute(0.0, 0.0)
+                    .color(ink)
+                    .looping(LoopSpec::rotation(Self::TURN)),
             ),
-            None => mark.child(text(self.glyph).font(style).color(ink).single_line().absolute(left, top)),
+            None => mark.child(
+                text(self.glyph)
+                    .font(style)
+                    .color(ink)
+                    .single_line()
+                    .absolute(left, top),
+            ),
         }
     }
 }
@@ -337,23 +405,72 @@ impl EmptyState {
         let tk = t.tokens();
         let sp = &tk.spacing;
         let f = &tk.font;
-        let (gap, glyph_size, glyph_ink, glyph_opacity, title_size, title_ink, title_opacity, hint_size, hint_ink) = if self.overlay {
-            (sp.lg, f.display_large, color(tk.surfaces.menu.selected_text), 0.8, f.title, t.fg(), 0.7, f.body, t.dim())
+        let (
+            gap,
+            glyph_size,
+            glyph_ink,
+            glyph_opacity,
+            title_size,
+            title_ink,
+            title_opacity,
+            hint_size,
+            hint_ink,
+        ) = if self.overlay {
+            (
+                sp.lg,
+                f.display_large,
+                color(tk.surfaces.menu.selected_text),
+                0.8,
+                f.title,
+                t.fg(),
+                0.7,
+                f.body,
+                t.dim(),
+            )
         } else {
-            (sp.sm, f.icon_large, t.dim(), 1.0, f.body, t.dim(), 1.0, f.body_small, t.faint())
+            (
+                sp.sm,
+                f.icon_large,
+                t.dim(),
+                1.0,
+                f.body,
+                t.dim(),
+                1.0,
+                f.body_small,
+                t.faint(),
+            )
         };
         let mut c = col().w_full().items_center().gap(gap as f32);
         if !self.glyph.is_empty() {
             c = c.child(glyph(t, &self.glyph, glyph_size, glyph_ink).opacity(glyph_opacity));
         }
         c = c.child(
-            text(self.title).font(t.text_style(title_size)).color(title_ink).align(Align::Center).wrap().w_full().opacity(title_opacity),
+            text(self.title)
+                .font(t.text_style(title_size))
+                .color(title_ink)
+                .align(Align::Center)
+                .wrap()
+                .w_full()
+                .opacity(title_opacity),
         );
         if !self.hint.is_empty() {
-            c = c.child(text(self.hint).font(t.text_style(hint_size)).color(hint_ink).align(Align::Center).wrap().w_full());
+            c = c.child(
+                text(self.hint)
+                    .font(t.text_style(hint_size))
+                    .color(hint_ink)
+                    .align(Align::Center)
+                    .wrap()
+                    .w_full(),
+            );
         }
         if !self.action.is_empty() {
-            c = c.child(attached(Button::new(self.action).bordered(true).cursor(self.cursor).build(t), self.on_action));
+            c = c.child(attached(
+                Button::new(self.action)
+                    .bordered(true)
+                    .cursor(self.cursor)
+                    .build(t),
+                self.on_action,
+            ));
         }
         c
     }
@@ -420,7 +537,11 @@ impl Banner {
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
         let sp = &tk.spacing;
-        let tone = if self.tone == Tone::Neutral { Tone::Info } else { self.tone };
+        let tone = if self.tone == Tone::Neutral {
+            Tone::Info
+        } else {
+            self.tone
+        };
         let ink = tone.color(t);
         let line = tk.controls.normal.border.max_width().max(1.0) as f32;
         let trailing = !self.action.is_empty() || self.dismissible;
@@ -432,7 +553,12 @@ impl Banner {
             .gap(sp.control_gap as f32)
             .min_h(sp.control_height as f32 + (sp.sm as f32 + line) * 2.0)
             .pl(sp.control_padding_x as f32 + line)
-            .pr(if trailing { sp.sm } else { sp.control_padding_x } as f32 + line)
+            .pr(if trailing {
+                sp.sm
+            } else {
+                sp.control_padding_x
+            } as f32
+                + line)
             .py(sp.sm as f32 + line)
             .fill(color(tk.controls.normal.fill))
             .border(line, ink)
@@ -440,12 +566,28 @@ impl Banner {
             .role("alert")
             .label(self.text.clone())
             .child(glyph(t, &mark, tk.font.icon, ink))
-            .child(text(self.text).font(t.text_style(tk.font.body)).color(t.fg()).wrap().grow(1.0).min_w(0.0));
+            .child(
+                text(self.text)
+                    .font(t.text_style(tk.font.body))
+                    .color(t.fg())
+                    .wrap()
+                    .grow(1.0)
+                    .min_w(0.0),
+            );
         if !self.action.is_empty() {
-            r = r.child(attached(Button::new(self.action).bordered(true).cursor(self.cursor).build(t), self.on_action));
+            r = r.child(attached(
+                Button::new(self.action)
+                    .bordered(true)
+                    .cursor(self.cursor)
+                    .build(t),
+                self.on_action,
+            ));
         }
         if self.dismissible {
-            r = r.child(attached(IconButton::new("\u{f0156}").label("Dismiss").build(t), self.on_dismiss));
+            r = r.child(attached(
+                IconButton::new("\u{f0156}").label("Dismiss").build(t),
+                self.on_dismiss,
+            ));
         }
         r
     }
@@ -518,10 +660,18 @@ impl Toast {
         let body = t.text_style(tk.font.body);
 
         let mut words = col().grow(1.0).min_w(0.0).gap(t.space(3.0)).child(
-            text(self.title.clone()).font(t.text_style_bold(tk.font.body)).color(ink).single_line(),
+            text(self.title.clone())
+                .font(t.text_style_bold(tk.font.body))
+                .color(ink)
+                .single_line(),
         );
         if !self.text.is_empty() {
-            words = words.child(text(self.text).font(body).color(color(s.base.text.darker(1.15))).wrap());
+            words = words.child(
+                text(self.text)
+                    .font(body)
+                    .color(color(s.base.text.darker(1.15)))
+                    .wrap(),
+            );
         }
         let mut content = row().w_full().items_center().gap(t.space(12.0));
         if !self.glyph.is_empty() {
@@ -529,7 +679,10 @@ impl Toast {
         }
         content = content.child(words);
         if !self.action.is_empty() {
-            content = content.child(attached(Button::new(self.action).bordered(true).build(t), self.on_action));
+            content = content.child(attached(
+                Button::new(self.action).bordered(true).build(t),
+                self.on_action,
+            ));
         }
 
         let mut e = col()
@@ -545,7 +698,10 @@ impl Toast {
         e = e.w(self.width.unwrap_or_else(|| t.space(360.0)));
         if self.cursor {
             let hover = color(tk.controls.hover.fill);
-            e = e.child(el().pin(Some(bw[3]), Some(bw[0]), Some(bw[1]), Some(bw[2])).fill(hover));
+            e = e.child(
+                el().pin(Some(bw[3]), Some(bw[0]), Some(bw[1]), Some(bw[2]))
+                    .fill(hover),
+            );
         }
         e = e.child(content);
         if let Some(left) = self.countdown {
@@ -555,7 +711,11 @@ impl Toast {
                 row()
                     .pin(Some(bw[3] + r), None, Some(bw[1] + r), Some(bw[2]))
                     .h(line)
-                    .child(el().h_full().w_frac(left.clamp(0.0, 1.0)).fill(color(s.countdown))),
+                    .child(
+                        el().h_full()
+                            .w_frac(left.clamp(0.0, 1.0))
+                            .fill(color(s.countdown)),
+                    ),
             );
         }
         e

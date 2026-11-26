@@ -19,7 +19,11 @@ pub struct Badge {
 
 impl Badge {
     pub fn new(label: impl Into<String>) -> Badge {
-        Badge { label: label.into(), tone: Tone::Neutral, filled: false }
+        Badge {
+            label: label.into(),
+            tone: Tone::Neutral,
+            filled: false,
+        }
     }
     pub fn tone(mut self, tone: Tone) -> Self {
         self.tone = tone;
@@ -41,7 +45,11 @@ impl Badge {
         } else if neutral {
             (c.normal.fill, c.normal.border.clone(), ink)
         } else {
-            (ink.with_alpha(c.selected.fill.alpha_f() as f64), BorderSpec::none(), ink)
+            (
+                ink.with_alpha(c.selected.fill.alpha_f() as f64),
+                BorderSpec::none(),
+                ink,
+            )
         };
         let size = tk.font.caption;
         let h = tk.font.line_px(size) as f32 + (t.space(1.0) + line) * 2.0;
@@ -52,7 +60,12 @@ impl Badge {
             .center()
             .radius(t.radius_small())
             .fill(color(fill))
-            .child(text(self.label).font(t.text_style_bold(size)).color(color(label)).single_line());
+            .child(
+                text(self.label)
+                    .font(t.text_style_bold(size))
+                    .color(color(label))
+                    .single_line(),
+            );
         border(e, &edge)
     }
 }
@@ -67,7 +80,11 @@ pub struct StatusDot {
 
 impl StatusDot {
     pub fn new(tone: Tone) -> StatusDot {
-        StatusDot { tone, size: None, ground: None }
+        StatusDot {
+            tone,
+            size: None,
+            ground: None,
+        }
     }
     /// The dot's diameter, without the ring (default `space(8)`).
     pub fn size(mut self, s: f32) -> Self {
@@ -92,7 +109,12 @@ impl StatusDot {
         el().size(outer, outer)
             .radius(outer / 2.0)
             .fill(color(self.ground.unwrap_or(tk.surfaces.popups.background)))
-            .child(el().absolute(ring, ring).size(size, size).radius(size / 2.0).fill(color(self.tone.rgba(t, tk.palette.foreground))))
+            .child(
+                el().absolute(ring, ring)
+                    .size(size, size)
+                    .radius(size / 2.0)
+                    .fill(color(self.tone.rgba(t, tk.palette.foreground))),
+            )
     }
 }
 
@@ -136,7 +158,17 @@ pub struct Avatar {
 
 impl Avatar {
     pub fn new(name: impl Into<String>) -> Avatar {
-        Avatar { name: name.into(), image: None, icon: String::new(), glyph: String::new(), size: 0.0, preset: Some(AvatarSize::Medium), round: false, status: None, ground: None }
+        Avatar {
+            name: name.into(),
+            image: None,
+            icon: String::new(),
+            glyph: String::new(),
+            size: 0.0,
+            preset: Some(AvatarSize::Medium),
+            round: false,
+            status: None,
+            ground: None,
+        }
     }
     /// The picture, from an `ImageCache`. Until it decodes, or if it fails, the fallbacks draw.
     pub fn image(mut self, image: Option<&Image>) -> Self {
@@ -182,30 +214,61 @@ impl Avatar {
 
     /// The initial `Avatar` draws for `name`: its first character, uppercased.
     pub fn initial(name: &str) -> String {
-        name.trim().chars().next().map(|c| c.to_uppercase().collect()).unwrap_or_default()
+        name.trim()
+            .chars()
+            .next()
+            .map(|c| c.to_uppercase().collect())
+            .unwrap_or_default()
     }
 
     pub fn build(self, t: &Theme) -> El {
         let tk = t.tokens();
         let size = self.preset.map_or(self.size, |p| p.px(t));
-        let radius = if self.round { size / 2.0 } else { t.radius().min(size / 2.0) };
-        let pictured = self.image.as_ref().is_some_and(|i| i.is_ready() && i.error().is_none());
-        let icon = if pictured || self.icon.is_empty() { None } else { t.icon(&self.icon, size) };
+        let radius = if self.round {
+            size / 2.0
+        } else {
+            t.radius().min(size / 2.0)
+        };
+        let pictured = self
+            .image
+            .as_ref()
+            .is_some_and(|i| i.is_ready() && i.error().is_none());
+        let icon = if pictured || self.icon.is_empty() {
+            None
+        } else {
+            t.icon(&self.icon, size)
+        };
         let icon = icon.filter(|i| i.error().is_none());
         let face = if pictured {
-            el().size(size, size).radius(radius).pixels_fit(self.image.as_ref().unwrap().pixels(), SurfaceFit::Fill)
+            el().size(size, size)
+                .radius(radius)
+                .pixels_fit(self.image.as_ref().unwrap().pixels(), SurfaceFit::Fill)
         } else if let Some(icon) = icon {
-            el().size(size, size).pixels_fit(icon.pixels(), SurfaceFit::Fit)
+            el().size(size, size)
+                .pixels_fit(icon.pixels(), SurfaceFit::Fit)
         } else {
-            let tile = row().size(size, size).center().radius(radius).fill(color(tk.controls.selected.fill));
+            let tile = row()
+                .size(size, size)
+                .center()
+                .radius(radius)
+                .fill(color(tk.controls.selected.fill));
             let mark_size = (size * 0.5).round() as i64;
             if !self.glyph.is_empty() {
                 tile.child(glyph(t, &self.glyph, mark_size, t.fg()))
             } else {
-                tile.child(text(Avatar::initial(&self.name)).font(t.text_style_bold(mark_size)).color(t.fg()).single_line())
+                tile.child(
+                    text(Avatar::initial(&self.name))
+                        .font(t.text_style_bold(mark_size))
+                        .color(t.fg())
+                        .single_line(),
+                )
             }
         };
-        let mut e = el().size(size, size).role("img").label(self.name).child(face);
+        let mut e = el()
+            .size(size, size)
+            .role("img")
+            .label(self.name)
+            .child(face);
         if let Some(tone) = self.status {
             let dot = (size * 0.28).round().max(t.space(6.0));
             let ring = StatusDot::ring(t);
@@ -214,7 +277,10 @@ impl Avatar {
             if let Some(g) = self.ground {
                 d = d.ground(g);
             }
-            e = e.child(d.build(t).absolute(size - outer + ring, size - outer + ring));
+            e = e.child(
+                d.build(t)
+                    .absolute(size - outer + ring, size - outer + ring),
+            );
         }
         e
     }
@@ -229,7 +295,11 @@ pub struct Tile {
 
 impl Tile {
     pub fn new(label: impl Into<String>) -> Tile {
-        Tile { label: label.into(), glyph: String::new(), avatar: None }
+        Tile {
+            label: label.into(),
+            glyph: String::new(),
+            avatar: None,
+        }
     }
     pub fn glyph(mut self, g: impl Into<String>) -> Self {
         self.glyph = g.into();
@@ -258,7 +328,16 @@ pub struct TileGrid {
 
 impl TileGrid {
     pub fn new(tiles: impl IntoIterator<Item = Tile>) -> TileGrid {
-        TileGrid { tiles: tiles.into_iter().collect(), columns: 4, cell_width: None, cursor: None, current: None, key: None, press: None, pointer: None }
+        TileGrid {
+            tiles: tiles.into_iter().collect(),
+            columns: 4,
+            cell_width: None,
+            cursor: None,
+            current: None,
+            key: None,
+            press: None,
+            pointer: None,
+        }
     }
     pub fn columns(mut self, n: usize) -> Self {
         self.columns = n.max(1);
@@ -291,10 +370,14 @@ impl TileGrid {
     }
     /// The pointer moved over tile `index`, at a window point: pass it to
     /// [`super::CursorModel::pointer_moved`].
-    pub fn on_pointer_move<S: 'static>(mut self, f: impl Fn(&mut S, usize, f32, f32) + Clone + 'static) -> Self {
+    pub fn on_pointer_move<S: 'static>(
+        mut self,
+        f: impl Fn(&mut S, usize, f32, f32) + Clone + 'static,
+    ) -> Self {
         self.pointer = Some(std::rc::Rc::new(move |i| {
             let f = f.clone();
-            Box::new(move |e: El| e.on_pointer_move(move |s: &mut S, p| f(s, i, p.x, p.y))) as Attach
+            Box::new(move |e: El| e.on_pointer_move(move |s: &mut S, p| f(s, i, p.x, p.y)))
+                as Attach
         }));
         self
     }

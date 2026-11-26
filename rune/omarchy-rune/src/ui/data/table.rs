@@ -18,7 +18,11 @@ pub struct Column {
 
 impl Column {
     pub fn new(title: impl Into<String>) -> Column {
-        Column { title: title.into(), width: None, right: false }
+        Column {
+            title: title.into(),
+            width: None,
+            right: false,
+        }
     }
     pub fn width(mut self, w: f32) -> Self {
         self.width = Some(w);
@@ -65,8 +69,14 @@ impl Table {
         }
     }
     /// One `Vec` of cell strings per row, one string per column.
-    pub fn rows<R: IntoIterator<Item = S>, S: Into<String>>(mut self, rows: impl IntoIterator<Item = R>) -> Self {
-        self.rows = rows.into_iter().map(|r| r.into_iter().map(Into::into).collect()).collect();
+    pub fn rows<R: IntoIterator<Item = S>, S: Into<String>>(
+        mut self,
+        rows: impl IntoIterator<Item = R>,
+    ) -> Self {
+        self.rows = rows
+            .into_iter()
+            .map(|r| r.into_iter().map(Into::into).collect())
+            .collect();
         self
     }
     /// The sorted column and direction, shown as a chevron in its header.
@@ -124,7 +134,13 @@ impl Table {
         // Column widths as Qt computes them: fixed as given, the rest share what is left.
         let fixed: f32 = self.columns.iter().filter_map(|c| c.width).sum();
         let flex = self.columns.iter().filter(|c| c.width.is_none()).count();
-        let share = self.width.map(|w| if flex > 0 { ((w - fixed) / flex as f32).floor().max(0.0) } else { 0.0 });
+        let share = self.width.map(|w| {
+            if flex > 0 {
+                ((w - fixed) / flex as f32).floor().max(0.0)
+            } else {
+                0.0
+            }
+        });
         let sized = |c: &Column, e: El| match (c.width, share) {
             (Some(w), _) | (None, Some(w)) => e.w(w),
             (None, None) => e.grow(1.0).min_w(0.0),
@@ -133,10 +149,18 @@ impl Table {
         // ---- Header
         let mut header = row().w_full().h(h);
         for (i, c) in self.columns.iter().enumerate() {
-            let title = text(c.title.clone()).font(t.text_style_bold(tk.font.caption)).color(t.dim()).truncate();
+            let title = text(c.title.clone())
+                .font(t.text_style_bold(tk.font.caption))
+                .color(t.dim())
+                .truncate();
             let mut content = row().items_center().gap(sp.xs as f32).min_w(0.0);
             let chevron = self.sort.filter(|(col, _)| *col == i).map(|(_, up)| {
-                glyph(t, if up { "\u{f0143}" } else { "\u{f0140}" }, tk.font.caption, t.dim())
+                glyph(
+                    t,
+                    if up { "\u{f0143}" } else { "\u{f0140}" },
+                    tk.font.caption,
+                    t.dim(),
+                )
             });
             content = match (c.right, chevron) {
                 (true, Some(g)) => content.child(g).child(title),
@@ -147,7 +171,10 @@ impl Table {
             if c.right {
                 cell = cell.justify_end();
             }
-            let mut cell = cell.child(content).role("columnheader").label(c.title.clone());
+            let mut cell = cell
+                .child(content)
+                .role("columnheader")
+                .label(c.title.clone());
             if let Some(k) = &self.key {
                 cell = cell.key(format!("{k}-col-{i}"));
             }
@@ -163,7 +190,11 @@ impl Table {
         let mut body = col().w_full().role("grid").focus_group();
         for (r, cells) in self.rows.iter().enumerate() {
             let is_selected = self.selected == Some(r);
-            let style = if is_selected { t.text_style_bold(tk.font.body) } else { t.text_style(tk.font.body) };
+            let style = if is_selected {
+                t.text_style_bold(tk.font.body)
+            } else {
+                t.text_style(tk.font.body)
+            };
             let ink = if is_selected { selected_ink } else { t.fg() };
             let mut kids = Vec::new();
             let mut line = row().w_full().h_full().items_center();
@@ -179,7 +210,13 @@ impl Table {
             if self.separators && r < last {
                 kids.push(bottom_rule(t));
             }
-            let base = el().w_full().h(h).role("row").focusable(true).focus_selected(is_selected).label(cells.first().cloned().unwrap_or_default());
+            let base = el()
+                .w_full()
+                .h(h)
+                .role("row")
+                .focusable(true)
+                .focus_selected(is_selected)
+                .label(cells.first().cloned().unwrap_or_default());
             let mut e = row_chrome(t, base, kids, is_selected, self.cursor == Some(r));
             if let Some(k) = &self.key {
                 e = e.key(format!("{k}-{r}"));

@@ -15,7 +15,11 @@ fn root() -> PathBuf {
 }
 
 fn theme_set(home: &Path, name: &str) {
-    let ok = Command::new(root().join("tools/live/theme-set")).arg(home).arg(name).status().expect("tools/live/theme-set");
+    let ok = Command::new(root().join("tools/live/theme-set"))
+        .arg(home)
+        .arg(name)
+        .status()
+        .expect("tools/live/theme-set");
     assert!(ok.success(), "theme-set {name}");
 }
 
@@ -27,7 +31,9 @@ fn isolate() -> PathBuf {
     std::fs::create_dir_all(tmp.join("run")).unwrap();
     let cache = std::env::var_os("XDG_CACHE_HOME")
         .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".cache"));
+        .unwrap_or_else(|| {
+            PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".cache")
+        });
     // SAFETY: this binary's only test sets these before it starts any thread.
     unsafe {
         std::env::set_var("HOME", tmp.join("home"));
@@ -54,23 +60,44 @@ fn a_theme_switch_reaches_the_watch_once() {
     let _watch = omarchy_theme::watch(initial, move |fresh| {
         let _ = tx.send(fresh);
     });
-    assert!(rx.recv_timeout(Duration::from_millis(400)).is_err(), "the initial load is not a change");
+    assert!(
+        rx.recv_timeout(Duration::from_millis(400)).is_err(),
+        "the initial load is not a change"
+    );
 
     theme_set(&home, "catppuccin-latte");
-    let fresh = rx.recv_timeout(Duration::from_secs(5)).expect("the switch is delivered");
+    let fresh = rx
+        .recv_timeout(Duration::from_secs(5))
+        .expect("the switch is delivered");
     assert_eq!(fresh.palette.background.hex(), "#eff1f5ff");
     assert_eq!(fresh.theme, "catppuccin-latte");
     assert!(!fresh.is_dark());
-    assert!(rx.recv_timeout(Duration::from_millis(600)).is_err(), "one switch is one change");
+    assert!(
+        rx.recv_timeout(Duration::from_millis(600)).is_err(),
+        "one switch is one change"
+    );
 
     // Something in current/ that alters no token (omarchy-theme-set rewrites theme.generation
     // and the background link on every run) is coalesced, re-resolved, and dropped.
-    std::fs::write(home.join(".local/state/omarchy/current/theme.generation"), "again\n").unwrap();
-    assert!(rx.recv_timeout(Duration::from_millis(800)).is_err(), "no change, no delivery");
+    std::fs::write(
+        home.join(".local/state/omarchy/current/theme.generation"),
+        "again\n",
+    )
+    .unwrap();
+    assert!(
+        rx.recv_timeout(Duration::from_millis(800)).is_err(),
+        "no change, no delivery"
+    );
 
     // An edit inside the swapped-in directory is followed: the watch moved to the new one.
-    std::fs::write(home.join(".local/state/omarchy/current/theme/icons.theme"), "Yaru-red\n").unwrap();
-    let fresh = rx.recv_timeout(Duration::from_secs(5)).expect("the icon theme edit is delivered");
+    std::fs::write(
+        home.join(".local/state/omarchy/current/theme/icons.theme"),
+        "Yaru-red\n",
+    )
+    .unwrap();
+    let fresh = rx
+        .recv_timeout(Duration::from_secs(5))
+        .expect("the icon theme edit is delivered");
     assert_eq!(fresh.icon_theme, "Yaru-red");
 
     let _ = std::fs::remove_dir_all(&tmp);
