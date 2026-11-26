@@ -18,7 +18,9 @@ jobs:
         with:
           path: ${{ github.event.repository.name }}
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev
+        run: |
+          sudo apt-get update && sudo apt-get install -y libxkbcommon-dev fontconfig
+          mkdir -p ~/.fonts && curl -fsSL -o /tmp/nerd.zip https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip && unzip -o -q /tmp/nerd.zip -d ~/.fonts && fc-cache -f
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
