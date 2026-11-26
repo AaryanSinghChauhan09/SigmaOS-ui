@@ -18,8 +18,9 @@ use swash::zeno::{Command, PathData};
 
 /// Turned glyphs made so far, by glyph, font, size and placement; each lives for the process
 /// (a handful: one per spinner look).
-static MADE: Mutex<Option<HashMap<(String, String, u32, [i32; 2]), Option<&'static Icon>>>> =
-    Mutex::new(None);
+type MadeIcons = HashMap<(String, String, u32, [i32; 2]), Option<&'static Icon>>;
+
+static MADE: Mutex<Option<MadeIcons>> = Mutex::new(None);
 
 /// `glyph` in `family` at `size` points, its outline's ink centred on `ink_centre` inside a
 /// `side`-point square. `None` when no font has it (or it has no outline), and the caller

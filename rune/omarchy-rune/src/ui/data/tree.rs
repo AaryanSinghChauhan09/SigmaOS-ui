@@ -129,7 +129,7 @@ impl Tree {
     }
     fn walk<'a>(&self, nodes: &'a [TreeNode], depth: usize, out: &mut Vec<Visible<'a>>) {
         for n in nodes {
-            let open = !n.children.is_empty() && self.expanded.iter().any(|e| *e == n.id);
+            let open = !n.children.is_empty() && self.expanded.contains(&n.id);
             out.push(Visible {
                 node: n,
                 depth,

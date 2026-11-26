@@ -337,11 +337,11 @@ impl CursorModel {
 
     /// Keep the cursor on a real row: off an empty section, within the count.
     fn settle(&mut self) {
-        if self.count() == 0 {
-            if let Some(s) = self.neighbour(1).or_else(|| self.neighbour(-1)) {
-                self.section = s;
-                self.index = 0;
-            }
+        if self.count() == 0
+            && let Some(s) = self.neighbour(1).or_else(|| self.neighbour(-1))
+        {
+            self.section = s;
+            self.index = 0;
         }
         self.index = self.index.min(self.count().saturating_sub(1));
     }

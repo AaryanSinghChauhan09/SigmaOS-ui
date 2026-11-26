@@ -66,6 +66,7 @@ type Seek = Rc<dyn Fn(El, TimelineView, f32, f32) -> El>;
 type Select = Rc<dyn Fn(El, usize, usize) -> El>;
 type Trim = Rc<dyn Fn(TrimHandle, usize, usize, Edge, f32, TimelineView) -> TrimHandle>;
 type ViewFn = Rc<dyn Fn(El, TimelineView, f32) -> El>;
+type ScrubSeek = Rc<dyn Fn(El, f32, f32, f32) -> El>;
 
 /// A time ruler over clip tracks, with a playhead. Press or drag on the ruler or an empty lane
 /// to scrub, press a clip to select it, drag a trim handle to trim, turn the wheel to zoom
@@ -463,7 +464,7 @@ pub struct Scrubber {
     duration: f32,
     width: Option<f32>,
     cursor: bool,
-    seek: Option<Rc<dyn Fn(El, f32, f32, f32) -> El>>,
+    seek: Option<ScrubSeek>,
 }
 
 impl Scrubber {

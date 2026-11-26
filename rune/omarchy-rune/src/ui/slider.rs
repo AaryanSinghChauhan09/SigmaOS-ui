@@ -5,6 +5,8 @@ use rune::{El, el};
 
 use crate::{Theme, color};
 
+type Change = Box<dyn FnOnce(El, f32, f32) -> El>;
+
 pub struct Slider {
     value: f32,
     min: f32,
@@ -12,7 +14,7 @@ pub struct Slider {
     ticks: usize,
     width: Option<f32>,
     cursor: bool,
-    change: Option<Box<dyn FnOnce(El, f32, f32) -> El>>,
+    change: Option<Change>,
 }
 
 impl Slider {

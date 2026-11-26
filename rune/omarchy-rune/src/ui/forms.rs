@@ -487,7 +487,7 @@ impl PasswordField {
         let polkit = &tk.surfaces.polkit;
         let error_ink = color(polkit.text_error);
         if self.error.is_some() {
-            let w = (c.normal.border.max_width().max(1.0)) as f64;
+            let w = c.normal.border.max_width().max(1.0);
             let spec = BorderSpec {
                 color: polkit.border_error.color,
                 widths: [w; 4],
